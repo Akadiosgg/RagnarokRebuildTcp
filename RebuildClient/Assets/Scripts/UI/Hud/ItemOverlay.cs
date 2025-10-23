@@ -14,8 +14,11 @@ namespace Assets.Scripts.UI.Hud
         {
             if (item == Item)
                 return;
-            
-            ItemText.text = $"{item.ItemName}: {item.Count} ea.";
+            if(item.Count > 1)
+                ItemText.text = $"{item.Count}x {item.ItemName}";
+            else
+                ItemText.text = item.ItemName;
+
             gameObject.SetActive(true);
             Item = item;
         }

@@ -526,6 +526,7 @@ public static class CommandBuilder
         packet.Write(di.AttackMotionTime);
         packet.Write(di.Time - Time.ElapsedTimeFloat);
         packet.Write(di.IsIndirect || isIndirect);
+        packet.Write((byte)di.AttackElement);
 
         NetworkManager.SendMessageMulti(packet, recipients);
     }
@@ -552,6 +553,7 @@ public static class CommandBuilder
         packet.Write((byte)di.AttackSkill);
         packet.Write((byte)di.HitCount);
         packet.Write((byte)di.Result);
+        packet.Write((byte)di.AttackElement);
 
         NetworkManager.SendMessageMulti(packet, recipients);
     }
@@ -663,6 +665,7 @@ public static class CommandBuilder
         packet.Write(di.AttackMotionTime);
         packet.Write(di.Time - Time.ElapsedTimeFloat);
         packet.Write(showAttackMotion);
+        packet.Write((byte)di.AttackElement);
 
         NetworkManager.SendMessageMulti(packet, recipients);
     }

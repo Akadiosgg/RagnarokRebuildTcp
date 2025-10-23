@@ -4,8 +4,10 @@ using Assets.Scripts.Network.Messaging;
 using Assets.Scripts.SkillHandlers;
 using Assets.Scripts.Utility;
 using RebuildSharedData.Enum;
+using RebuildSharedData.Enum.EntityStats;
 using RebuildSharedData.Networking;
 using UnityEngine;
+using static UnityEngine.Networking.UnityWebRequest;
 
 namespace Assets.Scripts.Network.IncomingPacketHandlers.Combat
 {
@@ -30,7 +32,7 @@ namespace Assets.Scripts.Network.IncomingPacketHandlers.Combat
             var motionTime = msg.ReadFloat();
             var damageTime = msg.ReadFloat();
             var showAttackAction = msg.ReadBoolean();
-
+            var attackElement = msg.ReadByte();
             var comboDelay = 0.2f;
 
             var hasOffHand = offHand != 0;
@@ -119,7 +121,9 @@ namespace Assets.Scripts.Network.IncomingPacketHandlers.Combat
 
                 if (dmg > 0)
                 {
-                    var dmgSound = ClientSkillHandler.SkillTakesWeaponSound(skill);
+                    var dmgSound = false;
+                    if (result.Skill != CharacterSkill.NoCast)
+                        dmgSound = ClientSkillHandler.SkillTakesWeaponSound(skill);
                     Debug.Log($"Offhand:{hasOffHand} {dmg}x{hits} + {offHand}");
                     if (resultType != AttackResult.Invisible)
                     {
@@ -128,7 +132,7 @@ namespace Assets.Scripts.Network.IncomingPacketHandlers.Combat
                                 resultType == AttackResult.CriticalDamage);
                         else
                             controllable2.Messages.SendDamageEvent(controllable, damageTime, dmg, hits, resultType == AttackResult.CriticalDamage, dmgSound,
-                                result.Skill != CharacterSkill.Smoking);
+                                result.Skill != CharacterSkill.Smoking, attackElement);
                     }
                 }
 

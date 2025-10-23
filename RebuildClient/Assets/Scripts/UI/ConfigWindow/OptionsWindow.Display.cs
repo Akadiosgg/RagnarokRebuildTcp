@@ -10,6 +10,7 @@ namespace Assets.Scripts.UI.ConfigWindow
         public Toggle HideShoutChatToggle;
         public Toggle EnableXRayToggle;
         public Toggle EnableWASDControls;
+        public Toggle EnableColoredDamageNumbers;
 
 
         public void UpdateDisplayOptions()
@@ -22,6 +23,8 @@ namespace Assets.Scripts.UI.ConfigWindow
             GameConfig.Data.EnableXRay = EnableXRayToggle.isOn;
 
             GameConfig.Data.EnableWASDControls = EnableWASDControls.isOn;
+
+            GameConfig.Data.UseColoredDamageNumbers = EnableColoredDamageNumbers.isOn;
 
             CameraFollower.Instance.UseTTFDamage = !GameConfig.Data.UseSpriteBasedDamageNumbers;
             CameraFollower.Instance.SetSmoothPixel(!GameConfig.Data.UseUnfilteredSprites);
@@ -40,6 +43,8 @@ namespace Assets.Scripts.UI.ConfigWindow
             EnableXRayToggle.isOn = GameConfig.Data.EnableXRay;
 
             EnableWASDControls.isOn = GameConfig.Data.EnableWASDControls;
+
+            EnableColoredDamageNumbers.isOn = GameConfig.Data.UseColoredDamageNumbers;
         }
     }
 }

@@ -122,7 +122,8 @@ namespace Assets.Scripts.Network.IncomingPacketHandlers.Combat
             var motionTime = msg.ReadFloat();
             var damageTiming = msg.ReadFloat();
             var isIndirect = msg.ReadBoolean();
-            
+            var attackElement = msg.ReadByte();
+
             if (result == AttackResult.InvisibleMiss)
             {
                 hasTarget = false;
@@ -196,7 +197,7 @@ namespace Assets.Scripts.Network.IncomingPacketHandlers.Combat
 
                 if (hits > 0 && result != AttackResult.Miss && result != AttackResult.Invisible)
                 {
-                    controllable2.Messages.SendDamageEvent(controllable, damageTiming, dmg, hits, result == AttackResult.CriticalDamage, dmgSound);
+                    controllable2.Messages.SendDamageEvent(controllable, damageTiming, dmg, hits, result == AttackResult.CriticalDamage, dmgSound, attackElement: attackElement);
                     if(dmg > 0)
                         ClientSkillHandler.OnHitEffect(controllable2, ref attack);
                 }

@@ -51,7 +51,7 @@ public class StealHandler : SkillHandlerBase
             return;
         }
 
-        foreach (var d in drops.DropChances)
+        foreach (var d in drops.NativeDrops)
         {
             var chance = (int)(d.Chance * 10 * rate);
             if (GameRandom.Next(0, 100_000) > chance)

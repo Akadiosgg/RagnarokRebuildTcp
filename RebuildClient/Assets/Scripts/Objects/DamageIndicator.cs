@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Text;
 using Assets.Scripts;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Network;
@@ -7,6 +8,7 @@ using Assets.Scripts.UI.ConfigWindow;
 using Assets.Scripts.Utility;
 using RebuildSharedData.Data;
 using RebuildSharedData.Enum;
+using RebuildSharedData.Enum.EntityStats;
 using TMPro;
 using UnityEngine;
 
@@ -50,8 +52,9 @@ public class DamageIndicator : MonoBehaviour
 		Controllable.ComboIndicator = gameObject;
 		basePosition = controllable.transform.localPosition;
 	}
-	
-	private void RemoveComboIndicatorIfExists(ServerControllable controllable)
+
+
+    private void RemoveComboIndicatorIfExists(ServerControllable controllable)
 	{
 		if (controllable.ComboIndicator == null)
 			return;
@@ -154,8 +157,29 @@ public class DamageIndicator : MonoBehaviour
 			
 		RagnarokEffectPool.ReturnDamageIndicator(this);
 	}
+    
+	public static string GetElementColor(AttackElement element)
+    {
+        return element switch
+        {
 
-	void OnUpdate(float f)
+            AttackElement.Neutral => "#FFFFFF",
+            AttackElement.Earth => "#CC9966",
+            AttackElement.Water => "#8BD8FF",
+            AttackElement.Fire => "#FF7833",
+            AttackElement.Wind => "#C9FF50",
+            AttackElement.Poison => "#CC66CC",
+            AttackElement.Undead => "#709C76",
+            AttackElement.Dark => "#9966FF",
+            AttackElement.Holy => "#FFFFCF",
+            AttackElement.Ghost => "#BABCBB",
+            AttackElement.Special => "#FFFFFF",
+            AttackElement.None => "#FFFFFF",
+            _ => null
+        };
+    }
+
+    void OnUpdate(float f)
 	{
 		if (Controllable)
 			basePosition = Controllable.transform.localPosition;

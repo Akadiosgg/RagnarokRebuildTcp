@@ -1,5 +1,6 @@
 ﻿using RebuildSharedData.Data;
 using RebuildSharedData.Enum;
+using RebuildSharedData.Enum.EntityStats;
 using RoRebuildServer.EntitySystem;
 
 namespace RoRebuildServer.EntityComponents.Character;
@@ -31,6 +32,7 @@ public struct DamageInfo
     private byte skillId;
     public DamageApplicationFlags Flags;
     public bool IsIndirect;
+    public AttackElement AttackElement;
 
     public float TimeInSeconds
     {

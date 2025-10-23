@@ -24,11 +24,19 @@ namespace Assets.Scripts.UI.Hud
         {
             //var itemName = item.Slots == 0 ? item.Name : $"{item.Name} [{item.Slots}]";
             var obtainedText = $"{inventoryItem.ProperName()} - {itemCount} obtained.";
-            
-            if(itemCount == 1)
+
+            if (itemCount == 1)
+            {
+                obtainedText = $"{inventoryItem.ProperName()} obtained.";
                 CameraFollower.Instance.AppendChatText($"<color=#00fbfb>You got {inventoryItem.ProperName()}.</color>");
-            else
+                
+            }
+            else 
+            {
+                obtainedText = $"{itemCount}x {inventoryItem.ProperName()} obtained.";
                 CameraFollower.Instance.AppendChatText($"<color=#00fbfb>You got {itemCount}x {inventoryItem.ProperName()}.</color>");
+            }
+
 
             if (chatOnly)
                 return;

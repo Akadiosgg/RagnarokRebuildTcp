@@ -63,7 +63,10 @@ namespace Assets.Scripts.Effects.EffectHandlers
             if (step == 12)
             {
                 var id = Random.Range(0, 4);
-                AudioManager.Instance.OneShotSoundEffect(effect.SourceEntityId, $"ef_firearrow{id}.ogg", effect.transform.position);
+                if (id == 0)
+                    AudioManager.Instance.OneShotSoundEffect(effect.SourceEntityId, $"ef_firearrow.ogg", effect.transform.position);
+                else
+                    AudioManager.Instance.OneShotSoundEffect(effect.SourceEntityId, $"ef_firearrow{id}.ogg", effect.transform.position);
             }
 
             if (step >= 12 && (step - 12) % 10 == 0 && step < effect.DurationFrames && (step - 12) / 10 < effect.ObjCount)

@@ -1606,7 +1606,6 @@ public partial class CombatEntity : IEntityAutoReset
 
 
         UpdateHidingStateAfterAttack();
-
         ExecuteCombatResult(di);
     }
 

@@ -50,9 +50,9 @@ Warp("prt_fild08", "pronterafieldwarp047", 16, 187, 3, 17, "prt_fild07", 380, 18
 Warp("prt_fild08", "pronterafieldwarp048", 16, 239, 3, 15, "prt_fild07", 379, 239);
 Warp("prt_fild08", "pronterafieldwarp049", 55, 21, 4, 2, "moc_fild01", 56, 380);
 Warp("prt_fild08", "pronterafieldwarp050", "Prontera, Capital of Rune-Midgard", 170, 378, 3, 2, "prontera", 156, 26);
-Warp("prt_fild08", "pronterafieldwarp051", 218, 16, 12, 1, "moc_fild01", 238, 378);
-Warp("prt_fild08", "pronterafieldwarp052", 228, 16, 12, 1, "moc_fild01", 238, 378);
-Warp("prt_fild08", "pronterafieldwarp053", 238, 16, 12, 1, "moc_fild01", 238, 378);
+//Warp("prt_fild08", "pronterafieldwarp051", 218, 16, 12, 1, "moc_fild01", 238, 378);
+Warp("prt_fild08", "pronterafieldwarp052", 233, 16, 12, 1, "moc_fild01", 238, 378);
+//Warp("prt_fild08", "pronterafieldwarp053", 238, 16, 12, 1, "moc_fild01", 238, 378);
 Warp("prt_fild08", "pronterafieldwarp054", 371, 212, 3, 3, "izlude", 35, 78);
 Warp("prt_fild09", "pronterafieldwarp055", 14, 124, 2, 6, "prt_fild10", 336, 126);
 Warp("prt_fild09", "pronterafieldwarp056", 14, 139, 2, 8, "prt_fild10", 336, 126);

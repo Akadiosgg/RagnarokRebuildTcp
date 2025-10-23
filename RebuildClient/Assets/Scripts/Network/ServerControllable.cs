@@ -1309,11 +1309,17 @@ namespace Assets.Scripts.Network
             di.AttachDamageIndicator(this);
         }
 
-        private void AttachCriticalDamageIndicator(int damage, int totalDamage)
+        private void AttachCriticalDamageIndicator(int damage, int totalDamage, byte attackElement)
         {
             var di = RagnarokEffectPool.GetDamageIndicator();
-            var red = SpriteAnimator != null && SpriteAnimator.Type == SpriteType.Player;
-            var color = red ? "#FF8888" : "#FFFF33"; //crit changed from FFFF00 to FFFF33 to brighten it up a bit due to the gradient effect
+            var color = GameConfig.Data.UseColoredDamageNumbers ? DamageIndicator.GetElementColor((AttackElement)attackElement) : "#FFFFFF";
+            if (color == "#FFFFFF")
+                color = "#FFFF33";
+            if(color == "#FFFF33" && SpriteAnimator != null && SpriteAnimator.Type == SpriteType.Player)
+                color = "red";
+
+            //var color = red ? "#FF8888" : "#FFFF33"; //crit changed from FFFF00 to FFFF33 to brighten it up a bit due to the gradient effect
+
             var height = 1f;
             var direction = SpriteAnimator != null ? SpriteAnimator.Direction : RoAnimationHelper.GetFacingForAngle(Angle);
             di.DoDamage(TextIndicatorType.Critical, damage.ToString(), gameObject.transform.localPosition, height, direction, color, true);
@@ -1321,23 +1327,27 @@ namespace Assets.Scripts.Network
             if (totalDamage > 0 && CharacterType != CharacterType.Player)
             {
                 var di2 = RagnarokEffectPool.GetDamageIndicator();
-                di2.DoDamage(TextIndicatorType.ComboDamage, $"{totalDamage}", Vector3.zero, height, direction, color, false);
+                di2.DoDamage(TextIndicatorType.ComboDamage, $"{totalDamage}", Vector3.zero, height, direction, "#FFFF00", false);
                 di2.AttachComboIndicatorToControllable(this);
             }
         }
 
-        private void AttachDamageIndicator(int damage, int totalDamage)
+        private void AttachDamageIndicator(int damage, int totalDamage, byte attackElement)
         {
             var di = RagnarokEffectPool.GetDamageIndicator();
-            var red = SpriteAnimator != null && SpriteAnimator.Type == SpriteType.Player;
             var height = 1f;
             var direction = SpriteAnimator != null ? SpriteAnimator.Direction : RoAnimationHelper.GetFacingForAngle(Angle);
-            di.DoDamage(TextIndicatorType.Damage, damage.ToString(), gameObject.transform.localPosition, height, direction, red ? "red" : null, false);
+            var color = "#FFFFFF";
+            if (GameConfig.Data.UseColoredDamageNumbers)
+                color = DamageIndicator.GetElementColor((AttackElement)attackElement);
+            if (SpriteAnimator != null && SpriteAnimator.Type == SpriteType.Player && color == "#FFFFFF")
+                color = "red";
+            di.DoDamage(TextIndicatorType.Damage, damage.ToString(), gameObject.transform.localPosition, height, direction, color, false);
 
             if (totalDamage > 0 && CharacterType != CharacterType.Player)
             {
                 var di2 = RagnarokEffectPool.GetDamageIndicator();
-                di2.DoDamage(TextIndicatorType.ComboDamage, $"{totalDamage}", Vector3.zero, height, direction, "#FFFF00", false);
+                di2.DoDamage(TextIndicatorType.ComboDamage, $"{totalDamage}", Vector3.zero, height, direction, "#FFFF00", false); 
                 di2.AttachComboIndicatorToControllable(this);
             }
         }
@@ -1503,11 +1513,10 @@ namespace Assets.Scripts.Network
                     AudioManager.Instance.OneShotSoundEffect(Id, sound, transform.position, 0.8f);
                 }
             }
-
             if (msg.Value3 > 0)
-                AttachCriticalDamageIndicator(dmg, msg.Value2); //DamageIndicator(dmg, msg.Value2);
+                AttachCriticalDamageIndicator(dmg, msg.Value2, (byte)msg.Value5); //DamageIndicator(dmg, msg.Value2);
             else
-                AttachDamageIndicator(dmg, msg.Value2);
+                AttachDamageIndicator(dmg, msg.Value2, (byte)msg.Value5);
         }
 
         public void ExecuteMessage(EntityMessage msg)

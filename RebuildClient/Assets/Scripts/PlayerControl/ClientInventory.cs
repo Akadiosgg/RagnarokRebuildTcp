@@ -260,7 +260,10 @@ namespace Assets.Scripts.PlayerControl
                 return $"{refine}{MakeNameWithSockets()}[{ItemData.Slots}]";
             }
 
-            return $"{ItemData.Name}: {Count} ea.";
+            if(Count > 1)
+                return $"{Count}x {ItemData.Name}";
+            else
+                return ItemData.Name;
         }
     }
     

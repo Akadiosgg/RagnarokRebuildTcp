@@ -1,17 +1,18 @@
-﻿using RebuildSharedData.ClientTypes;
-using RebuildSharedData.Enum.EntityStats;
-using RebuildSharedData.Enum;
-using RoRebuildServer.Data;
-using RoRebuildServer.EntityComponents.Character;
-using RoRebuildServer.EntitySystem;
-using RoRebuildServer.Networking;
+﻿using Microsoft.AspNetCore.DataProtection;
+using RebuildSharedData.ClientTypes;
 using RebuildSharedData.Data;
+using RebuildSharedData.Enum;
+using RebuildSharedData.Enum.EntityStats;
+using RoRebuildServer.Data;
 using RoRebuildServer.Data.Monster;
+using RoRebuildServer.EntityComponents.Character;
 using RoRebuildServer.EntityComponents.Util;
+using RoRebuildServer.EntitySystem;
+using RoRebuildServer.Logging;
+using RoRebuildServer.Networking;
 using RoRebuildServer.Simulation.Pathfinding;
 using RoRebuildServer.Simulation.Skills;
 using RoRebuildServer.Simulation.Util;
-using Microsoft.AspNetCore.DataProtection;
 
 namespace RoRebuildServer.EntityComponents;
 
@@ -96,7 +97,7 @@ public partial class CombatEntity
         di.Result = AttackResult.NormalDamage;
 
         var baseDamage = GameRandom.Next(req.MinAtk, req.MaxAtk);
-        var eleMod = GetElementalReductionForReceivedAttack(null, req.Element, true);
+        var eleMod = GetElementalReductionForReceivedAttack(null, ref req.Element, true);
         var (defCut, subDef) = GetDefenseReductionForReceivedAttack(null, 0, req.Flags);
 
         //simplified damage calculation for sourceless attacks. We don't get race, size, and element modifiers since we won't have those.
@@ -113,7 +114,7 @@ public partial class CombatEntity
         return di;
     }
 
-    public int GetElementalReductionForReceivedAttack(CombatEntity? attacker, AttackElement attackElement, bool ignoreGhostArmor = false)
+    public int GetElementalReductionForReceivedAttack(CombatEntity? attacker, ref AttackElement attackElement, bool ignoreGhostArmor = false)
     {
         var eleMod = 100;
 
@@ -401,10 +402,9 @@ public partial class CombatEntity
         //---------------------------
         // Elemental Modifiers
         //---------------------------
-
         var eleMod = 100;
         if (!evade && !flags.HasFlag(AttackFlags.NoElement) && attackElement != AttackElement.Special)
-            eleMod = target.GetElementalReductionForReceivedAttack(this, attackElement,
+            eleMod = target.GetElementalReductionForReceivedAttack(this, ref attackElement,
                 attackerType == CharacterType.Monster && target.Character.Type == CharacterType.Player);
 
         //{
@@ -694,6 +694,7 @@ public partial class CombatEntity
         di.Result = res;
         di.Damage = damage;
         di.HitCount = (byte)req.HitCount;
+        di.AttackElement = attackElement;
 
         //arrow travel time
         if (Character.Type == CharacterType.Player && Player.WeaponClass == 12 && req.SkillSource == CharacterSkill.None)

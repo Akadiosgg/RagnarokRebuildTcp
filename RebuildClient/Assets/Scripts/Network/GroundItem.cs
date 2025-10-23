@@ -96,6 +96,13 @@ namespace Assets.Scripts.Network
                 item.velocity = 20f;
             }
 
+            //var dropEffect = Resources.Load<GameObject>($"ItemDropEffect");
+            //var dropEffectObject = Instantiate(dropEffect, subObject.transform.position, subObject.transform.rotation);
+            //dropEffectObject.transform.localScale = Vector3.one;
+            //dropEffectObject.transform.SetParent(subObject.transform, worldPositionStays: true);
+            //var dropEffectSr = dropEffect.AddComponent<SpriteRenderer>();
+            //dropEffectSr.color = Color.yellow;
+
             return item;
         }
 

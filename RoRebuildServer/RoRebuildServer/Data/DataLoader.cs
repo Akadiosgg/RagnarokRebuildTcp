@@ -1,8 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Reflection;
-using System.Text;
-using CsvHelper;
+﻿using CsvHelper;
 using CsvHelper.Configuration;
 using RebuildSharedData.ClientTypes;
 using RebuildSharedData.Data;
@@ -13,12 +9,18 @@ using RoRebuildServer.Data.Map;
 using RoRebuildServer.Data.Monster;
 using RoRebuildServer.Data.Player;
 using RoRebuildServer.Data.ServerConfigScript;
+using RoRebuildServer.EntityComponents;
 using RoRebuildServer.EntityComponents.Character;
 using RoRebuildServer.EntityComponents.Items;
 using RoRebuildServer.EntityComponents.Monsters;
 using RoRebuildServer.EntityComponents.Npcs;
 using RoRebuildServer.Logging;
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Reflection;
+using System.Text;
 using Tomlyn;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RoRebuildServer.Data;
 
@@ -382,8 +384,18 @@ internal class DataLoader
 
         var drops = new Dictionary<string, MonsterDropData>();
         using var inPath = new TemporaryFile(Path.Combine(ServerConfig.DataConfig.DataPath, @"Db/DropData.csv"));
+        using var tr = new StreamReader(Path.Combine(ServerConfig.DataConfig.DataPath, @"Db/GlobalDropData.csv")) as TextReader;
+        using var csv = new CsvReader(tr, CultureInfo.InvariantCulture);
+
+        var globalDropData = csv.GetRecords<CsvGlobalDropData>().ToList();
         //using var tr = new StreamReader(inPath.FilePath, Encoding.UTF8) as TextReader;
         //using var csv = new CsvReader(tr, CultureInfo.InvariantCulture);
+        foreach (var globalDropDataEntry in globalDropData)
+        {
+                if (!DataManager.ItemIdByName.TryGetValue(globalDropDataEntry.Code, out var itemId))
+                    ServerLogger.LogWarning($"Item {globalDropDataEntry.Code} inside GlobalDropData.csv was not found in the item list.");
+        }
+
 
         var lineNum = 0;
         foreach (var line in File.ReadLines(inPath.FilePath))
@@ -396,7 +408,7 @@ internal class DataLoader
             var monster = s[0].Replace(" ", "_").ToUpper();
             var data = new MonsterDropData();
 
-            if (!DataManager.MonsterCodeLookup.ContainsKey(monster))
+            if (!DataManager.MonsterCodeLookup.TryGetValue(monster, out var monsterStats))
                 ServerLogger.LogWarning($"Item drops defined for monster {monster} but that monster could not be found.");
 
             for (var pos = 1; pos < s.Length; pos += 2)
@@ -429,19 +441,32 @@ internal class DataLoader
                 var chance = int.Parse(s[pos + 1]);
                 if (chance <= 0)
                     continue;
+                
+                var itemInfo = DataManager.GetItemInfoById(item);
 
-
-                if (remapDrops)
+                if (itemInfo != null)
                 {
-                    var itemInfo = DataManager.GetItemInfoById(item);
-                    if (itemInfo != null)
+                    if (globalDropData.Any(entry => entry.Code == itemName))
+                        continue; //global drops are seperated from the native drop pool
+                    if (remapDrops)
                         chance = config.UpdateDropData(itemInfo.ItemClass, itemInfo.Code, itemInfo.SubCategory, chance);
                 }
 
                 if (item > 0) //for debug reasons mostly
-                    data.DropChances.Add(new MonsterDropData.MonsterDropEntry(item, chance, rangeMin, rangeMax));
+                    data.NativeDrops.Add(new MonsterDropData.MonsterDropEntry(item, chance, rangeMin, rangeMax));
             }
 
+            foreach (var globalDropDataEntry in globalDropData)
+            {
+                if (globalDropDataEntry.DropType.Trim() == "Refine")
+                {
+                    if (!DataManager.ItemIdByName.TryGetValue(globalDropDataEntry.Code, out var itemId) || globalDropDataEntry.InitialWeight == 0)
+                        continue;
+                    var ItemWeight = globalDropDataEntry.InitialWeight + (globalDropDataEntry.WeightScaling * (monsterStats?.Level ?? 1));
+                    data.RefineMaterialDrops.Add(new MonsterDropData.MonsterDropEntry(itemId, ItemWeight, 1, 1));
+                    data.RefíneMaterialTotalWeight += ItemWeight;
+                }
+            }
             drops.Add(monster, data);
         }
         

@@ -28,10 +28,8 @@ public class PacketSay : IClientPacketHandler
             return;
 
 #if DEBUG
-        if(type == PlayerChatType.Shout)
-            ServerLogger.Log($"Shout chat message from [{connection.Player!.Name}]: {text}");
-        else
-            ServerLogger.Log($"Chat message from [{connection.Player!.Name}]: {text}");
+        if(type == PlayerChatType.Say)
+            ServerLogger.Log($"Chat message from [{connection.Player!.Name}] on map [{map.Name}]: {text}");
 #endif
         var p = connection.Player;
 
@@ -61,7 +59,7 @@ public class PacketSay : IClientPacketHandler
                 CommandBuilder.ErrorMessage(connection.Player, $"You must wait more time before using shout again.");
                 return;
             }
-            ServerLogger.Log($"Shout chat message from [{connection.Player!.Name}]: {text}");
+            ServerLogger.Log($"Shout chat message from [{connection.Player!.Name}] on map [{map.Name}]: {text}");
             CommandBuilder.AddAllPlayersAsRecipients();
             if (p.ShoutCooldown < Time.ElapsedTime)
                 p.ShoutCooldown = Time.ElapsedTimeFloat + 20f;

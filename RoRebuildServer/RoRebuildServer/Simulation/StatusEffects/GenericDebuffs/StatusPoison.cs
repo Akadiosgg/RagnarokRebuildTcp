@@ -41,8 +41,8 @@ namespace RoRebuildServer.Simulation.StatusEffects.GenericDebuffs
             
             if (damage <= 0)
                 return StatusUpdateResult.Continue;
-            
-            
+
+
             var di = new DamageInfo()
             {
                 Damage = damage,

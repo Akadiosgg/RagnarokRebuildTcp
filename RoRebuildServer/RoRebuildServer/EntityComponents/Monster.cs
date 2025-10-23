@@ -538,9 +538,9 @@ public partial class Monster : IEntityAutoReset
         var topContributor = GetTopContributor();
         if (DataManager.MonsterDropData.TryGetValue(MonsterBase.Code, out var drops))
         {
-            for (var i = 0; i < drops.DropChances.Count; i++)
+            for (var i = 0; i < drops.NativeDrops.Count; i++)
             {
-                var d = drops.DropChances[i];
+                var d = drops.NativeDrops[i];
                 totalChance += d.Chance;
                 if (GameRandom.Next(10000) <= d.Chance)
                 {
@@ -554,26 +554,47 @@ public partial class Monster : IEntityAutoReset
                     Character.Map.DropGroundItem(ref item);
                     hasDrop = true;
                     dropId++;
-                    
+
                 }
             }
 
             //special event: MVPs are guaranteed to drop at least 1 item, so if none drops, we force one to drop
-            if (isMvp && !hasDrop && ServerConfig.OperationConfig.GuaranteeMvpDrops)
-            {
-                var val = GameRandom.Next(totalChance);
-                for (var i = 0; i < drops.DropChances.Count; i++)
-                {
-                    val -= drops.DropChances[i].Chance;
-                    if (val > 0)
-                        continue;
+            //if (isMvp && !hasDrop && ServerConfig.OperationConfig.GuaranteeMvpDrops)
+            //{
+            //    var val = GameRandom.Next(totalChance);
+            //    for (var i = 0; i < drops.NativeDrops.Count; i++)
+            //    {
+            //        val -= drops.NativeDrops[i].Chance;
+            //        if (val > 0)
+            //            continue;
 
-                    var dropPos = GetNextTileForDrop(dropId);
-                    var item = new GroundItem(dropPos, drops.DropChances[i].Id, 1);
-                    if (topContributor != null)
-                        item.SetExclusivePickupTime(topContributor, isMvp ? 8f : 4f);
-                    Character.Map.DropGroundItem(ref item);
-                    break;
+            //        var dropPos = GetNextTileForDrop(dropId);
+            //        var item = new GroundItem(dropPos, drops.NativeDrops[i].Id, 1);
+            //        if (topContributor != null)
+            //            item.SetExclusivePickupTime(topContributor, 8f);
+            //        Character.Map.DropGroundItem(ref item);
+            //        break;
+            //    }
+            //}
+
+            //drop items not in native drop pool
+            if(GameRandom.Next(2000) <= 40 + MonsterBase.Level)
+            { 
+                var randomValue = GameRandom.Next(drops.RefíneMaterialTotalWeight);
+                for(var i = 0; i < drops.RefineMaterialDrops.Count; i++)
+                {
+                    if (randomValue < drops.RefineMaterialDrops[i].Chance)
+                    {
+                        var dropPos = GetNextTileForDrop(dropId);
+                        var item = new GroundItem(dropPos, drops.RefineMaterialDrops[i].Id, 1);
+                        if (topContributor != null)
+                            item.SetExclusivePickupTime(topContributor, isMvp ? 8f : 4f);
+                        Character.Map.DropGroundItem(ref item);
+                        hasDrop = true;
+                        dropId++;
+                        break;
+                    }
+                    randomValue -= drops.RefineMaterialDrops[i].Chance;
                 }
             }
         }

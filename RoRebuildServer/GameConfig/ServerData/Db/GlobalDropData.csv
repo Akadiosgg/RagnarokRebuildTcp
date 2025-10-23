@@ -1,0 +1,7 @@
+﻿Code,InitialWeight,WeightScaling,DropType,MonsterRace,MonsterElement,MonsterSize,Region,MinLevel
+Rough_Oridecon,0,0,Refine,All,All,All,All,0
+Rough_Elunium,0,0,Refine,All,All,All,All,0
+Oridecon,100,5,Refine,All,All,All,All,1
+Elunium,100,5,Refine,All,All,All,All,1
+Phracon,5000,0,Refine,All,All,All,All,1
+Emveretarcon,5000,0,Refine,All,All,All,All,1

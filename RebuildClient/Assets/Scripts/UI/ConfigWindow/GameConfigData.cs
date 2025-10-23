@@ -59,6 +59,7 @@ namespace Assets.Scripts.UI.ConfigWindow
         public bool HideShoutChat = false;
         
         public bool EnableXRay = false;
+        public bool UseColoredDamageNumbers = true;
 
         //game
         public bool EnableWASDControls = false;
