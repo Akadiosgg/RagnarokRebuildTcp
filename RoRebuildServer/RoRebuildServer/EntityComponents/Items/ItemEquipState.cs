@@ -594,6 +594,22 @@ public class ItemEquipState
             }
         }
 
+        for (var k = 0; k < 8; k++)
+        {
+            unsafe //apply item modifiers to the player
+            {
+                var modId = item.ModifierId[k];
+                var modValue = item.ModifierValue[k];
+                if (modId == 0)
+                    continue;
+                if(!DataManager.ModifierInfoList.TryGetValue(modId, out var modifierData))
+                    throw new Exception($"Attempting to run OnEquip for modifier {modId} on item {item.Id}, but the modifier doesn't appear to exist in the database.");
+                modifierData.Interaction?.OnEquip(Player, Player.CombatEntity, this, default, slot, modValue);
+            }
+        }
+
+        
+
         OnEquipUpdateItemSets(item.Id);
     }
 
@@ -690,6 +706,20 @@ public class ItemEquipState
                 SubEquipItemCount(slotData.Id);
                 slotData.Interaction?.OnUnequip(Player, Player.CombatEntity, this, default, slot);
                 OnUnEquipUpdateItemSets(slotData.Id);
+            }
+        }
+        
+        for (var k = 0; k < 8; k++)
+        {
+            unsafe //run unequip interactions for modifiers
+            {
+                var modId = item.ModifierId[k];
+                var modValue = item.ModifierValue[k];
+                if (modId == 0)
+                    continue;
+                if (!DataManager.ModifierInfoList.TryGetValue(modId, out var modifierData))
+                    throw new Exception($"Attempting to run OnUnequip for modifier {modId} on item {item.Id}, but the modifier doesn't appear to exist in the database.");
+                modifierData.Interaction?.OnUnequip(Player, Player.CombatEntity, this, default, slot, modValue);
             }
         }
 

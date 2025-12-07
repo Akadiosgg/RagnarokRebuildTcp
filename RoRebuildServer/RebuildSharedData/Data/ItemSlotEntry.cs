@@ -44,26 +44,43 @@ public enum UniqueItemFlags : byte
 public unsafe struct UniqueItem : ISerializableItem
 {
     public int Id;
+    public byte ItemLevel;
     public short Count;
     public byte Flags;
     public byte Refine;
     public Guid UniqueId;
     public fixed int Data[4];
+    public fixed short ModifierId[8];
+    public fixed short ModifierValue[8];
 
-    public static int Size => 40; //Id(4) + Count(2) + Flags(2) + UniqueId(16) + Data(4 * 4)
+    public static int Size => 73; //Id(4) + ItemLevel(1) Count(2) + Flags(1) + Refine (1) + UniqueId(16) + Data(4 * 4) + Modifiers(8 * (2 + 2))
 
+    public void SetItemLevel(byte itemLevel) => ItemLevel = itemLevel;
     public int SlotData(int slot) => Data[slot];
     public int SetSlotData(int slot, int val) => Data[slot] = val;
+    public short ModifierIdAt(int index) => ModifierId[index];
+    public short ModifierValueAt(int index) => ModifierValue[index];
+    public void SetModifierIdAt(int index, short val) => ModifierId[index] = val;
+    public void SetModifierValueAt(int index, short val) => ModifierValue[index] = val;
+
 
     public void Serialize(IBinaryMessageWriter msg)
     {
         msg.Write(Id);
+        msg.Write(ItemLevel);
         msg.Write(Count);
         msg.Write(Flags);
         msg.Write(Refine);
         msg.Write(UniqueId.ToByteArray());
+        
         for (var i = 0; i < 4; i++)
             msg.Write(Data[i]);
+        
+        for (var i = 0; i < 8; i++)
+        {
+            msg.Write(ModifierId[i]);
+            msg.Write(ModifierValue[i]);
+        }
     }
 
     public void SerializeAsRegularItem(IBinaryMessageWriter msg)
@@ -77,6 +94,7 @@ public unsafe struct UniqueItem : ISerializableItem
         var entry = new UniqueItem()
         {
             Id = br.ReadInt32(),
+            ItemLevel = br.ReadByte(),
             Count = br.ReadInt16(),
             Flags = br.ReadByte(),
             Refine = br.ReadByte(),
@@ -86,6 +104,27 @@ public unsafe struct UniqueItem : ISerializableItem
         for (var i = 0; i < 4; i++)
             entry.Data[i] = br.ReadInt32();
 
+        for (var i = 0; i < 8; i++)
+        {
+            entry.ModifierId[i] = br.ReadInt16();
+            entry.ModifierValue[i] = br.ReadInt16();
+        }
+
+
         return entry;
+    }
+
+    public unsafe bool ContainsItemIdInSlot(int slotItemId)
+    {
+        fixed (int* data = Data)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (data[i] == slotItemId)
+                    return true;
+            }
+        }
+
+        return false;
     }
 }

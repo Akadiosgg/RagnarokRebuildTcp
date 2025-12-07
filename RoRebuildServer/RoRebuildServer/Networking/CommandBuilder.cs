@@ -638,6 +638,14 @@ public static class CommandBuilder
         NetworkManager.SendMessageMulti(packet, recipients);
     }
 
+    public static void AttackAutoVis(WorldObject? attacker, WorldObject target, DamageInfo di, bool showAttackMotion = true)
+    {
+        attacker.Map?.AddVisiblePlayersAsPacketRecipients(attacker);
+        AttackMulti(attacker, target, di, showAttackMotion);
+        ClearRecipients();
+
+    }
+
     public static void AttackMulti(WorldObject? attacker, WorldObject target, DamageInfo di, bool showAttackMotion = true)
     {
         if (!HasRecipients())

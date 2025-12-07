@@ -1,11 +1,14 @@
 ﻿using System.Buffers;
 using System.Diagnostics;
+using RebuildSharedData.ClientTypes;
 using RebuildSharedData.Data;
 using RebuildSharedData.Enum;
 using RebuildSharedData.Enum.EntityStats;
 using RoRebuildServer.Data;
+using RoRebuildServer.Data.CsvDataTypes;
 using RoRebuildServer.Data.Map;
 using RoRebuildServer.Data.Monster;
+using RoRebuildServer.Data.Player;
 using RoRebuildServer.EntityComponents.Character;
 using RoRebuildServer.EntityComponents.Items;
 using RoRebuildServer.EntityComponents.Monsters;
@@ -551,6 +554,16 @@ public partial class Monster : IEntityAutoReset
                     var item = new GroundItem(dropPos, d.Id, count);
                     if (topContributor != null)
                         item.SetExclusivePickupTime(topContributor, isMvp ? 8f : 4f);
+
+                    var modList = DataManager.LookupModifierList(d.Id);
+                    if(modList != null)
+                    {
+                        item.UniqueItem.SetItemLevel((byte)MonsterBase.Level);
+                        modList.GenerateModifiersForNewItem(ref item.UniqueItem);
+                    }
+                        
+
+                        
                     Character.Map.DropGroundItem(ref item);
                     hasDrop = true;
                     dropId++;

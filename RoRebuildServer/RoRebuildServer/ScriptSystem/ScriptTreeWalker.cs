@@ -188,6 +188,9 @@ internal class ScriptTreeWalker
             case "ServerConfig":
                 EnterServerConfigStatement(context);
                 break;
+            case "Modifier":
+                EnterModifierStatement(context);
+                break;
             default:
                 throw new Exception("Unexpected top level statement: " + id);
         }
@@ -245,6 +248,32 @@ internal class ScriptTreeWalker
         builder.EndItem(itemName, className);
     }
 
+    private void EnterModifierStatement(FunctionDefinitionContext functionContext)
+    {
+        //only expect one param, the item name
+        var param = functionContext.functionparam();
+        if (param.expression().Length != 1)
+            throw new Exception($"Incorrect number of parameters on Item expression on line {param.start.Line}");
+
+        var modifierName = param.expression()[0].GetText();
+        if (modifierName.StartsWith("\""))
+            modifierName = modifierName.Substring(1, modifierName.Length - 2);
+
+        var className = modifierName.Replace(" ", "_").Replace(".", "").Replace("'", "").Replace("-", "_");
+
+        sectionHandler = ModifierSectionHandler;
+
+        builder.StartModifier(className);
+
+        var statements = functionContext.block1;
+        VisitStatementBlock(statements);
+
+        builder.EndMethod();
+        builder.EndClass();
+
+        builder.EndModifier(modifierName, className);
+    }
+
     private void EnterComboItemStatement(FunctionDefinitionContext functionContext)
     {
         //only expect one param, the item name
@@ -293,6 +322,11 @@ internal class ScriptTreeWalker
     public void ItemSectionHandler(StartSectionContext context)
     {
         builder.StartItemSection(context.IDENTIFIER().GetText());
+    }
+
+    public void ModifierSectionHandler(StartSectionContext context)
+    {
+        builder.StartModifierSection(context.IDENTIFIER().GetText());
     }
 
     private void EnterMapConfigStatement(FunctionDefinitionContext functionContext)

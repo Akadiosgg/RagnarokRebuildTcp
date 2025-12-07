@@ -1,5 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using System.Reflection;
+﻿using Microsoft.VisualBasic;
 using RebuildSharedData.ClientTypes;
 using RebuildSharedData.Enum;
 using RoRebuildServer.Data.CsvDataTypes;
@@ -13,9 +12,13 @@ using RoRebuildServer.EntityComponents.Monsters;
 using RoRebuildServer.EntityComponents.Npcs;
 using RoRebuildServer.Logging;
 using RoRebuildServer.ScriptSystem;
+using RoRebuildServer.Simulation;
 using RoRebuildServer.Simulation.Skills.SkillHandlers.Mage;
 using RoRebuildServer.Simulation.StatusEffects.Setup;
 using RoRebuildServer.Simulation.Util;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Reflection;
 
 namespace RoRebuildServer.Data;
 
@@ -39,6 +42,15 @@ public static class DataManager
     public static ReadOnlyDictionary<string, int> JobIdLookup;
     public static ReadOnlyDictionary<string, int> ItemIdByName;
     public static ReadOnlyDictionary<int, ItemInfo> ItemList;
+    public static ReadOnlyDictionary<short, ModifierInfo> ModifierInfoList;
+    public static ReadOnlyDictionary<string, short> ModifierIdByName;
+    public static ReadOnlyDictionary<int, ModifierList> weaponClassModifierList;
+    public static ReadOnlyDictionary<EquipPosition, ModifierList> equipmentModifierList;
+    public static int[] modifierCountWeights = { 0, 25, 25, 25, 25 };
+    public static int totalModifierCountWeight;
+    public static int maxModifiers = modifierCountWeights.Length - 1;
+
+
     public static Dictionary<string, int> EffectIdForName;
     public static ReadOnlyDictionary<string, MonsterDropData> MonsterDropData;
     public static ReadOnlyDictionary<int, PlayerSkillTree> SkillTree; //SkillTree[Job][Skill] { (Prereq, lvl) } 
@@ -47,6 +59,7 @@ public static class DataManager
     public static ReadOnlyDictionary<string, SavePosition> SavePoints;
     
     public static ReadOnlyDictionary<string, int> WeaponClasses;
+    public static ReadOnlyDictionary<int, string> WeaponClassToString;
     public static ReadOnlyDictionary<string, HashSet<int>> EquipGroupInfo;
     public static ReadOnlyDictionary<int, WeaponInfo> WeaponInfo;
     public static ReadOnlyDictionary<int, ArmorInfo> ArmorInfo;
@@ -63,6 +76,7 @@ public static class DataManager
     private static ReadOnlyDictionary<string, MapEntry> mapLookup;
     private static ReadOnlyDictionary<string, MapFlags> mapFlags;
     private static List<MapEntry> mapList;
+    
     private static int[] refineSuccessTable;
     public static int[] JobBonusTable;
 
@@ -105,7 +119,32 @@ public static class DataManager
 
         return data.SpCost[level-1];
     }
-    
+
+    public static ModifierList? LookupModifierList(int itemId)
+    {
+        var itemInfo = ItemList[itemId]; //Check if mods should be rolled for this item
+        ModifierList? modList = null;
+        if (itemInfo.IsUnique)
+        {
+            switch (itemInfo.ItemClass)
+            {
+                case ItemClass.Weapon:
+                    var weaponInfo = WeaponInfo[itemId];
+                    modList = weaponClassModifierList[weaponInfo.WeaponClass];
+                    break;
+                case ItemClass.Equipment:
+                    var armorInfo = ArmorInfo[itemId];
+                    var headPos = armorInfo.HeadPosition;
+                    if (headPos == HeadgearPosition.Mid || headPos == HeadgearPosition.Bottom || headPos == HeadgearPosition.MidBottom) // Those can't have modifiers
+                        break;
+                    modList = equipmentModifierList[armorInfo.EquipPosition];
+                    break;
+            }
+        }
+        return modList;
+    }
+
+
     public static void RegisterItem(string name, ItemInteractionBase item)
     {
         if (!ItemIdByName.TryGetValue(name, out var id))
@@ -115,6 +154,17 @@ public static class DataManager
         }
 
         ItemList[id].Interaction = item;
+    }
+
+    public static void RegisterModifier(string name, ItemInteractionBase modifier)
+    {
+        if (!ModifierIdByName.TryGetValue(name, out var id))
+        {
+            ServerLogger.LogWarning($"Could not attach item interaction to modifier as the modifier list does not contain: {name}");
+            return;
+        }
+
+        ModifierInfoList[id].Interaction = modifier;
     }
 
     public static void RegisterComboItem(string name, ItemInteractionBase itemInteraction, List<string> comboItems)
@@ -198,6 +248,7 @@ public static class DataManager
         JobMaxSpLookup = loader.LoadMaxSpChart();
 
         WeaponClasses = loader.LoadWeaponClasses();
+        WeaponClassToString = loader.GenerateWeaponclassNameById();
         EquipGroupInfo = loader.LoadEquipGroups();
         var items = loader.LoadItemsRegular();
         ArmorInfo = loader.LoadItemsArmor(items);
@@ -213,6 +264,14 @@ public static class DataManager
         SavePoints = loader.LoadSavePoints().AsReadOnly();
         ElementChart = loader.LoadElementChart();
         MvpMonsterCodes = loader.LoadMvpList();
+
+        ModifierInfoList = loader.LoadModifiers();
+        ModifierIdByName = loader.GenerateModifierIdByNameLookup();
+        (weaponClassModifierList, equipmentModifierList) = loader.LoadUniqueItemTypeModifiers(); //dependent on modifier lists loaded earlier
+        for (int i = 0; modifierCountWeights.Length > i; i++)
+        {
+            totalModifierCountWeight += modifierCountWeights[i];
+        }
 
         var dataLoadTime = Time.SampleDiagnosticsTime();
         

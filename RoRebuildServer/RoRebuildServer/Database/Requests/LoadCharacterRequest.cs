@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using RebuildSharedData.Data;
 using RebuildSharedData.Enum;
+using RoRebuildServer.Data;
 using RoRebuildServer.Database.Utility;
 using RoRebuildServer.EntityComponents.Character;
 using RoRebuildServer.EntityComponents.Items;
@@ -141,6 +142,25 @@ public class LoadCharacterRequest : IDbRequest
                         PlayerDataDbHelper.DecompressPlayerInventoryData(this, ch.ItemData, ch.ItemDataLength, SaveVersion);
                 }
             }
+
+            //var dataChangeList = this.Inventory?.UniqueItems.Where(x => x.Value.ContainsItemIdInSlot(4006));
+            //if (dataChangeList != null)
+            //{
+            //    foreach(var kvp in dataChangeList)
+            //    {
+            //        var bagId = kvp.Key;
+            //        var uniqueItem = kvp.Value;
+
+            //        ServerLogger.LogVerbose($"Found item {DataManager.GetItemInfoById(uniqueItem.Id).Name} that contains {4006}");
+
+            //        for (int i = 0; i < 4; i++)
+            //            if (uniqueItem.SlotData(i) == 4006)
+            //                uniqueItem.SetSlotData(i, 0);
+
+            //        Inventory.UniqueItems[bagId] = uniqueItem;
+            //    }
+            //}
+
 
 
             HasCharacter = true;

@@ -49,7 +49,7 @@ public class MagnumBreakHandler : SkillHandlerBase
             source.ExecuteCombatResult(res, false);
 
 
-            CommandBuilder.AttackMulti(source.Character, blastTarget, res, false);
+            CommandBuilder.AttackAutoVis(source.Character, blastTarget, res, false);
         }
 
         if (source.Character.Type == CharacterType.Player)

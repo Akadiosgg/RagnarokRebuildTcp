@@ -257,6 +257,7 @@ public partial class CombatEntity
             if (isMagical)
             {
                 var mDef = GetEffectiveStat(CharacterStat.MDef);
+                mDef = mDef * mDefMod / 100;
                 defCut = MathHelper.DefValueLookup(mDef); //for now players have different def calculations
                 if (!flags.HasFlag(AttackFlags.IgnoreSubDefense))
                     subDef = GetEffectiveStat(CharacterStat.Int) + vit / 2;
@@ -265,7 +266,7 @@ public partial class CombatEntity
                     subDef = 999999;
                 else if (mDefMod != 100)
                 {
-                    defCut = defCut * mDefMod / 100;
+                    //defCut = defCut * mDefMod / 100;
                     subDef = subDef * mDefMod / 100;
                 }
             }
@@ -454,6 +455,7 @@ public partial class CombatEntity
         var sizeMod = 100;
         var specialMod = 100;
         var defMod = 100;
+        var mdefMod = 100;
         if (!evade && !flags.HasFlag(AttackFlags.NoDamageModifiers))
         {
             var atkSize = attackerType == CharacterType.Monster ? Character.Monster.MonsterBase.Size : CharacterSize.Medium;
@@ -538,7 +540,7 @@ public partial class CombatEntity
 
                 sizeMod += GetStat(CharacterStat.AddAttackSmallSize + (int)defSize);
 
-                defMod = int.Clamp(100 - GetStat(CharacterStat.IgnoreDefRaceFormless + (int)targetRace), 0, 100);
+                defMod = int.Clamp(100 - GetStat(CharacterStat.IgnoreDefRaceFormless + (int)targetRace) - GetStat(CharacterStat.IgnoreDef), 0, 100);
             }
 
             if (Character.Type == CharacterType.Player && (flags & AttackFlags.IgnoreWeaponRefine) == 0)
@@ -555,12 +557,13 @@ public partial class CombatEntity
         var defCut = 1f;
         var subDef = 0;
         var vit = target.GetEffectiveStat(CharacterStat.Vit);
-
+        
+        mdefMod = int.Clamp(100 - GetStat(CharacterStat.IgnoreMDefRaceFormless + (int)targetRace) - GetStat(CharacterStat.IgnoreMDef), 0, 100);
 
 
         //physical defense
         if (!flags.HasFlag(AttackFlags.IgnoreDefense))
-            (defCut, subDef) = target.GetDefenseReductionForReceivedAttack(this, attackerPenalty, flags, defMod, 100);
+            (defCut, subDef) = target.GetDefenseReductionForReceivedAttack(this, attackerPenalty, flags, defMod, mdefMod);
         //{
         //    if (isPhysical)
         //    {

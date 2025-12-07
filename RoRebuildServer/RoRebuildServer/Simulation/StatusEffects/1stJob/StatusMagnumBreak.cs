@@ -3,6 +3,7 @@ using RebuildSharedData.Enum.EntityStats;
 using RoRebuildServer.EntityComponents;
 using RoRebuildServer.EntityComponents.Character;
 using RoRebuildServer.EntityComponents.Util;
+using RoRebuildServer.Networking;
 using RoRebuildServer.Simulation.StatusEffects.Setup;
 
 namespace RoRebuildServer.Simulation.StatusEffects._1stJob;
@@ -32,8 +33,17 @@ public class StatusMagnumBreak : StatusEffectBase
 
             var res = ch.CalculateCombatResult(target, attack);
 
+
+
             if (res.Damage > 0)
-                info.Damage += res.Damage * (10 + state.Value1) / 100;
+            {
+                res.Time = info.Time + 0.15f;
+                res.IsIndirect = true;
+                res.Damage = res.Damage * (10 + state.Value1) / 100;
+                target.QueueDamage(res);
+                CommandBuilder.AttackAutoVis(ch.Character, target.Character, res, false);
+            }
+
         }
 
         return StatusUpdateResult.Continue;

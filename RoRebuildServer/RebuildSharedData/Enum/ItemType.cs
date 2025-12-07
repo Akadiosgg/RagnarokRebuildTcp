@@ -74,5 +74,5 @@
         Any = HeadUpper | HeadMid | HeadLower | Body | MainHand | OffHand | Garment | Footgear | Accessory
     }
 
-    
+
 }

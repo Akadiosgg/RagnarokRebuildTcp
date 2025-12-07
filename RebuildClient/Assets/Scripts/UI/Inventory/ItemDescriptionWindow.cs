@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 using Assets.Scripts.PlayerControl;
 using Assets.Scripts.Sprites;
 using Assets.Scripts.Utility;
@@ -19,6 +20,9 @@ namespace Assets.Scripts.UI.Inventory
         public RectTransform WindowRect;
 
         public GameObject CardSocketPanel;
+
+        public GameObject ModPanel;
+        public TextMeshProUGUI ModDescriptions;
 
         public Button ShowIllustrationButton;
 
@@ -101,6 +105,28 @@ namespace Assets.Scripts.UI.Inventory
                     }
                 }
             }
+
+            var modCount = 0;
+            var sb = new StringBuilder();
+            for (var i = 0; i < 8; i++)
+            {
+                var modId = inventoryItem.UniqueItem.ModifierIdAt(i);
+                var modValue = inventoryItem.UniqueItem.ModifierValueAt(i);
+                if (modId <= 0 || modValue == 0)
+                    continue;
+                modCount++;
+                string signedValue = modValue > 0 ? $"+{modValue}" : modValue.ToString();
+                sb.AppendLine(ClientDataLoader.Instance.GetModDescription(modId).Replace("{modifierValue}", signedValue)); //maybe presplit mod descriptions at {modifierValue} during data load for performance?
+            }
+            
+            if (modCount == 0)
+                ModPanel.SetActive(false);
+            else
+            {
+                ModDescriptions.text = sb.ToString().TrimEnd('\n');
+                ModPanel.SetActive(true);
+            }
+                
 
             ItemDescription.ForceMeshUpdate();
             Vector2 preferredDimensions = ItemDescription.GetPreferredValues(415, 0); //300 minus 20 for margins

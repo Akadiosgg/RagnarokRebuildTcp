@@ -8038,6 +8038,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 30558d82aca7f2949885104b090e1569
+    m_Address: Assets/Effects/Prefabs/DropItem.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Effect
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 305c58e84bf6c424980e640f7c5c0b61
     m_Address: Assets/Sprites/Imported/Collections/Cobweb.png
     m_ReadOnly: 0

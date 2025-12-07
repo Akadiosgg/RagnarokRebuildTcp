@@ -58,7 +58,7 @@ namespace RoRebuildServer.Simulation.Skills.SkillHandlers.Merchant
             res.AttackPosition = source.Character.Position;
 
             source.ApplyCooldownForAttackAction(position);
-            CommandBuilder.SkillExecuteTargetedSkill(source.Character, target.Character, CharacterSkill.CartRevolution, lvl, res);
+            CommandBuilder.SkillExecuteTargetedSkillAutoVis(source.Character, target.Character, CharacterSkill.CartRevolution, lvl, res);
             source.ExecuteCombatResult(res, false);
 
             foreach (var e in targetList)
@@ -73,7 +73,7 @@ namespace RoRebuildServer.Simulation.Skills.SkillHandlers.Merchant
                 source.ExecuteCombatResult(res, false);
 
                 if (e.TryGet<WorldObject>(out var blastTarget))
-                    CommandBuilder.AttackMulti(source.Character, blastTarget, res, false);
+                    CommandBuilder.AttackAutoVis(source.Character, blastTarget, res, false);
             }
 
             CommandBuilder.ClearRecipients();

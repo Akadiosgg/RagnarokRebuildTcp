@@ -2,6 +2,18 @@
 
 namespace RebuildSharedData.Data;
 
+public struct TakenModifierSet
+{
+    private ulong Mask; // values 0–63, there are much fewer entries in ModifierWeights
+
+    public void Clear() => Mask = 0;
+
+    public bool Contains(byte value)
+        => (Mask & (1UL << value)) != 0;
+
+    public void Add(byte value)
+        => Mask |= (1UL << value);
+}
 public class GameRandom
 {
     private static readonly Random _global = new Random();
@@ -70,5 +82,37 @@ public class GameRandom
             Initialize();
 
         return local!.NextDouble().Remap(0, 1, min, max);
+    }
+
+    public static int WeightedRandomRoll<T>(IReadOnlyList<T> weightList, Func<T, int> weightSelector, int totalWeight, TakenModifierSet ignoredIndexes = default)
+    {
+        var randomNumber = Next(totalWeight);
+        for (int i = 0; i < weightList.Count; i++)
+        {
+            if (ignoredIndexes.Contains((byte)i))
+                continue;
+            int w = weightSelector(weightList[i]);
+            if (randomNumber < w)
+                return i;
+
+            randomNumber -= w;
+        }
+
+        return -1;
+    }
+
+    public static int WeightedRandomRoll(IReadOnlyList<int> weightList, int totalWeight)
+    {
+        var randomNumber = Next(totalWeight);
+        for (int i = 0; i < weightList.Count; i++)
+        {
+            int w = weightList[i];
+            if (randomNumber < w)
+                return i;
+
+            randomNumber -= w;
+        }
+
+        return -1;
     }
 }

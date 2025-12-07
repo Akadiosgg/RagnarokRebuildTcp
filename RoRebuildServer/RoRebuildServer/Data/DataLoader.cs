@@ -1,5 +1,6 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
+using Microsoft.Extensions.Primitives;
 using RebuildSharedData.ClientTypes;
 using RebuildSharedData.Data;
 using RebuildSharedData.Enum;
@@ -14,6 +15,7 @@ using RoRebuildServer.EntityComponents.Character;
 using RoRebuildServer.EntityComponents.Items;
 using RoRebuildServer.EntityComponents.Monsters;
 using RoRebuildServer.EntityComponents.Npcs;
+using RoRebuildServer.EntitySystem;
 using RoRebuildServer.Logging;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -447,7 +449,7 @@ internal class DataLoader
                 if (itemInfo != null)
                 {
                     if (globalDropData.Any(entry => entry.Code == itemName))
-                        continue; //global drops are seperated from the native drop pool
+                        continue; //global drops are separated from the native drop pool
                     if (remapDrops)
                         chance = config.UpdateDropData(itemInfo.ItemClass, itemInfo.Code, itemInfo.SubCategory, chance);
                 }
@@ -609,6 +611,106 @@ internal class DataLoader
         }
 
         return items;
+    }
+
+    public ReadOnlyDictionary<short, ModifierInfo> LoadModifiers()
+    {
+        var returnDictionary = new Dictionary<short, ModifierInfo>();
+        foreach (var entry in GetCsvRows<CsvModifier>("Db/Modifiers.csv"))
+        {
+            string raw = entry.TypeFlags ?? string.Empty;
+            var normalized = raw.Replace("|", ",").Replace(" ", "");
+            if (!Enum.TryParse<ModTypeFlags>(normalized, true, out var flags))
+                throw new Exception($"Invalid flags: {normalized}");
+           
+            var modifier = new ModifierInfo()
+            {
+                Name = entry.Name,
+                TypeFlags = flags
+            };
+
+            returnDictionary.Add(entry.Id, modifier);
+        }
+
+        return returnDictionary.AsReadOnly();
+    }
+
+    public (ReadOnlyDictionary<int, ModifierList>, ReadOnlyDictionary<EquipPosition, ModifierList>) LoadUniqueItemTypeModifiers()
+    {
+        var uniqueModifierData = new Dictionary<string, ModifierList>();
+        var weaponModifiers = new Dictionary<int, ModifierList>();
+        var armorModifiers = new Dictionary<EquipPosition, ModifierList>();
+        foreach (var entry in GetCsvRows<CsvUniqueItemTypeModifierList>("Db/UniqueItemTypeModifierList.csv"))
+        {
+            var affixName = entry.AffixType.Trim();
+            if (!Enum.TryParse<AffixType>(affixName, false, out var affixType))
+                throw new Exception($"UniqueItemTypeModifierList.csv contained an AffixType of {affixName} that is not defined");
+            var modifierName = entry.ModifierName.Trim();
+            if (!DataManager.ModifierIdByName.TryGetValue(modifierName, out short modifierId))
+                throw new Exception($"UniqueItemTypeModifierList.csv contained a ModifierName of {modifierName} that is not defined in Modifiers.csv");
+            var tierInfo = new TierInfo(entry.Tier, entry.MinLevel, entry.MinValue, entry.MaxValue, entry.Weight);
+            if (tierInfo.MinValue > tierInfo.MaxValue || tierInfo.Weight < 0)
+                throw new Exception($"TierInfo ({entry.Tier}, {entry.MinValue}, {entry.MaxValue}, {entry.Weight}, {entry.MinLevel}) in UniqueItemTypeModifierList.csv is invalid");
+
+            var uniqueItemType = entry.UniqueItemType.Trim();
+
+            if (!uniqueModifierData.ContainsKey(uniqueItemType))
+                uniqueModifierData.Add(uniqueItemType, new ModifierList());
+
+            uniqueModifierData[uniqueItemType].AddModifierTier(uniqueItemType, affixType, modifierId, tierInfo, modifierName);
+        }
+
+        foreach(var data in uniqueModifierData)
+        {
+            var modifiers = data.Value.Modifiers;
+            for(int i = 0; i < (int)AffixType.Count; i++)
+            {
+                foreach (var entry in modifiers[i])
+                {
+                    var tierInfoList = entry.Value;
+                    tierInfoList.Sort((a, b) => a.Tier.CompareTo(b.Tier));
+                    int running = 0;
+                    for (int j = 0; j < tierInfoList.Count; j++)
+                    {
+                        running += tierInfoList[j].Weight;
+
+                        tierInfoList[j] = tierInfoList[j] with { CumulativeWeight = running };
+
+                        if(j > 0)
+                        {
+                            var curr = tierInfoList[j];
+                            var prev = tierInfoList[j - 1];
+
+                            if (prev.MaxValue > 0 && curr.MinValue > 0 && prev.MaxValue > curr.MinValue)
+                                throw new Exception($"UniqueItemTypeModifierList.csv contains positive tierInfo where a higher tier can roll lower values than the previous " +
+                                    $"(Tier: {prev.Tier} MaxValue:{prev.MaxValue}, Tier: {curr.Tier} MinValue:{curr.MinValue})");
+                            else if (prev.MinValue < 0 && curr.MaxValue < 0 && prev.MinValue > curr.MaxValue)
+                                throw new Exception($"UniqueItemTypeModifierList.csv contains negative tierInfo where a higher tier can roll higher values than the previous " +
+                                    $"(Tier: {prev.Tier} MinValue:{prev.MinValue}, Tier: {curr.Tier} MaxValue:{curr.MaxValue})");
+                        }
+
+                    }
+                }
+            }
+
+            var uniqueItemType = data.Key;
+            if (DataManager.WeaponClasses.ContainsKey(uniqueItemType))
+            {
+                var weaponClass = DataManager.WeaponClasses[uniqueItemType];
+                if (!weaponModifiers.ContainsKey(weaponClass))
+                    weaponModifiers.Add(weaponClass, data.Value);
+            }
+            else if (Enum.TryParse<EquipPosition>(uniqueItemType, false, out var equipPosition))
+            {
+                if (!armorModifiers.ContainsKey(equipPosition))
+                    armorModifiers.Add(equipPosition, data.Value);
+
+            }
+            else
+                throw new Exception($"UniqueItemTypeModifierList.csv contained an UniqueItemType of {uniqueItemType} that is not a WeaponClass or EquipPosition");
+        }
+
+        return (weaponModifiers.AsReadOnly(), armorModifiers.AsReadOnly());
     }
 
     public ReadOnlyDictionary<int, ArmorInfo> LoadItemsArmor(Dictionary<int, ItemInfo> itemList)
@@ -899,6 +1001,26 @@ internal class DataLoader
             lookup.Add(item.Value.Code, item.Value.Id);
         }
 
+        return lookup.AsReadOnly();
+    }
+
+    public ReadOnlyDictionary<string, short> GenerateModifierIdByNameLookup()
+    {
+        var lookup = new Dictionary<string, short>();
+        foreach (var modifier in DataManager.ModifierInfoList)
+        {
+            lookup.Add(modifier.Value.Name, modifier.Key);
+        }
+        return lookup.AsReadOnly();
+    }
+
+    public ReadOnlyDictionary<int, string> GenerateWeaponclassNameById()
+    {
+        var lookup = new Dictionary<int, string>();
+        foreach (var weaponClass in DataManager.WeaponClasses)
+        {
+            lookup.Add(weaponClass.Value, weaponClass.Key);
+        }
         return lookup.AsReadOnly();
     }
 

@@ -369,6 +369,30 @@ public class ScriptBuilder
         LoadFunctionSource(typeof(CombatEntity), "combatEntity", true);
     }
 
+    public void StartModifier(string name)
+    {
+        UseStateMachine = false;
+        UseStateStorage = false;
+        UseLocalStorage = false;
+        stateMachineType = StateMachineType.None;
+        defaultReturn = null;
+        blockBuilder.Clear();
+        terminalFunctions.Clear();
+
+        StartIndentedScriptLine().AppendLine($"public class RoRebuildModifierGen_{name} : ItemInteractionBase");
+        StartIndentedScriptLine().AppendLine("{");
+        indentation++;
+
+        StartIndentedBlockLine().AppendLine($"public override void Init(Player player, CombatEntity combatEntity)");
+        StartIndentedBlockLine().AppendLine("{");
+        indentation++;
+
+        methodName = "Init";
+
+        LoadFunctionSource(typeof(Player), "player", true);
+        LoadFunctionSource(typeof(CombatEntity), "combatEntity", true);
+    }
+
     public void StartMonsterSkillHandler(string name)
     {
         methodName = name.Replace(" ", "").Replace("-", "_");
@@ -403,7 +427,11 @@ public class ScriptBuilder
         var behaviorName = $"RoRebuildItemGen_{className}";
         itemDefinitions.Add($"DataManager.RegisterItem(\"{name}\", new {behaviorName}());");
     }
-
+    public void EndModifier(string name, string className)
+    {
+        var behaviorName = $"RoRebuildModifierGen_{className}";
+        itemDefinitions.Add($"DataManager.RegisterModifier(\"{name}\", new {behaviorName}());");
+    }
     public void EndComboItem(string name, string className, List<string> comboItems)
     {
         var behaviorName = $"RoRebuildItemGen_{className}";
@@ -564,7 +592,7 @@ public class ScriptBuilder
         if (section == "OnEquip" || section == "OnUnequip")
         {
             CloseScope();
-            StartIndentedBlockLine().AppendLine($"public override void {section}(Player player, CombatEntity combatEntity, ItemEquipState state, UniqueItem item, EquipSlot position)");
+            StartIndentedBlockLine().AppendLine($"public override void {section}(Player player, CombatEntity combatEntity, ItemEquipState state, UniqueItem item, EquipSlot position, int ModifierValue = 0)");
             OpenScope();
 
             stateVariable = "state";
@@ -577,6 +605,8 @@ public class ScriptBuilder
             LoadFunctionSource(typeof(Player), "player", true);
             //LoadFunctionSource(typeof(CombatEntity), "combatEntity"); //we don't want them using the addstat/substat directly, ti should come from ItemEquipState
             LoadFunctionSource(typeof(ScriptUtilityFunctions), "ScriptUtilityFunctions");
+            additionalVariables.Add("ModifierValue", "ModifierValue");
+
 
 
             foreach (var i in Enum.GetValues<CharacterElement>())
@@ -655,6 +685,10 @@ public class ScriptBuilder
         }
     }
 
+    public void StartModifierSection(string section)
+    {
+        StartItemSection(section); //lol
+    }
 
     public void StartServerConfigSection(string section)
     {

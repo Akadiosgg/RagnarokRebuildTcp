@@ -1,0 +1,275 @@
+Id,Name,TypeFlags,Description,DisplayScale
+0,None,None,"NONE",1
+1,AddMaxHp,HP,"MaxHP {modifierValue}",1
+2,AddMaxHpPercent,HP,"MaxHP {modifierValue}%",1
+3,AddMaxSp,SP,"MaxSP {modifierValue}",1
+4,AddMaxSpPercent,SP,"MaxSP {modifierValue}%",1
+5,AspdBonus,Speed,"ASPD {modifierValue}%",1
+6,MoveSpeedBonus,Speed,"Movement Speed  {modifierValue}%",1
+7,AddStr,Attribute,"STR {modifierValue}",1
+8,AddAgi,Attribute,"AGI {modifierValue}",1
+9,AddDex,Attribute,"DEX {modifierValue}",1
+10,AddInt,Attribute,"INT {modifierValue}",1
+11,AddVit,Attribute,"VIT {modifierValue}",1
+12,AddLuk,Attribute,"LUK {modifierValue}",1
+13,AddDef,Defense,"DEF {modifierValue}",1
+14,AddMDef,Defense,"MDEF {modifierValue}",1
+15,AddSoftDefPercent,Defense,"VIT DEF {modifierValue}%",1
+16,AddFlee,Defense,"FLEE {modifierValue}",1
+17,AddHit,Attack,"HIT {modifierValue}",1
+18,AddAttackPercent,Attack,"ATK {modifierValue}%",1
+19,AddMagicAttackPercent,Caster,"MATK {modifierValue}%",1
+20,AddAttackPower,Attack,"ATK {modifierValue}",1
+21,AddMagicAttackPower,Caster,"MATK {modifierValue}",1
+22,AddDefPercent,Defense,"DEF {modifierValue}%",1
+23,AddMDefPercent,Defense,"MDEF {modifierValue}%",1
+24,DoubleAttackChance,Attack,"{modifierValue}% chance to Double Attack",1
+25,AddSpRecoveryPercent,SP,"SP Recovery {modifierValue}%",1
+26,AddHpRecoveryPercent,HP,"HP Recovery {modifierValue}%",1
+27,PerfectDodge,Defense,"Perfect Dodge {modifierValue}",1
+28,AddCrit,Crit,"CRIT {modifierValue}",1
+29,AddCritDamage,Crit,"Critical Damage {modifierValue}%",1
+30,AddCastTime,Speed,"Cast Time {modifierValue}%",1
+31,AddAttackElementNeutral,Elemental | Attack,"{modifierValue}% ATK against Neutral Property",1
+32,AddAttackElementEarth,Elemental | Attack,"{modifierValue}% ATK against Earth Property",1
+33,AddAttackElementWater,Elemental | Attack,"{modifierValue}% ATK against Water Property",1
+34,AddAttackElementFire,Elemental | Attack,"{modifierValue}% ATK against Fire Property",1
+35,AddAttackElementWind,Elemental | Attack,"{modifierValue}% ATK against Wind Property",1
+36,AddAttackElementPoison,Elemental | Attack,"{modifierValue}% ATK against Poison Property",1
+37,AddAttackElementUndead,Elemental | Attack,"{modifierValue}% ATK against Undead Property",1
+38,AddAttackElementDark,Elemental | Attack,"{modifierValue}% ATK against Dark Property",1
+39,AddAttackElementHoly,Elemental | Attack,"{modifierValue}% ATK against Holy Property",1
+40,AddAttackElementGhost,Elemental | Attack,"{modifierValue}% ATK against Ghost Property",1
+41,AddResistElementNeutral,Elemental | Resistance,"Neutral Resistance {modifierValue}%",1
+42,AddResistElementEarth,Elemental | Resistance,"Earth Resistance {modifierValue}%",1
+43,AddResistElementWater,Elemental | Resistance,"Water Resistance {modifierValue}%",1
+44,AddResistElementFire,Elemental | Resistance,"Fire Resistance {modifierValue}%",1
+45,AddResistElementWind,Elemental | Resistance,"Wind Resistance {modifierValue}%",1
+46,AddResistElementPoison,Elemental | Resistance,"Poison Resistance {modifierValue}%",1
+47,AddResistElementUndead,Elemental | Resistance,"Undead Resistance {modifierValue}%",1
+48,AddResistElementDark,Elemental | Resistance,"Dark Resistance {modifierValue}%",1
+49,AddResistElementHoly,Elemental | Resistance,"Holy Resistance {modifierValue}%",1
+50,AddResistElementGhost,Elemental | Resistance,"Ghost Resistance {modifierValue}%",1
+51,AddAttackRaceFormless,Racial | Attack,"{modifierValue}% ATK against Formless",1
+52,AddAttackRaceDemihuman,Racial | Attack,"{modifierValue}% ATK against Demi-Humans",1
+53,AddAttackRaceBeast,Racial | Attack,"{modifierValue}% ATK against Beasts",1
+54,AddAttackRaceInsect,Racial | Attack,"{modifierValue}% ATK against Insects",1
+55,AddAttackRaceAngel,Racial | Attack,"{modifierValue}% ATK against Angels",1
+56,AddAttackRaceDragon,Racial | Attack,"{modifierValue}% ATK against Dragons",1
+57,AddAttackRaceAquatic,Racial | Attack,"{modifierValue}% ATK against Aquatics",1
+58,AddAttackRacePlant,Racial | Attack,"{modifierValue}% ATK against Plants",1
+59,AddAttackRaceDemon,Racial | Attack,"{modifierValue}% ATK against Demons",1
+60,AddAttackRaceUndead,Racial | Attack,"{modifierValue}% ATK against Undead",1
+61,AddCritChanceRaceFormless,Racial | Crit,"{modifierValue} CRIT against Formless",1
+62,AddCritChanceRaceDemihuman,Racial | Crit,"{modifierValue} CRIT against Demi-Humans",1
+63,AddCritChanceRaceBeast,Racial | Crit,"{modifierValue} CRIT against Beasts",1
+64,AddCritChanceRaceInsect,Racial | Crit,"{modifierValue} CRIT against Insects",1
+65,AddCritChanceRaceAngel,Racial | Crit,"{modifierValue} CRIT against Angels",1
+66,AddCritChanceRaceDragon,Racial | Crit,"{modifierValue} CRIT against Dragons",1
+67,AddCritChanceRaceAquatic,Racial | Crit,"{modifierValue} CRIT against Aquatics",1
+68,AddCritChanceRacePlant,Racial | Crit,"{modifierValue} CRIT against Plants",1
+69,AddCritChanceRaceDemon,Racial | Crit,"{modifierValue} CRIT against Demons",1
+70,AddCritChanceRaceUndead,Racial | Crit,"{modifierValue} CRIT against Undead",1
+71,AddCritDamageRaceFormless,Racial | Crit,"{modifierValue}% Critical Damage against Formless",1
+72,AddCritDamageRaceDemihuman,Racial | Crit,"{modifierValue}% Critical Damage against Demi-Humans",1
+73,AddCritDamageRaceBeast,Racial | Crit,"{modifierValue}% Critical Damage against Beasts",1
+74,AddCritDamageRaceInsect,Racial | Crit,"{modifierValue}% Critical Damage against Insects",1
+75,AddCritDamageRaceAngel,Racial | Crit,"{modifierValue}% Critical Damage against Angels",1
+76,AddCritDamageRaceDragon,Racial | Crit,"{modifierValue}% Critical Damage against Dragons",1
+77,AddCritDamageRaceAquatic,Racial | Crit,"{modifierValue}% Critical Damage against Aquatics",1
+78,AddCritDamageRacePlant,Racial | Crit,"{modifierValue}% Critical Damage against Plants",1
+79,AddCritDamageRaceDemon,Racial | Crit,"{modifierValue}% Critical Damage against Demons",1
+80,AddCritDamageRaceUndead,Racial | Crit,"{modifierValue}% Critical Damage against Undead",1
+81,AddResistRaceFormless,Racial | Resistance,"{modifierValue}% Resistance against Formless",1
+82,AddResistRaceDemihuman,Racial | Resistance,"{modifierValue}% Resistance against Demi-Humans",1
+83,AddResistRaceBeast,Racial | Resistance,"{modifierValue}% Resistance against Beasts",1
+84,AddResistRaceInsect,Racial | Resistance,"{modifierValue}% Resistance against Insects",1
+85,AddResistRaceAngel,Racial | Resistance,"{modifierValue}% Resistance against Angels",1
+86,AddResistRaceDragon,Racial | Resistance,"{modifierValue}% Resistance against Dragons",1
+87,AddResistRaceAquatic,Racial | Resistance,"{modifierValue}% Resistance against Aquatics",1
+88,AddResistRacePlant,Racial | Resistance,"{modifierValue}% Resistance against Plants",1
+89,AddResistRaceDemon,Racial | Resistance,"{modifierValue}% Resistance against Demons",1
+90,AddResistRaceUndead,Racial | Resistance,"{modifierValue}% Resistance against Undead",1
+91,AddExpRaceFormless,Racial,"{modifierValue}% EXP from Formless",1
+92,AddExpRaceDemihuman,Racial,"{modifierValue}% EXP from Demi-Humans",1
+93,AddExpRaceBeast,Racial,"{modifierValue}% EXP from Beasts",1
+94,AddExpRaceInsect,Racial,"{modifierValue}% EXP from Insects",1
+95,AddExpRaceAngel,Racial,"{modifierValue}% EXP from Angels",1
+96,AddExpRaceDragon,Racial,"{modifierValue}% EXP from Dragons",1
+97,AddExpRaceAquatic,Racial,"{modifierValue}% EXP from Aquatics",1
+98,AddExpRacePlant,Racial,"{modifierValue}% EXP from Plants",1
+99,AddExpRaceDemon,Racial,"{modifierValue}% EXP from Demons",1
+100,AddExpRaceUndead,Racial,"{modifierValue}% EXP from Undead",1
+101,AddAttackSpecialNormal,Attack,"{modifierValue}% ATK against Normal Enemies",1
+102,AddAttackSpecialBoss,Attack,"{modifierValue}% ATK against Bosses",1
+103,AddAttackRangedAttack,Attack,"{modifierValue}% Ranged ATK",1
+104,AddAttackSmallSize,Attack | Size,"{modifierValue}% ATK against Small Enemies",1
+105,AddAttackMidSize,Attack | Size,"{modifierValue}% ATK against Medium Enemies",1
+106,AddAttackLargeSize,Attack | Size,"{modifierValue}% ATK against Large Enemies",1
+107,AddResistSpecialNormal,Resistance,"{modifierValue}% Resistance against Normal Enemies",1
+108,AddResistSpecialBoss,Resistance,"{modifierValue}% Resistance against Bosses",1
+109,AddResistRangedAttack,Resistance,"{modifierValue}% Resistance against Ranged Damage",1
+110,AddResistSmallSize,Resistance | Size,"{modifierValue}% Resistance against Small Enemies",1
+111,AddResistMidSize,Resistance | Size,"{modifierValue}% Resistance against Medium Enemies",1
+112,AddResistLargeSize,Resistance | Size,"{modifierValue}% Resistance against Large Enemies",1
+113,IgnoreDefRaceFormless,Racial | Defense,"Ignore {modifierValue}% DEF against Formless",1
+114,IgnoreDefRaceDemihuman,Racial | Defense,"Ignore {modifierValue}% DEF against Demi-Humans",1
+115,IgnoreDefRaceBeast,Racial | Defense,"Ignore {modifierValue}% DEF against Beasts",1
+116,IgnoreDefRaceInsect,Racial | Defense,"Ignore {modifierValue}% DEF against Insects",1
+117,IgnoreDefRaceAngel,Racial | Defense,"Ignore {modifierValue}% DEF against Angels",1
+118,IgnoreDefRaceDragon,Racial | Defense,"Ignore {modifierValue}% DEF against Dragons",1
+119,IgnoreDefRaceAquatic,Racial | Defense,"Ignore {modifierValue}% DEF against Aquatics",1
+120,IgnoreDefRacePlant,Racial | Defense,"Ignore {modifierValue}% DEF against Plants",1
+121,IgnoreDefRaceDemon,Racial | Defense,"Ignore {modifierValue}% DEF against Demons",1
+122,IgnoreDefRaceUndead,Racial | Defense,"Ignore {modifierValue}% DEF against Undead",1
+123,IgnoreMDefRaceFormless,Racial | Defense,"Ignore {modifierValue}% MDEF against Formless",1
+124,IgnoreMDefRaceDemihuman,Racial | Defense,"Ignore {modifierValue}% MDEF against Demi-Humans",1
+125,IgnoreMDefRaceBeast,Racial | Defense,"Ignore {modifierValue}% MDEF against Beasts",1
+126,IgnoreMDefRaceInsect,Racial | Defense,"Ignore {modifierValue}% MDEF against Insects",1
+127,IgnoreMDefRaceAngel,Racial | Defense,"Ignore {modifierValue}% MDEF against Angels",1
+128,IgnoreMDefRaceDragon,Racial | Defense,"Ignore {modifierValue}% MDEF against Dragons",1
+129,IgnoreMDefRaceAquatic,Racial | Defense,"Ignore {modifierValue}% MDEF against Aquatics",1
+130,IgnoreMDefRacePlant,Racial | Defense,"Ignore {modifierValue}% MDEF against Plants",1
+131,IgnoreMDefRaceDemon,Racial | Defense,"Ignore {modifierValue}% MDEF against Demons",1
+132,IgnoreMDefRaceUndead,Racial | Defense,"Ignore {modifierValue}% MDEF against Undead",1
+133,OnMeleeAttackBlind,Status | Attack,"{modifierValue}% Melee Chance to Blind",10
+134,OnMeleeAttackSilence,Status | Attack,"{modifierValue}% Melee Chance to Silence",10
+135,OnMeleeAttackCurse,Status | Attack,"{modifierValue}% Melee Chance to Curse",10
+136,OnMeleeAttackPoison,Status | Attack,"{modifierValue}% Melee Chance to Poison",10
+137,OnMeleeAttackConfusion,Status | Attack,"{modifierValue}% Melee Chance to Confuse",10
+138,OnMeleeAttackHeavyPoison,Status | Attack,"{modifierValue}% Melee Chance to Heavy Poison",10
+139,OnMeleeAttackBleeding,Status | Attack,"{modifierValue}% Melee Chance to Bleed",10
+140,OnMeleeAttackStun,Status | Attack,"{modifierValue}% Melee Chance to Stun",10
+141,OnMeleeAttackStone,Status | Attack,"{modifierValue}% Melee Chance to Petrify",10
+142,OnMeleeAttackFreeze,Status | Attack,"{modifierValue}% Melee Chance to Freeze",10
+143,OnMeleeAttackSleep,Status | Attack,"{modifierValue}% Melee Chance to Sleep",10
+144,OnRangedAttackBlind,Status | Attack,"{modifierValue}% Ranged Chance to Blind",10
+145,OnRangedAttackSilence,Status | Attack,"{modifierValue}% Ranged Chance to Silence",10
+146,OnRangedAttackCurse,Status | Attack,"{modifierValue}% Ranged Chance to Curse",10
+147,OnRangedAttackPoison,Status | Attack,"{modifierValue}% Ranged Chance to Poison",10
+148,OnRangedAttackConfusion,Status | Attack,"{modifierValue}% Ranged Chance to Confuse",10
+149,OnRangedAttackHeavyPoison,Status | Attack,"{modifierValue}% Ranged Chance to Heavy Poison",10
+150,OnRangedAttackBleeding,Status | Attack,"{modifierValue}% Ranged Chance to Bleed",10
+151,OnRangedAttackStun,Status | Attack,"{modifierValue}% Ranged Chance to Stun",10
+152,OnRangedAttackStone,Status | Attack,"{modifierValue}% Ranged Chance to Petrify",10
+153,OnRangedAttackFreeze,Status | Attack,"{modifierValue}% Ranged Chance to Freeze",10
+154,OnRangedAttackSleep,Status | Attack,"{modifierValue}% Ranged Chance to Sleep",10
+155,OnAttackBlindSelf,Status | Attack,"{modifierValue}% Chance to Blind Yourself on Attacks",10
+156,OnAttackSilenceSelf,Status | Attack,"{modifierValue}% Chance to Silence Yourself on Attacks",10
+157,OnAttackCurseSelf,Status | Attack,"{modifierValue}% Chance to Curse Yourself on Attacks",10
+158,OnAttackPoisonSelf,Status | Attack,"{modifierValue}% Chance to Poison Yourself on Attacks",10
+159,OnAttackConfusionSelf,Status | Attack,"{modifierValue}% Chance to Confuse Yourself on Attacks",10
+160,OnAttackHeavyPoisonSelf,Status | Attack,"{modifierValue}% Chance to Heavy Poison Yourself on Attacks",10
+161,OnAttackBleedingSelf,Status | Attack,"{modifierValue}% Chance to Bleed Yourself on Attacks",10
+162,OnAttackStunSelf,Status | Attack,"{modifierValue}% Chance to Stun Yourself on Attacks",10
+163,OnAttackStoneSelf,Status | Attack,"{modifierValue}% Chance to Petrify Yourself on Attacks",10
+164,OnAttackFreezeSelf,Status | Attack,"{modifierValue}% Chance to Freeze Yourself on Attacks",10
+165,OnAttackSleepSelf,Status | Attack,"{modifierValue}% Chance to Sleep Yourself on Attacks",10
+166,WhenAttackedBlind,Status | Defense,"{modifierValue}% Chance to Blind Enemies when Attacked",10
+167,WhenAttackedSilence,Status | Defense,"{modifierValue}% Chance to Silence Enemies when Attacked",10
+168,WhenAttackedCurse,Status | Defense,"{modifierValue}% Chance to Curse Enemies when Attacked",10
+169,WhenAttackedPoison,Status | Defense,"{modifierValue}% Chance to Poison Enemies when Attacked",10
+170,WhenAttackedConfusion,Status | Defense,"{modifierValue}% Chance to Confuse Enemies when Attacked",10
+171,WhenAttackedHeavyPoison,Status | Defense,"{modifierValue}% Chance to Heavy Poison Enemies when Attacked",10
+172,WhenAttackedBleeding,Status | Defense,"{modifierValue}% Chance to Bleed Enemies when Attacked",10
+173,WhenAttackedStun,Status | Defense,"{modifierValue}% Chance to Stun Enemies when Attacked",10
+174,WhenAttackedStone,Status | Defense,"{modifierValue}% Chance to Petrify Enemies when Attacked",10
+175,WhenAttackedFreeze,Status | Defense,"{modifierValue}% Chance to Freeze Enemies when Attacked",10
+176,WhenAttackedSleep,Status | Defense,"{modifierValue}% Chance to Sleep Enemies when Attacked",10
+177,ResistBlindStatus,Status | Resistance,"{modifierValue}% Blind Resistance",1
+178,ResistSilenceStatus,Status | Resistance,"{modifierValue}% Silence Resistance",1
+179,ResistCurseStatus,Status | Resistance,"{modifierValue}% Curse Resistance",1
+180,ResistPoisonStatus,Status | Resistance,"{modifierValue}% Poison Resistance",1
+181,ResistConfusionStatus,Status | Resistance,"{modifierValue}% Confusion Resistance",1
+182,ResistHeavyPoisonStatus,Status | Resistance,"{modifierValue}% Heavy Poison Resistance",1
+183,ResistBleedingStatus,Status | Resistance,"{modifierValue}% Bleeding Resistance",1
+184,ResistStunStatus,Status | Resistance,"{modifierValue}% Stun Resistance",1
+185,ResistStoneStatus,Status | Resistance,"{modifierValue}% Petrify Resistance",1
+186,ResistFreezeStatus,Status | Resistance,"{modifierValue}% Freeze Resistance",1
+187,ResistSleepStatus,Status | Resistance,"{modifierValue}% Sleep Resistance",1
+188,DecreasePoisonStatusDamage,Status | Resistance,"{modifierValue}% Poison Status Damage",1
+189,DecreaseStunDuration,Status,"{modifierValue}% Stun Duration",1
+190,DecreaseFreezeDuration,Status,"{modifierValue}% Freeze Duration",1
+191,PureHpDrain,HP,"{modifierValue}% HP Leech on Attack",10
+192,PureSpDrain,SP,"{modifierValue}% SP Leech on Attack",10
+193,HpDrainChance,HP,"{modifierValue}% Attack Chance to Leech HP",1
+194,HpDrainAmount,HP,"{modifierValue}% Attack HP Leech on Proc",1
+195,SpDrainChance,SP,"{modifierValue}% Attack Chance to Leech SP",1
+196,SpDrainAmount,SP,"{modifierValue}% Attack SP Leech on Proc",1
+197,HpGainOnAttack,HP,"Recover {modifierValue} HP on Attack",1
+198,SpGainOnAttack,SP,"Recover {modifierValue} SP on Attack",1
+199,HpGainOnKill,HP,"Recover {modifierValue} HP on Kill",1
+200,SpGainOnKill,SP,"Recover {modifierValue} SP on Kill",1
+201,HpGainOnAttackRaceFormless,Racial | HP,"Recover {modifierValue} HP on Attack against Formless",1
+202,HpGainOnAttackRaceDemihuman,Racial | HP,"Recover {modifierValue} HP on Attack against Demi-Humans",1
+203,HpGainOnAttackRaceBeast,Racial | HP,"Recover {modifierValue} HP on Attack against Beasts",1
+204,HpGainOnAttackRaceInsect,Racial | HP,"Recover {modifierValue} HP on Attack against Insects",1
+205,HpGainOnAttackRaceAngel,Racial | HP,"Recover {modifierValue} HP on Attack against Angels",1
+206,HpGainOnAttackRaceDragon,Racial | HP,"Recover {modifierValue} HP on Attack against Dragons",1
+207,HpGainOnAttackRaceAquatic,Racial | HP,"Recover {modifierValue} HP on Attack against Aquatics",1
+208,HpGainOnAttackRacePlant,Racial | HP,"Recover {modifierValue} HP on Attack against Plants",1
+209,HpGainOnAttackRaceDemon,Racial | HP,"Recover {modifierValue} HP on Attack against Demons",1
+210,HpGainOnAttackRaceUndead,Racial | HP,"Recover {modifierValue} HP on Attack against Undead",1
+211,HpGainOnKillRaceFormless,Racial | HP,"Recover {modifierValue} HP on Formless Kills",1
+212,HpGainOnKillRaceDemihuman,Racial | HP,"Recover {modifierValue} HP on Demi-Human Kills",1
+213,HpGainOnKillRaceBeast,Racial | HP,"Recover {modifierValue} HP on Beast Kills",1
+214,HpGainOnKillRaceInsect,Racial | HP,"Recover {modifierValue} HP on Insect Kills",1
+215,HpGainOnKillRaceAngel,Racial | HP,"Recover {modifierValue} HP on Angel Kills",1
+216,HpGainOnKillRaceDragon,Racial | HP,"Recover {modifierValue} HP on Dragon Kills",1
+217,HpGainOnKillRaceAquatic,Racial | HP,"Recover {modifierValue} HP on Aquatic Kills",1
+218,HpGainOnKillRacePlant,Racial | HP,"Recover {modifierValue} HP on Plant Kills",1
+219,HpGainOnKillRaceDemon,Racial | HP,"Recover {modifierValue} HP on Demon Kills",1
+220,HpGainOnKillRaceUndead,Racial | HP,"Recover {modifierValue} HP on Undead Kills",1
+221,SpGainOnAttackRaceFormless,Racial | SP,"Recover {modifierValue} SP on Attack against Formless",1
+222,SpGainOnAttackRaceDemihuman,Racial | SP,"Recover {modifierValue} SP on Attack against Demi-Humans",1
+223,SpGainOnAttackRaceBeast,Racial | SP,"Recover {modifierValue} SP on Attack against Beasts",1
+224,SpGainOnAttackRaceInsect,Racial | SP,"Recover {modifierValue} SP on Attack against Insects",1
+225,SpGainOnAttackRaceAngel,Racial | SP,"Recover {modifierValue} SP on Attack against Angels",1
+226,SpGainOnAttackRaceDragon,Racial | SP,"Recover {modifierValue} SP on Attack against Dragons",1
+227,SpGainOnAttackRaceAquatic,Racial | SP,"Recover {modifierValue} SP on Attack against Aquatics",1
+228,SpGainOnAttackRacePlant,Racial | SP,"Recover {modifierValue} SP on Attack against Plants",1
+229,SpGainOnAttackRaceDemon,Racial | SP,"Recover {modifierValue} SP on Attack against Demons",1
+230,SpGainOnAttackRaceUndead,Racial | SP,"Recover {modifierValue} SP on Attack against Undead",1
+231,SpGainOnKillRaceFormless,Racial | SP,"Recover {modifierValue} SP on Formless Kills",1
+232,SpGainOnKillRaceDemihuman,Racial | SP,"Recover {modifierValue} SP on Demi-Human Kills",1
+233,SpGainOnKillRaceBeast,Racial | SP,"Recover {modifierValue} SP on Beast Kills",1
+234,SpGainOnKillRaceInsect,Racial | SP,"Recover {modifierValue} SP on Insect Kills",1
+235,SpGainOnKillRaceAngel,Racial | SP,"Recover {modifierValue} SP on Angel Kills",1
+236,SpGainOnKillRaceDragon,Racial | SP,"Recover {modifierValue} SP on Dragon Kills",1
+237,SpGainOnKillRaceAquatic,Racial | SP,"Recover {modifierValue} SP on Aquatic Kills",1
+238,SpGainOnKillRacePlant,Racial | SP,"Recover {modifierValue} SP on Plant Kills",1
+239,SpGainOnKillRaceDemon,Racial | SP,"Recover {modifierValue} SP on Demon Kills",1
+240,SpGainOnKillRaceUndead,Racial | SP,"Recover {modifierValue} SP on Undead Kills",1
+241,KnockOutOnAttack,Status | Attack,"{modifierValue}% Chance to Coma",10
+242,KnockOutOnAttackRaceFormless,Racial | Status | Attack,"{modifierValue}% Chance to Coma against Formless",10
+243,KnockOutOnAttackRaceDemihuman,Racial | Status | Attack,"{modifierValue}% Chance to Coma against Demi-Humans",10
+244,KnockOutOnAttackRaceBeast,Racial | Status | Attack,"{modifierValue}% Chance to Coma against Beasts",10
+245,KnockOutOnAttackRaceInsect,Racial | Status | Attack,"{modifierValue}% Chance to Coma against Insects",10
+246,KnockOutOnAttackRaceAngel,Racial | Status | Attack,"{modifierValue}% Chance to Coma against Angels",10
+247,KnockOutOnAttackRaceDragon,Racial | Status | Attack,"{modifierValue}% Chance to Coma against Dragons",10
+248,KnockOutOnAttackRaceAquatic,Racial | Status | Attack,"{modifierValue}% Chance to Coma against Aquatics",10
+249,KnockOutOnAttackRacePlant,Racial | Status | Attack,"{modifierValue}% Chance to Coma against Plants",10
+250,KnockOutOnAttackRaceDemon,Racial | Status | Attack,"{modifierValue}% Chance to Coma against Demons",10
+251,KnockOutOnAttackRaceUndead,Racial | Status | Attack,"{modifierValue}% Chance to Coma against Undead",10
+252,SpConsumption,SP,"SP Consumption {modifierValue}%",1
+253,UninterruptibleCast,Caster,"Uninterruptible Casts",1
+254,KnockbackImmune,None,"Knockback Immune",1
+255,ReverseDefense,Defense,"Enemey DEF is Reversed",1
+256,FullRevive,None,"Fully Revive",1
+257,NoGemstone,None,"Nullify Gemstone Requirement",1
+258,MagicImmunity,None,"Immune to Magic",1
+259,AddHealingPower,HP,"{modifierValue}% Healing Power",1
+260,IgnoreDef,Defense,"Ignore {modifierValue}% DEF",1
+261,IgnoreMDef,Defense,"Ignore {modifierValue}% MDEF",1
+262,OnAttackBlind,Status | Attack,"{modifierValue}% Chance to Blind on Attack",10
+263,OnAttackSilence,Status | Attack,"{modifierValue}% Chance to Silence on Attack",10
+264,OnAttackCurse,Status | Attack,"{modifierValue}% Chance to Curse on Attack",10
+265,OnAttackPoison,Status | Attack,"{modifierValue}% Chance to Poison on Attack",10
+266,OnAttackConfusion,Status | Attack,"{modifierValue}% Chance to Confuse on Attack",10
+267,OnAttackHeavyPoison,Status | Attack,"{modifierValue}% Chance to Heavy Poison on Attack",10
+268,OnAttackBleeding,Status | Attack,"{modifierValue}% Chance to Bleed on Attack",10
+269,OnAttackStun,Status | Attack,"{modifierValue}% Chance to Stun on Attack",10
+270,OnAttackStone,Status | Attack,"{modifierValue}% Chance to Petrify on Attack",10
+271,OnAttackFreeze,Status | Attack,"{modifierValue}% Chance to Freeze on Attack",10
+272,OnAttackSleep,Status | Attack,"{modifierValue}% Chance to Sleep on Attack",10
+273,Range,None,"{modifierValue} Range",1

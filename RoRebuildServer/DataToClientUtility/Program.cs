@@ -43,6 +43,25 @@ class Program
         WriteItemsList();
         WritePatchNotes();
         WriteEmoteData();
+        WriteModList();
+    }
+
+    private static void WriteModList()
+    {
+        var inPath = Path.Combine(path, "Modifiers.csv");
+        var tempPath = Path.Combine(Path.GetTempPath(), @"Modifiers.csv"); //copy in case file is locked
+        File.Copy(inPath, tempPath, true);
+        var modList = new List<ModDescription>();
+        foreach (var entry in GetCsvRows<CsvModifier>(tempPath))
+        {
+            modList.Add(new ModDescription()
+            {
+                ModId = entry.Id,
+                Description = entry.Description
+            });
+            
+        }
+        SaveToClient("modDescriptions.json", modList);
     }
 
     private static void WriteEffectsList()

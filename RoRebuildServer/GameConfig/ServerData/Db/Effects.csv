@@ -125,3 +125,4 @@
 124,ImpositioManus,TRUE,TRUE,FALSE,impositio,,,0,,
 125,LexAeterna,TRUE,TRUE,FALSE,lexaeterna,,,0,,
 126,LexDivina,TRUE,TRUE,FALSE,lexdivina,,,0,,
+127,DropItem,TRUE,TRUE,FALSE,new_dropitem\dropitem_blue\dropitem_blue\dropitem_blue,,,0,,

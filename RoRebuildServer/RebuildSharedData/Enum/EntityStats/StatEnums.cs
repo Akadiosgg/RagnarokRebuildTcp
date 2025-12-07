@@ -37,6 +37,7 @@ public enum PlayerStat
 
 public enum CharacterStat
 {
+    //None = -1,
     Level,
     Hp,
     MaxHp,
@@ -192,7 +193,8 @@ public enum CharacterStat
     AddResistSmallSize,
     AddResistMidSize,
     AddResistLargeSize,
-
+    
+    IgnoreDef,
     IgnoreDefRaceFormless,
     IgnoreDefRaceDemihuman,
     IgnoreDefRaceBeast,
@@ -204,6 +206,7 @@ public enum CharacterStat
     IgnoreDefRaceDemon,
     IgnoreDefRaceUndead,
 
+    IgnoreMDef,
     IgnoreMDefRaceFormless,
     IgnoreMDefRaceDemihuman,
     IgnoreMDefRaceBeast,

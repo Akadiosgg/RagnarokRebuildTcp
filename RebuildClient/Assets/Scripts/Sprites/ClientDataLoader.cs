@@ -68,6 +68,7 @@ namespace Assets.Scripts.Sprites
         private readonly Dictionary<string, ClientMapEntry> mapDataLookup = new();
         private readonly Dictionary<string, string> displaySpriteList = new();
         private readonly Dictionary<string, string> itemDescriptionTable = new();
+        private readonly Dictionary<short, string> modDescriptionTable = new();
         private readonly Dictionary<int, CardPrefixData> cardPrefixPostfixTable = new();
         private readonly Dictionary<int, EmoteData> emoteDataTable = new();
         private readonly Dictionary<int, StatusEffectData> statusEffectData = new();
@@ -96,8 +97,9 @@ namespace Assets.Scripts.Sprites
         private const string JobExpDataPath = "ClientConfigGenerated/jobexpchart.txt";
         private const string EmoteDataPath = "ClientConfigGenerated/emotes.json";
         private const string StatusEffectDataPath = "ClientConfigGenerated/statusinfo.json";
+        private const string ModDescriptionDataPath = "ClientConfigGenerated/modDescriptions.json";
 
-// #if UNITY_WEBGL
+        // #if UNITY_WEBGL
         private string[] streamingAssets = new[]
         {
             "ClientConfigGenerated/effects.json",
@@ -161,6 +163,7 @@ namespace Assets.Scripts.Sprites
         public bool TryGetItemByName(string name, out ItemData item) => itemNameLookup.TryGetValue(name, out item);
         public bool TryGetItemById(int id, out ItemData item) => itemIdLookup.TryGetValue(id, out item);
         public string GetItemDescription(string itemCode) => itemDescriptionTable.GetValueOrDefault(itemCode, "No description available.");
+        public string GetModDescription(short modId) => modDescriptionTable.GetValueOrDefault(modId, "No mod description available.");
         public CardPrefixData GetCardPrefixData(int id) => cardPrefixPostfixTable.GetValueOrDefault(id, null);
         public StatusEffectData GetStatusEffect(int id) => statusEffectData.GetValueOrDefault(id, null);
 
@@ -464,6 +467,10 @@ namespace Assets.Scripts.Sprites
             var itemDescriptions = JsonUtility.FromJson<Wrapper<ItemDescription>>(ReadStreamingAssetFile(ItemDescDataPath));
             foreach (var desc in itemDescriptions.Items)
                 itemDescriptionTable.Add(desc.Code, desc.Description);
+
+            var modDescriptions = JsonUtility.FromJson<Wrapper<ModDescription>>(ReadStreamingAssetFile(ModDescriptionDataPath));
+            foreach (var desc in modDescriptions.Items)
+                modDescriptionTable.Add(desc.ModId, desc.Description);
 
             var notes = JsonUtility.FromJson<Wrapper<PatchNotes>>(ReadStreamingAssetFile(PatchNoteDataPath));
 
