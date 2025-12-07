@@ -58,7 +58,9 @@ public partial class Monster : IEntityAutoReset
 
     private float nextMoveUpdate;
     private double nextAiSkillUpdate;
+
     private float timeofLastStateChange;
+
     //private float timeEnteredCombat;
     private float timeLastCombat;
     private float timeSinceLastDamage;
@@ -66,7 +68,9 @@ public partial class Monster : IEntityAutoReset
     private float createTime;
 
     public void UpdateStateChangeTime() => timeofLastStateChange = Time.ElapsedTimeFloat;
+
     public float TimeInCurrentAiState => Time.ElapsedTimeFloat - timeofLastStateChange;
+
     //private float durationInCombat => Target.IsAlive() ? Time.ElapsedTimeFloat - timeEnteredCombat : -1f;
     public float DurationOutOfCombat => !Target.IsAlive() ? Time.ElapsedTimeFloat - timeLastCombat : -1;
     public float TimeSinceLastDamage => Time.ElapsedTimeFloat - timeSinceLastDamage;
@@ -104,6 +108,7 @@ public partial class Monster : IEntityAutoReset
     private WorldObject? targetCharacter => Target.GetIfAlive<WorldObject>();
 
     public MonsterDatabaseInfo MonsterBase = null!;
+
     //public MapSpawnEntry SpawnEntry;
     public string SpawnMap = null!;
     public MapSpawnRule? SpawnRule;
@@ -119,7 +124,7 @@ public partial class Monster : IEntityAutoReset
     public bool IsInventoryFull => inventoryCount >= InventorySize;
     public int InventoryCount => inventoryCount;
     private const int InventorySize = 20;
-    
+
     public bool LockMovementToSpawn;
     public Area MoveLockZone;
     public bool GivesExperience;
@@ -133,9 +138,10 @@ public partial class Monster : IEntityAutoReset
 
     public bool WasAttacked
     {
-        get; 
+        get;
         set;
     }
+
     public bool WasRudeAttacked;
     public bool LastAttackPhysical;
     public bool WasMagicLocked;
@@ -144,7 +150,7 @@ public partial class Monster : IEntityAutoReset
     public Entity RudeAttacker;
 
     public EntityValueList<int>? TotalDamageReceived;
-    
+
 
     //private WorldObject searchTarget = null!;
 
@@ -211,7 +217,7 @@ public partial class Monster : IEntityAutoReset
             else
                 LastAttackRange = 0;
             ResetAiUpdateTime();
-            if(CurrentAiState != MonsterAiState.StateAttacking && (di.Flags & DamageApplicationFlags.NoHitLock) == 0)
+            if (CurrentAiState != MonsterAiState.StateAttacking && (di.Flags & DamageApplicationFlags.NoHitLock) == 0)
                 Character.StopMovingImmediately();
             WasAttacked = true;
             Character.LastAttacked = di.Source;
@@ -263,7 +269,7 @@ public partial class Monster : IEntityAutoReset
         LastAttackRange = 0;
         AttackSight = 9;
         ChaseSight = 12;
-        if(monsterInventory != null)
+        if (monsterInventory != null)
             ArrayPool<ItemReference>.Shared.Return(monsterInventory, true);
         monsterInventory = null;
         inventoryCount = 0;
@@ -334,7 +340,7 @@ public partial class Monster : IEntityAutoReset
         MonsterBase = info;
         aiType = info.AiType;
         aiEntries = DataManager.GetAiStateMachine(aiType);
-        
+
         Character.Name = info.Name;
         CurrentAiState = MonsterAiState.StateIdle;
 
@@ -362,7 +368,7 @@ public partial class Monster : IEntityAutoReset
         Children ??= EntityListPool.Get();
         Children.Add(child);
 
-        if(newAiType != MonsterAiType.AiEmpty)
+        if (newAiType != MonsterAiType.AiEmpty)
             childMon.MakeChild(ref Entity);
         else
             childMon.MakeChild(ref Entity, newAiType);
@@ -404,7 +410,7 @@ public partial class Monster : IEntityAutoReset
             monsterInventory = ArrayPool<ItemReference>.Shared.Rent(InventorySize);
         monsterInventory[inventoryIndex] = item;
         inventoryIndex++;
-        if(inventoryIndex > inventoryCount)
+        if (inventoryIndex > inventoryCount)
             inventoryCount = inventoryIndex;
         if (inventoryIndex >= InventorySize)
             inventoryIndex = 0;
@@ -451,7 +457,7 @@ public partial class Monster : IEntityAutoReset
         var aspdStat = GetStat(CharacterStat.AspdBonus);
         if (aspdStat != 0)
             aspdBonus *= MathF.Pow(0.99f, aspdStat * MathF.Pow(1.0064f, aspdStat));
-        
+
         var recharge = MonsterBase.RechargeTime * aspdBonus;
         var motionTime = MonsterBase.AttackLockTime;
         var spriteTime = MonsterBase.AttackDamageTiming;
@@ -567,7 +573,6 @@ public partial class Monster : IEntityAutoReset
                     Character.Map.DropGroundItem(ref item);
                     hasDrop = true;
                     dropId++;
-
                 }
             }
 
@@ -611,7 +616,7 @@ public partial class Monster : IEntityAutoReset
                 }
             }
         }
-        
+
         dropId = 3; //bonus drops start north
         if (inventoryCount > 0 && monsterInventory != null)
         {
@@ -635,7 +640,7 @@ public partial class Monster : IEntityAutoReset
 
         TotalDamageReceived.ClearInactive();
         var dmgValues = TotalDamageReceived.InternalValueList;
-        if(dmgValues != null)
+        if (dmgValues != null)
             dmgValues[0] = dmgValues[0] * 130 / 100; //give first attacker a bonus contribution
     }
 
@@ -733,7 +738,7 @@ public partial class Monster : IEntityAutoReset
 
         CurrentAiState = MonsterAiState.StateDead;
         Character.State = CharacterState.Dead;
-        
+
         Character.IsActive = false;
         Character.QueuedAction = QueuedAction.None;
         CombatEntity.IsCasting = false;
@@ -794,7 +799,7 @@ public partial class Monster : IEntityAutoReset
     {
         nextAiUpdate = 0f;
     }
-    
+
     public void AddDelay(float delay)
     {
         //usually to stop a monster from acting after taking fatal damage, but before the damage is applied
@@ -881,7 +886,7 @@ public partial class Monster : IEntityAutoReset
 
     private void ResetFlagsAfterSkillHandler()
     {
-        if(WasAttacked)
+        if (WasAttacked)
             WasAttacked = false;
         WasRudeAttacked = false;
         WasMagicLocked = false;
@@ -899,7 +904,7 @@ public partial class Monster : IEntityAutoReset
         if (CurrentAiState != MonsterAiState.StateAttacking)
         {
             nextAiSkillUpdate = Time.ElapsedTimeFloat + 0.9f + GameRandom.NextFloat(0f, 0.2f); //we'd like to desync mob skill updates if possible
-            if(!Character.HasVisiblePlayers())
+            if (!Character.HasVisiblePlayers())
                 nextAiSkillUpdate += 2f;
         }
 
@@ -919,7 +924,7 @@ public partial class Monster : IEntityAutoReset
                 Target = Entity.Null;
             return false;
         }
-        
+
         if (skillState.CastSuccessEvent != null)
         {
             if (skillState.ExecuteEventAtStartOfCast || (Character.QueuedAction == QueuedAction.None && !CombatEntity.IsCasting))
@@ -975,7 +980,7 @@ public partial class Monster : IEntityAutoReset
 
         if (skillAiHandler == null)
             canResetAttackedState = true;
-        
+
         for (var i = 0; i < aiEntries.Count; i++)
         {
             var entry = aiEntries[i];
@@ -983,7 +988,7 @@ public partial class Monster : IEntityAutoReset
             if (entry.InputState != CurrentAiState)
                 continue;
 #if DEBUG
-            if(ServerConfig.DebugConfig.DebugMapOnly || DebugLogging)
+            if (ServerConfig.DebugConfig.DebugMapOnly || DebugLogging)
                 DebugLog($"Input test {entry.InputCheck}");
 #endif
 
@@ -1004,7 +1009,7 @@ public partial class Monster : IEntityAutoReset
 #if DEBUG
             if (ServerConfig.DebugConfig.DebugMapOnly || DebugLogging)
             {
-                if(OverrideTargetState == 0)
+                if (OverrideTargetState == 0)
                     DebugLog($"Transition {entry.InputCheck} -> {entry.OutputCheck} = {entry.OutputState}");
                 else
                     DebugLog($"Transition {entry.InputCheck} -> {entry.OutputCheck} = {entry.OutputState} (short circuited to {OverrideTargetState})");
@@ -1016,7 +1021,7 @@ public partial class Monster : IEntityAutoReset
             timeofLastStateChange = Time.ElapsedTimeFloat;
 
             //some AI state actions can short circuit the output directly to a target state (particularly chase -> attacking)
-            if (OverrideTargetState == MonsterAiState.StateAny) 
+            if (OverrideTargetState == MonsterAiState.StateAny)
                 continue;
             CurrentAiState = OverrideTargetState;
             OverrideTargetState = MonsterAiState.StateAny;
@@ -1027,7 +1032,7 @@ public partial class Monster : IEntityAutoReset
 
         if (nextAiUpdate < 0)
             return; //we set this to ensure we do an update next frame, so we'll do an update next frame
-        
+
         if (Character.Map != null && Character.Map.PlayerCount == 0)
         {
             nextAiUpdate = Time.ElapsedTime + 2f + GameRandom.NextFloat(0f, 1f);
@@ -1095,7 +1100,7 @@ public partial class Monster : IEntityAutoReset
 
         if (GetStat(CharacterStat.Disabled) > 0 || CombatEntity.IsCasting)
             return;
-        
+
         if (Character.QueuedAction == QueuedAction.None || Character.QueuedAction == QueuedAction.Move)
             AiStateMachineUpdate();
 

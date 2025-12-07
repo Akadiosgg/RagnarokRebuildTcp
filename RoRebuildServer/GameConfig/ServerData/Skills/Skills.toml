@@ -233,12 +233,51 @@ MaxLevel = 10
 SpCost = [14,18,22,26,30,34,38,42,46,50]
 
 [CounterAttack]
+Name = "Counter Attack"
+Icon = "kn_autocounter"
+Target = "Self"
+MaxLevel = 5
+SpCost = [3]
+InterruptMode = "NoInterrupt"
+
 [BowlingBash]
+Name = "Bowling Bash"
+Icon = "kn_bowlingbash"
+Target = "Enemy"
+MaxLevel = 10
+SpCost = [13,14,15,16,17,18,19,20,21,22]
+InterruptMode = "NoInterrupt"
+
 [PecoPecoRiding]
+Name = "Peco Peco Riding"
+Icon = "kn_riding"
+Target = "Passive"
+MaxLevel = 1
+
 [CavalierMastery]
+Name = "Cavalier Mastery"
+Icon = "kn_cavaliermastery"
+Target = "Passive"
+MaxLevel = 5
+
 [SpearMastery]
+Name = "Spear Mastery"
+Icon = "kn_spearmastery"
+Target = "Passive"
+MaxLevel = 10
+
 [Pierce]
+Icon = "kn_pierce"
+Target = "Enemy"
+MaxLevel = 10
+SpCost = [7]
+
 [SpearStab]
+Name = "Spear Stab"
+Icon = "kn_spearstab"
+Target = "Enemy"
+MaxLevel = 10
+SpCost = [9]
 
 [BrandishSpear]
 Name = "Brandish Spear"
@@ -246,9 +285,14 @@ Icon = "kn_brandishspear"
 Target = "Enemy"
 MaxLevel = 10
 SpCost = [12,12,12,12,12,12,12,12,12,12]
-
+InterruptMode = "NoInterrupt"
 
 [SpearBoomerang]
+Name = "Spear Boomerang"
+Icon = "kn_spearboomerang"
+Target = "Enemy"
+MaxLevel = 5
+SpCost = [10]
 
 [ChargeAttack]
 Name = "Charge Attack"
@@ -549,7 +593,7 @@ SpCost = [13,16,19,21,24]
 [KyrieEleison]
 Name = "Kyrie Eleison"
 Icon = "pr_kyrie"
-Target = "Self"
+Target = "Ally"
 MaxLevel = 10
 SpCost = [20,20,20,25,25,25,30,30,30,35]
 
@@ -901,6 +945,9 @@ Icon = "as_splasher"
 Target = "Enemy"
 MaxLevel = 10
 SpCost = [12,14,16,18,20,22,24,26,28,30]
+InterruptMode = "NoInterrupt"
+
+[VenomSplasherDetonation]
 
 [SonicAcceleration]
 [VenomKnife]

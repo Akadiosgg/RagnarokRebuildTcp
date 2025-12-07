@@ -173,7 +173,16 @@ namespace Assets.Scripts.Network.Messaging
             }
         }
 
-        public void  SendDamageEvent(ServerControllable src, float time, int damage, int hitCount, bool isCrit = false, bool takeWeaponSound = true, bool playSound = true, byte attackElement = 0)
+        public void SendBlockEvent(float time)
+        {
+            var msg = EntityMessagePool.Borrow();
+            msg.ActivationTime = Time.timeSinceLevelLoad + time;
+            msg.Type = EntityMessageType.Guard;
+            
+            EnqueueMessage(msg);
+        }
+
+        public void SendDamageEvent(ServerControllable src, float time, int damage, int hitCount, bool isCrit = false, bool takeWeaponSound = true, bool playSound = true, byte attackElement = 0)
         {
 // #if DEBUG
 //             Debug.Log($"Enqueued damage event {damage}x{hitCount} damage, execute after {time}s");

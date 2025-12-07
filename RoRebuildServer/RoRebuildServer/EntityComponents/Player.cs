@@ -40,7 +40,9 @@ public class Player : IEntityAutoReset
     public int StorageId { get; set; }
     public int CharacterSlot { get; set; }
     public string Name { get; set; } = "Uninitialized Player";
+
     public HeadFacing HeadFacing;
+
     //public PlayerData Data { get; set; }
     [ScriptUseable] public bool IsAdmin { get; set; }
     public bool IsInNpcInteraction { get; set; }
@@ -56,6 +58,7 @@ public class Player : IEntityAutoReset
         get;
         set;
     } = new();
+
     [EntityIgnoreNullCheck] public MapMemoLocation[] MemoLocations = new MapMemoLocation[4];
     [EntityIgnoreNullCheck] public List<SkillCastInfo> IndirectCastQueue { get; set; } = null!;
     [EntityIgnoreNullCheck] public Dictionary<int, int>? AttackVersusTag { get; set; }
@@ -86,6 +89,7 @@ public class Player : IEntityAutoReset
     public PlayerFollower PlayerFollower;
     public bool HasCart => (PlayerFollower & PlayerFollower.AnyCart) > 0;
     public bool HasBird => (PlayerFollower & PlayerFollower.Falcon) > 0;
+    public bool HasPeco => (PlayerFollower & PlayerFollower.Mounted) > 0;
 
     public StatusTriggerFlags OnMeleeAttackStatusFlags;
     public StatusTriggerFlags OnRangedAttackStatusFlags;
@@ -105,6 +109,7 @@ public class Player : IEntityAutoReset
             return true;
         return false;
     }
+
     public int MaxLearnedLevelOfSkill(CharacterSkill skill) => LearnedSkills.TryGetValue(skill, out var learned) ? learned : 0;
 
     public int MaxAvailableLevelOfSkill(CharacterSkill skill)
@@ -113,10 +118,12 @@ public class Player : IEntityAutoReset
             LearnedSkills.TryGetValue(skill, out var learned) ? learned : 0,
             GrantedSkills != null && GrantedSkills.TryGetValue(skill, out var granted) ? granted : 0
         );
-
     }
 
-    [ScriptUseable] public int GetNpcFlag(string flag) => NpcFlags != null && NpcFlags.TryGetValue(flag, out var val) ? val : 0;
+    public void SetSkillSpecificCooldown(CharacterSkill skill, float time) => SkillSpecificCooldowns[skill] = Time.ElapsedTimeFloat + time;
+
+    [ScriptUseable]
+    public int GetNpcFlag(string flag) => NpcFlags != null && NpcFlags.TryGetValue(flag, out var val) ? val : 0;
 
     [ScriptUseable]
     public void SetNpcFlag(string flag, int val)
@@ -132,6 +139,7 @@ public class Player : IEntityAutoReset
         get;
         set;
     }
+
     private float regenHpTickTime { get; set; }
     private float regenSpTickTime { get; set; }
     private bool isSittingHpTick;
@@ -139,6 +147,7 @@ public class Player : IEntityAutoReset
 
     private const float HpRegenTickTime = 6f;
     private const float SpRegenTickTime = 6f;
+
     public void ResetRegenTickTime()
     {
         regenHpTickTime = HpRegenTickTime / 2f;
@@ -334,13 +343,14 @@ public class Player : IEntityAutoReset
                 SetData(PlayerStat.Str + i, 1); //should never happen, but lookups will break if they have 0 in any stat so fix it
                 hasStatFix = true;
             }
+
         if (hasStatFix)
             ServerLogger.LogError($"Player {this} initialized with one or more stats set to 0, something must have gone wrong loading their data.");
 
         //if this is their first time logging in, they get a free Knife
         var isNewCharacter = GetData(PlayerStat.Status) == 0 || (Inventory == null && GetData(PlayerStat.Level) <= 3);
         if (GetData(PlayerStat.Level) <= 1 && GetData(PlayerStat.Job) == 0
-            && Equipment.GetEquipmentIdBySlot(EquipSlot.Weapon) <= 0 && Equipment.GetEquipmentIdBySlot(EquipSlot.Body) <= 0)
+                                           && Equipment.GetEquipmentIdBySlot(EquipSlot.Weapon) <= 0 && Equipment.GetEquipmentIdBySlot(EquipSlot.Body) <= 0)
             isNewCharacter = true;
         if (isNewCharacter)
         {
@@ -351,6 +361,7 @@ public class Player : IEntityAutoReset
                 var bagId = AddItemToInventory(item);
                 Equipment.EquipItem(bagId, EquipSlot.Weapon);
             }
+
             if (DataManager.ItemIdByName.TryGetValue("Cotton_Shirt", out var shirt))
             {
                 var item = new ItemReference(shirt, 1);
@@ -363,6 +374,7 @@ public class Player : IEntityAutoReset
                 var item = new ItemReference(apple, 15);
                 AddItemToInventory(item);
             }
+
             SetData(PlayerStat.Status, 1);
             UpdateStats(false, false); //update without sending update because we want to trigger inventory update too
             CombatEntity.FullRecovery(true, true);
@@ -414,8 +426,8 @@ public class Player : IEntityAutoReset
     {
         if (VendingState != null)
         {
-
         }
+
         ReturnToSavePoint();
     }
 
@@ -542,6 +554,7 @@ public class Player : IEntityAutoReset
                 }
             }
         }
+
         packet.Write(sendInventory);
         if (sendInventory)
         {
@@ -813,6 +826,13 @@ public class Player : IEntityAutoReset
         var speedBoost = MathF.Pow(0.99f, aspdBonus);
         var recharge = jobAspd * speedScore * speedBoost;
 
+        if (HasPeco)
+        {
+            var ridingLevel = MaxLearnedLevelOfSkill(CharacterSkill.CavalierMastery);
+            if (ridingLevel < 5)
+                recharge *= 1.5f - ridingLevel * 0.1f;
+        }
+
         //--- old formula -------------------------------------------------------
         /*
         var jobAspd = jobInfo.WeaponTimings[WeaponClass];
@@ -825,7 +845,7 @@ public class Player : IEntityAutoReset
         var speedScore = (agi + dex / 4) * 5 / 3; //agi * 1.6667
         var speedBoost = 1 + ((MathHelper.PowScaleUp(speedScore) - 1) / 4.8f);
         var statSpeedValue = 1f / speedBoost;
-        
+
         var recharge = jobAspd * aspdBonus * statSpeedValue;
         */
         //--- end old formula -------------------------------------------------------
@@ -889,6 +909,8 @@ public class Player : IEntityAutoReset
                 moveBonus = 0.8f; //lower is faster, speed here is capped at +20%. Later peco will push this limit to 0.7 (+30%)
             if (HasCart)
                 moveBonus += 0.05f * (10 - MaxLearnedLevelOfSkill(CharacterSkill.PushCart));
+            if (HasPeco)
+                moveBonus *= 0.75f;
         }
 
         //var moveSpeed = 0.15f - (0.001f * level / 5f);
@@ -1010,6 +1032,13 @@ public class Player : IEntityAutoReset
             case 3: //2hand sword
                 mastery = MaxLearnedLevelOfSkill(CharacterSkill.TwoHandSwordMastery) * 4;
                 break;
+            case 4: //spear
+            case 5: //2hand spear
+                if (HasPeco)
+                    mastery = MaxLearnedLevelOfSkill(CharacterSkill.SpearMastery) * 5;
+                else
+                    mastery = MaxLearnedLevelOfSkill(CharacterSkill.SpearMastery) * 4;
+                break;
             case 8:
             case 9:
                 mastery = MaxLearnedLevelOfSkill(CharacterSkill.MaceMastery) * 4;
@@ -1024,6 +1053,39 @@ public class Player : IEntityAutoReset
             mastery += appraisal * Equipment.MainHandWeapon.WeaponLevel * 2;
 
         SetStat(CharacterStat.WeaponMastery, mastery);
+    }
+
+    public void StartRidingMount()
+    {
+        if (HasPeco)
+            return;
+
+        if (JobId != 7 && JobId != 13)
+        {
+            ServerLogger.LogErrorWithStackTrace($"Player {Character.Name} attempting to mount, but they are not one of the allowed jobs (job {JobId})");
+            return;
+        }
+
+        PlayerFollower |= PlayerFollower.Mounted;
+        SetData(PlayerStat.FollowerType, (int)PlayerFollower);
+        CombatEntity.AddStatusEffect(CharacterStatusEffect.PecoRiding, int.MaxValue);
+
+        RefreshWeaponMastery();
+        UpdateStats(false, false);
+        Character.Map?.RefreshEntity(Character);
+    }
+
+    public void StopRidingMount()
+    {
+        if (HasPeco)
+        {
+            PlayerFollower = 0; //this call will double for removing the bird too
+            SetData(PlayerStat.FollowerType, 0);
+        }
+
+        RefreshWeaponMastery();
+        UpdateStats(false, false);
+        Character.Map?.RefreshEntity(Character);
     }
 
     public void LevelUp()
@@ -1714,17 +1776,15 @@ public class Player : IEntityAutoReset
             {
                 CommandBuilder.RemoveItemFromInventory(this, Equipment.AmmoId, 1);
             }
-
         }
     }
 
-    public DamageInfo CalculateMeleeAttack(CombatEntity target)
+    public DamageInfo CalculateMeleeAttack(CombatEntity target, float multiplier = 1f)
     {
-        var multiplier = 1f;
         var isDualWielding = Character.Player.Equipment.IsDualWielding;
 
         if (isDualWielding)
-            multiplier = 0.5f + MaxLearnedLevelOfSkill(CharacterSkill.RightHandMastery) * 0.1f;
+            multiplier *= 0.5f + MaxLearnedLevelOfSkill(CharacterSkill.RightHandMastery) * 0.1f;
 
         var di = CombatEntity.CalculateCombatResult(target, multiplier, 1, AttackFlags.Physical | AttackFlags.CanCrit);
         var canDoubleAttack = (Character.Player.WeaponClass == 1 ||
@@ -1850,6 +1910,7 @@ public class Player : IEntityAutoReset
                     CommandBuilder.RemoveItemFromInventory(this, Equipment.AmmoId, 1);
                 }
             }
+
             return;
         }
 
@@ -2014,7 +2075,6 @@ public class Player : IEntityAutoReset
             {
                 CommandBuilder.UpdatePartyMembersOfMapChange(this, mapName);
                 CommandBuilder.UpdatePartyMembersOnMapOfHpSpChange(this, true);
-
             }
         }
 
@@ -2045,7 +2105,7 @@ public class Player : IEntityAutoReset
     public void AddInputActionDelay(float time) => InputActionCooldown += time;
 
     private bool InCombatReadyState => (Character.State == CharacterState.Idle || Character.State == CharacterState.Moving)
-        && !CombatEntity.IsCasting && Character.AttackCooldown < Time.ElapsedTimeFloat;
+                                       && !CombatEntity.IsCasting && Character.AttackCooldown < Time.ElapsedTimeFloat;
 
     private bool InMoveReadyState => (Character.State == CharacterState.Idle || Character.State == CharacterState.Moving) && !CombatEntity.IsCasting;
 

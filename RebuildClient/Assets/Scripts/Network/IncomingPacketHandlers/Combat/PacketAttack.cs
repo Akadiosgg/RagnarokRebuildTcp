@@ -87,7 +87,7 @@ namespace Assets.Scripts.Network.IncomingPacketHandlers.Combat
                     //controllable.SetAttackAnimationSpeed(motionTime);
                     controllable.PerformBasicAttackMotion();
                 }
-
+                
                 if (resultType == AttackResult.Miss)
                     controllable.Messages.SendMissEffect(damageTime);
 
@@ -118,13 +118,17 @@ namespace Assets.Scripts.Network.IncomingPacketHandlers.Combat
                     controllable2.Messages.SendMessage(EntityMessageType.LuckyDodge, motionTime);
                     return;
                 }
+                
+                if (result.Result == AttackResult.Block)
+                {
+                    controllable2.Messages.SendBlockEvent(motionTime);
+                    return;
+                }
 
                 if (dmg > 0)
                 {
-                    var dmgSound = false;
-                    if (result.Skill != CharacterSkill.NoCast)
-                        dmgSound = ClientSkillHandler.SkillTakesWeaponSound(skill);
-                    Debug.Log($"Offhand:{hasOffHand} {dmg}x{hits} + {offHand}");
+                    var dmgSound = ClientSkillHandler.SkillTakesWeaponSound(skill);
+                    // Debug.Log($"Offhand:{hasOffHand} {dmg}x{hits} + {offHand}");
                     if (resultType != AttackResult.Invisible)
                     {
                         if (hasOffHand)

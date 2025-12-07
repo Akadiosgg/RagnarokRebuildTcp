@@ -11,7 +11,7 @@ public class PacketSay : IClientPacketHandler
     public void Process(NetworkConnection connection, InboundMessage msg)
     {
         var map = connection.Character?.Map;
-         
+
         if (!connection.IsConnectedAndInGame || map == null)
             return;
 
@@ -68,9 +68,9 @@ public class PacketSay : IClientPacketHandler
         }
         else
             CommandBuilder.AddRecipients(map.Players); //send to everyone on the map
+
         //map.AddVisiblePlayersAsPacketRecipients(connection.Character);
         CommandBuilder.SendSayMulti(connection.Character, connection.Character!.Name, text, type);
         CommandBuilder.ClearRecipients();
     }
-
 }

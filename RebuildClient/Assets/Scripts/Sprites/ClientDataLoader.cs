@@ -11,6 +11,7 @@ using Assets.Scripts.Effects.EffectHandlers;
 using Assets.Scripts.Effects.EffectHandlers.Environment;
 using Assets.Scripts.Effects.EffectHandlers.General;
 using Assets.Scripts.Effects.EffectHandlers.Skills;
+using Assets.Scripts.Effects.EffectHandlers.Skills.Assassin;
 using Assets.Scripts.Effects.EffectHandlers.Skills.Priest;
 using Assets.Scripts.Misc;
 using Assets.Scripts.Network;
@@ -105,7 +106,7 @@ namespace Assets.Scripts.Sprites
             "ClientConfigGenerated/effects.json",
             "ClientConfigGenerated/levelchart.txt",
             "ClientConfig/AdminWarpList.txt",
-            "ClientConfig/fogdata.json",
+            "ClientConfig/fogData.json",
             MapDataPath,
         };
 
@@ -253,7 +254,7 @@ namespace Assets.Scripts.Sprites
                                  + " This can cause the file to be unloadable in a webGL build.");
 #endif
 
-#if !UNITY_WEBGL && !UNITY_EDITOR
+#if !UNITY_WEBGL && !UNITY_EDITOR && !UNITY_ANDROID
             //Non WebGL platforms can read from streaming assets directly.
             return File.ReadAllText(Path.Combine(Application.streamingAssetsPath, file));
 #endif
@@ -650,6 +651,11 @@ namespace Assets.Scripts.Sprites
             else
                 Debug.LogWarning("Failed to find player with id of " + param.ClassId);
 
+            bool isMounted = (param.Follower & PlayerFollower.Mounted) > 0 && (param.ClassId == 7 || param.ClassId == 13);
+            var displayData = pData;
+            if (isMounted)
+                playerClassLookup.TryGetValue(param.ClassId, out displayData);
+
             var go = new GameObject(pData.Name);
             go.layer = LayerMask.NameToLayer("Characters");
             go.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
@@ -673,6 +679,7 @@ namespace Assets.Scripts.Sprites
             var headSprite = head.AddComponent<RoSpriteAnimator>();
 
             control.ClassId = param.ClassId;
+            control.OverrideClassId = isMounted ? param.ClassId + 500 : control.ClassId;
             control.SpriteAnimator = bodySprite;
             control.CharacterType = CharacterType.Player;
             control.SpriteMode = ClientSpriteType.Sprite;
@@ -715,7 +722,7 @@ namespace Assets.Scripts.Sprites
                 shield = 0;
             }
 
-            var bodySpriteName = GetPlayerBodySpriteName(param.ClassId, param.IsMale);
+            var bodySpriteName = GetPlayerBodySpriteName(control.OverrideClassId, param.IsMale);
             var headSpriteName = GetPlayerHeadSpriteName(param.HeadId, param.HairDyeId, param.IsMale);
 
             // bodySpriteName = bodySpriteName.Replace(".spr", "_4.spr");
@@ -822,7 +829,7 @@ namespace Assets.Scripts.Sprites
             {
                 if (!isEffect)
                 {
-                    if (playerWeaponLookup.TryGetValue(ctrl.ClassId, out var weaponsByJob2))
+                    if (playerWeaponLookup.TryGetValue(ctrl.OverrideClassId, out var weaponsByJob2))
                         if (weaponsByJob2.TryGetValue(0, out var unarmed))
                             ctrl.SpriteAnimator.PreferredAttackMotion = ctrl.IsMale ? unarmed.AttackMale : unarmed.AttackFemale;
                     LoadAndAttachWeapon(ctrl, int.MaxValue);
@@ -834,7 +841,7 @@ namespace Assets.Scripts.Sprites
             var data = GetItemById(item);
             if (offHand == 0 && data.Id > 0 && displaySpriteList.TryGetValue(data.Code, out var sprite))
             {
-                var jobName = GetJobNameForId(ctrl.ClassId);
+                var jobName = GetJobNameForId(ctrl.OverrideClassId);
                 var spr = $"Assets/Sprites/Weapons/{jobName}/{(ctrl.IsMale ? $"Male/{jobName}_M_" : $"Female/{jobName}_F_")}{sprite}.spr";
                 if (DoesAddressableExist<RoSpriteData>(spr))
                     weaponSpriteFile = spr;
@@ -842,15 +849,15 @@ namespace Assets.Scripts.Sprites
                     Debug.Log($"Weapon sprite {data.Sprite} could not be loaded for {ctrl.Name} (Full path {spr})");
             }
 
-            if (!playerWeaponLookup.TryGetValue(ctrl.ClassId, out var weaponsByJob))
+            if (!playerWeaponLookup.TryGetValue(ctrl.OverrideClassId, out var weaponsByJob))
                 return;
 
             if (!weaponsByJob.TryGetValue(weaponClass, out var weapon))
             {
                 if(offHand == 0)
-                    Debug.Log($"Could not load default weapon sprite for weapon class {ctrl.WeaponClass} for job {ctrl.ClassId}");
+                    Debug.Log($"Could not load default weapon sprite for weapon class {ctrl.WeaponClass} for job {ctrl.OverrideClassId}");
                 else
-                    Debug.Log($"Could not load default weapon sprite for weapon class {ctrl.WeaponClass}/{offHand} for job {ctrl.ClassId}");
+                    Debug.Log($"Could not load default weapon sprite for weapon class {ctrl.WeaponClass}/{offHand} for job {ctrl.OverrideClassId}");
                 return;
             }
 
@@ -915,7 +922,7 @@ namespace Assets.Scripts.Sprites
             string spriteName;
             if (position == EquipPosition.Shield)
             {
-                var jobName = GetJobNameForId(ctrl.ClassId);
+                var jobName = GetJobNameForId(ctrl.OverrideClassId);
                 spriteName = $"Assets/Sprites/Shields/{jobName}/{(ctrl.IsMale ? $"Male/{jobName}_M_" : $"Female/{jobName}_F_")}{hatSprite}.spr";
             }
             else
@@ -1058,6 +1065,10 @@ namespace Assets.Scripts.Sprites
                 case NpcEffectType.MagnusExorcismus:
                     SanctuaryEffect.Create(control, true);
                     //DummyGroundEffect.Create(obj, "Sanctuary");
+                    break;
+                case NpcEffectType.VenomDust:
+                    //DummyGroundEffect.Create(obj, "VenomDust");
+                    VenomDustEffect.Create(control);
                     break;
                 case NpcEffectType.AnkleSnare:
                     AttachPrefabToControllable(control, "Assets/Effects/Prefabs/ModelAnkleSnare.prefab");

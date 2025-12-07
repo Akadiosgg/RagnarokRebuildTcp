@@ -33,7 +33,9 @@ public enum NpcEffectType : byte
     SkidTrap,
     ShockwaveTrap,
     TalkieBox,
-    
+    FirePillar,
+    VenomDust,
+
     //custom
     LightOrb,
 }

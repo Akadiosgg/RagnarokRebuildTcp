@@ -75,7 +75,7 @@ public partial class Monster
             return true;
 
         //if it's a 1 tile long path we never want to bail early (starting step counts as 1)
-        if (Character.TotalMoveSteps <= 2) 
+        if (Character.TotalMoveSteps <= 2)
             return false;
 
         if (Character.StepsRemaining == 1)
@@ -133,6 +133,7 @@ public partial class Monster
                     return false; //we want to stay in random move while we adjust to a non stacked position
                 }
             }
+
             return true;
         }
 
@@ -356,7 +357,7 @@ public partial class Monster
     {
         if (Character.Map == null || Character.Map.PlayerCount == 0)
             return false;
-        
+
         if (!FindRandomTargetInRange(AttackSight, out var newTarget))
             return false;
 
@@ -512,6 +513,7 @@ public partial class Monster
         }
 
         nextMoveUpdate = Time.ElapsedTimeFloat + GameRandom.NextFloat(4f, 6f); // + extraTime;
+
         //inAdjustMove = false;
 
         return true;
@@ -726,6 +728,7 @@ public partial class Monster
             return true;
 
         CombatEntity.PerformMeleeAttack(targetEntity);
+        CombatEntity.ApplyCooldownForAttackAction(targetEntity);
         Character.QueuedAction = QueuedAction.None;
         timeLastCombat = Time.ElapsedTimeFloat;
         timeOfStartChase = float.MaxValue;

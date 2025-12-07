@@ -53,7 +53,9 @@ public class ScriptBuilder
     //private Dictionary<string, ScriptMethodHandler> methodHandlers = new();
 
     private string className = "";
+
     private string methodName = "";
+
     //private string npcName = "";
     private string stateVariable = "";
     private string localVariable = "";
@@ -164,6 +166,7 @@ public class ScriptBuilder
     {
         StartIndentedBlockLine().AppendLine($"goto case ###{ptr}###;");
     }
+
     public void GotoBlock(int blockId)
     {
         StartIndentedBlockLine().AppendLine($"goto case {blockId};");
@@ -442,6 +445,7 @@ public class ScriptBuilder
                 items.Append(", ");
             items.Append($"\"{item}\"");
         }
+
         itemDefinitions.Add($"DataManager.RegisterComboItem(\"{name}\", new {behaviorName}(), new List<string>() {{ {items} }});");
     }
 
@@ -633,7 +637,6 @@ public class ScriptBuilder
         }
         else
         {
-
             CloseScope();
             if (section == "OnValidate")
             {
@@ -667,7 +670,6 @@ public class ScriptBuilder
 
             foreach (var i in Enum.GetValues<StatusCleanseTarget>())
                 additionalVariables.Add("Status" + i.ToString(), $"StatusCleanseTarget.{i}");
-
         }
 
         foreach (var i in Enum.GetNames<CharacterStat>())
@@ -714,7 +716,6 @@ public class ScriptBuilder
 
         if (section == "OnLoadDropData" || section == "OnSetItemPurchasePrice" || section == "OnSetItemSaleValue")
         {
-
             if (section == "OnLoadDropData")
                 StartIndentedBlockLine().AppendLine($"public override int {section}(ItemClass type, string code, string subType, int rate)");
             else
@@ -753,7 +754,6 @@ public class ScriptBuilder
         }
         else
             throw new Exception($"Invalid ServerConfig section type {section}!");
-
     }
 
 
@@ -998,7 +998,6 @@ public class ScriptBuilder
 
         if (section == "OnSignal")
         {
-
             StartIndentedBlockLine().AppendLine($"public override void {section}(Npc npc, WorldObject src, string signal, int value1, int value2, int value3, int value4)");
             OpenScope();
 
@@ -1399,11 +1398,11 @@ public class ScriptBuilder
             {
                 scriptBuilder.Replace($"###{l.Key}###", l.Value.ToString());
             }
+
             labels.Clear();
         }
 
         UseStateMachine = false;
-
     }
 
     public void OutputTimerMethods()
@@ -1513,5 +1512,4 @@ public class ScriptBuilder
 
         return scriptBuilder.ToString();
     }
-
 }

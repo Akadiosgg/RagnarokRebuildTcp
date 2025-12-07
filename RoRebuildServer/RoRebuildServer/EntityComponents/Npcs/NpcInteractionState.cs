@@ -18,9 +18,9 @@ public class NpcInteractionState
     public Player? Player;
     public int Step;
     public int OptionResult = -1;
-    
+
     public const int StorageCount = 10;
-    
+
     public bool[] ValidOptions = new bool[10];
     public int[] ValuesInt = new int[StorageCount];
     public string?[] ValuesString = new string[StorageCount];
@@ -48,7 +48,7 @@ public class NpcInteractionState
     public void BeginInteraction(ref Entity npc, Player player)
     {
 #if DEBUG
-        if(NpcEntity != Entity.Null || Player != null)
+        if (NpcEntity != Entity.Null || Player != null)
             ServerLogger.LogWarning($"Attempting to begin npc interaction with {npc} but an interaction already appears to exist!");
 #endif
 
@@ -84,7 +84,7 @@ public class NpcInteractionState
         var npc = NpcEntity.Get<Npc>();
         npc.Advance(Player);
     }
-    
+
     public void OptionInteraction(int result)
     {
         if (Player == null)
@@ -98,7 +98,7 @@ public class NpcInteractionState
             CancelInteraction();
             return;
         }
-        
+
         npc.OptionAdvance(Player, result);
     }
 
@@ -129,9 +129,9 @@ public class NpcInteractionState
             Player.Connection.LoadStorageRequest = null;
             return;
         }
+
         Player.Connection.LoadStorageRequest = new StorageLoadRequest(Player.Connection.AccountId);
         RoDatabase.EnqueueDbRequest(Player.Connection.LoadStorageRequest);
-
     }
 
     public void FinishOpeningStorage()
@@ -148,6 +148,7 @@ public class NpcInteractionState
             throw new Exception($"Npc flag '{name}' is too long! It must be 16 or fewer characters in length.");
         Player?.SetNpcFlag(name, value);
     }
+
     public int GetFlag(string name) => Player?.GetNpcFlag(name) ?? 0;
     public int Level => Player?.GetStat(CharacterStat.Level) ?? 0;
     public int JobLevel => Player?.GetData(PlayerStat.JobLevel) ?? 0;
@@ -161,6 +162,7 @@ public class NpcInteractionState
     public bool HasLearnedSkill(CharacterSkill skill, int level = 1) => Player?.DoesCharacterKnowSkill(skill, level) ?? false;
     public bool HasCart => ((Player?.GetData(PlayerStat.FollowerType) ?? 0) & (int)PlayerFollower.AnyCart) > 0;
     public bool HasBird => ((Player?.GetData(PlayerStat.FollowerType) ?? 0) & (int)PlayerFollower.Falcon) > 0;
+    public bool HasPeco => ((Player?.GetData(PlayerStat.FollowerType) ?? 0) & (int)PlayerFollower.Mounted) > 0;
 
     public void FocusNpc()
     {
@@ -176,6 +178,11 @@ public class NpcInteractionState
             return;
 
         CommandBuilder.SendFocusNpc(Player, NpcEntity.Get<Npc>(), false);
+    }
+
+    public void GivePeco()
+    {
+        Player?.StartRidingMount();
     }
 
     public void GiveZeny(int val)
@@ -199,7 +206,7 @@ public class NpcInteractionState
         var bagId = Player.AddItemToInventory(itemRef);
 
         itemRef.Count = Player.Inventory?.GetItemCount(item) ?? 0;
-        
+
         CommandBuilder.AddItemToInventory(Player, itemRef, bagId, count);
     }
 
@@ -215,7 +222,7 @@ public class NpcInteractionState
         }
 
         var item = DataManager.GetItemInfoById(itemId);
-        if(item == null) 
+        if (item == null)
             return false;
 
         if (item.IsUnique)
@@ -295,7 +302,7 @@ public class NpcInteractionState
     {
         if (Player == null) return 0;
 
-        if(!Enum.TryParse(skillName, true, out CharacterSkill skill))
+        if (!Enum.TryParse(skillName, true, out CharacterSkill skill))
             return 0;
 
         return Player.MaxLearnedLevelOfSkill(skill);
@@ -308,10 +315,10 @@ public class NpcInteractionState
 
         if (Player == null)
             return;
-        
+
         CommandBuilder.SendNpcShowSprite(Player, spriteName, pos);
     }
-    
+
     public void Option(params string[] options)
     {
         //Console.WriteLine("Option");
@@ -337,7 +344,6 @@ public class NpcInteractionState
 
     public void PromptForCount(string requestDesc, int maxCount)
     {
-
     }
 
     public void OpenRefineDialog()
@@ -394,14 +400,14 @@ public class NpcInteractionState
 
         var trade = tradeSet[itemEntry];
         var data = DataManager.GetItemInfoById(trade.ItemId);
-        
+
         if (data == null)
         {
             CommandBuilder.ErrorMessage(Player, $"Could not complete the trade.");
             ServerLogger.LogWarning($"Player submitted a FinalizeTradeItem request for item id {trade.ItemId} but the server does not have information about that item.");
             return;
         }
-        
+
         if (trade.IsCrafted && tradeCount != 1)
         {
             CommandBuilder.ErrorMessage(Player, $"Could not complete the trade.");
@@ -499,7 +505,7 @@ public class NpcInteractionState
             return;
         }
 
-        for(var i = 0; i < equippedItems.Length; i++)
+        for (var i = 0; i < equippedItems.Length; i++)
             Player.Equipment.UnEquipItem(equippedItems[i]);
 
         //we have everything we need, take the stuff out of our inventory and give us our item
@@ -508,6 +514,7 @@ public class NpcInteractionState
             Player.Inventory.RemoveItemByBagId(removeIds[i], removeCounts[i]);
             CommandBuilder.RemoveItemFromInventory(Player, removeIds[i], removeCounts[i]);
         }
+
         Player.DropZeny(tradeCount * trade.ZenyCost);
         var newItem = trade.CombinedItem;
         if (newItem.Type == ItemType.UniqueItem)
@@ -529,14 +536,13 @@ public class NpcInteractionState
 
     public void OpenShop(string[] items)
     {
-
     }
 
     public void MoveTo(string mapName, int x, int y)
     {
         MoveTo(mapName, x, y, 1, 1);
     }
-    
+
     public void MoveTo(string mapName, int x, int y, int width, int height)
     {
         //ServerLogger.Log("Warp to " + mapName);
@@ -645,11 +651,9 @@ public class NpcInteractionState
 
     public void EnterVendingState()
     {
-
     }
 
     public void StopVending()
     {
-        
     }
 }

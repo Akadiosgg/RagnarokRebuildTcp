@@ -34,6 +34,8 @@ public struct DamageInfo
     public bool IsIndirect;
     public AttackElement AttackElement;
 
+    public int TotalDamage => Damage * HitCount + DamageOffHand;
+
     public float TimeInSeconds
     {
         get => Single.Max(0, Time - Simulation.Util.Time.ElapsedTimeFloat);
@@ -95,7 +97,7 @@ public struct DamageInfo
         KnockBack = 0;
         Flags = DamageApplicationFlags.NoHitLock;
     }
-    
+
 
     public static DamageInfo SupportSkillResult(Entity src, Entity target, CharacterSkill skill)
     {
