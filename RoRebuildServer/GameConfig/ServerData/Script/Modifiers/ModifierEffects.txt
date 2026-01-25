@@ -270,4 +270,4 @@ Modifier("OnAttackStun") { OnEquip: AddStat(OnRangedAttackStun, ModifierValue); 
 Modifier("OnAttackStone") { OnEquip: AddStat(OnRangedAttackStone, ModifierValue); AddStat(OnMeleeAttackStone, ModifierValue); }
 Modifier("OnAttackFreeze") { OnEquip: AddStat(OnRangedAttackFreeze, ModifierValue); AddStat(OnMeleeAttackFreeze, ModifierValue); }
 Modifier("OnAttackSleep") { OnEquip: AddStat(OnRangedAttackSleep, ModifierValue); AddStat(OnMeleeAttackSleep, ModifierValue); }
-Modifier("Range") { OnEquip: AddStat(Range, ModifierValue); }
+Modifier("AddRange") { OnEquip: AddStat(AddRange, ModifierValue); }

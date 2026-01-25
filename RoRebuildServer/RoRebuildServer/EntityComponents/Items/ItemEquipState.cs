@@ -614,8 +614,6 @@ public class ItemEquipState
             }
         }
 
-        
-
         OnEquipUpdateItemSets(item.Id);
     }
 

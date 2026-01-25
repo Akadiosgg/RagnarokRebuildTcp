@@ -57,7 +57,7 @@ namespace Assets.Scripts.UI.ConfigWindow
         public bool UseSpriteBasedDamageNumbers = false;
         public bool AllowTabToShowWalkTable = false;
         public bool HideShoutChat = false;
-        
+
         public bool EnableXRay = false;
         public bool UseColoredDamageNumbers = true;
 

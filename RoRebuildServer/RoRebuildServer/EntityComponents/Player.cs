@@ -794,9 +794,9 @@ public class Player : IEntityAutoReset
         Character.ClassId = job;
 
         if (WeaponClass == 12) //bow
-            SetStat(CharacterStat.Range, int.Max(1, Equipment.WeaponRange + MaxLearnedLevelOfSkill(CharacterSkill.VultureEye)));
+            SetStat(CharacterStat.Range, int.Max(1, Equipment.WeaponRange + MaxLearnedLevelOfSkill(CharacterSkill.VultureEye) + GetStat(CharacterStat.AddRange)));
         else
-            SetStat(CharacterStat.Range, int.Max(1, Equipment.WeaponRange));
+            SetStat(CharacterStat.Range, int.Max(1, Equipment.WeaponRange + GetStat(CharacterStat.AddRange)));
 
         SetStat(CharacterStat.Str, GetData(PlayerStat.Str));
         SetStat(CharacterStat.Agi, GetData(PlayerStat.Agi));
@@ -813,18 +813,26 @@ public class Player : IEntityAutoReset
         //above that, there's diminishing returns.
         //For example, 0agi/dex +80% apsd (berserk pot/2hq/frenzy) goes from 4.34/sec to 3.54/sec
 
-        var jobAspd = jobInfo.WeaponTimings[Equipment.MainHandWeapon.WeaponClass];
-        if (Equipment.IsDualWielding)
-            jobAspd = (jobAspd + jobInfo.WeaponTimings[Equipment.OffHandWeapon.WeaponClass]) * 0.7f;
+        //var jobAspd = jobInfo.WeaponTimings[Equipment.MainHandWeapon.WeaponClass];
+        //if (Equipment.IsDualWielding)
+            //jobAspd = (jobAspd + jobInfo.WeaponTimings[Equipment.OffHandWeapon.WeaponClass]) * 0.7f;
+        var weaponAttackTime = 0.8f;
+        if (Equipment.MainHandWeapon.WeaponInfo != null)
+        {
+            weaponAttackTime = 1 / Equipment.MainHandWeapon.WeaponInfo.AttackSpeed;
+            if (Equipment.IsDualWielding && Equipment.OffHandWeapon.WeaponInfo != null)
+                weaponAttackTime = (weaponAttackTime + 1 / Equipment.OffHandWeapon.WeaponInfo.AttackSpeed) * 0.7f;
+        }
+
         var aspdBonus = (float)GetStat(CharacterStat.AspdBonus);
-        if (aspdBonus >= 0) aspdBonus *= MathF.Pow(1.0064f, aspdBonus);
+        //if (aspdBonus >= 0) aspdBonus *= MathF.Pow(1.0064f, aspdBonus);
 
         var agi = GetEffectiveStat(CharacterStat.Agi);
         var dex = GetEffectiveStat(CharacterStat.Dex);
 
         var speedScore = 1 - (agi + dex / 4f) / 250f;
-        var speedBoost = MathF.Pow(0.99f, aspdBonus);
-        var recharge = jobAspd * speedScore * speedBoost;
+        var attackSpeed = 100 / (100 + aspdBonus); //MathF.Pow(0.99f, aspdBonus);
+        var recharge = weaponAttackTime * speedScore * attackSpeed;
 
         if (HasPeco)
         {

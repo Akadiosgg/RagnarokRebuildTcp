@@ -60,6 +60,7 @@ public class CsvItemWeapon
     public required string Code { get; set; }
     public required string Name { get; set; }
     public required int Attack { get; set; }
+    public required float AttackSpeed { get; set; }
     public required int Slot { get; set; }
     public required string Type { get; set; }
     public required int Range { get; set; }
@@ -82,6 +83,7 @@ public class CsvItemEquipment
     public required string Code { get; set; }
     public required string Name { get; set; }
     public required int Defense { get; set; }
+    public required int Flee { get; set; }
     public required int MagicDef { get; set; }
     public required int Slot { get; set; }
     public required int Price { get; set; }

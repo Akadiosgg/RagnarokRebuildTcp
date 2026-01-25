@@ -747,7 +747,7 @@ public class Npc : IEntityAutoReset
         CommandBuilder.SendUpdatePlayerData(player, true, false);
 
         return;
-        Error:
+Error:
         CommandBuilder.ErrorMessage(player, $"Could not complete purchase.");
     }
 

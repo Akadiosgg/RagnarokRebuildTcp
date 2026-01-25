@@ -82,7 +82,7 @@ public class GameRandom
 
         return local!.NextDouble().Remap(0, 1, min, max);
     }
-
+    //Randomly chooses index from a weighted list based on the lists total weight and ignores indexes in ignoredIndexes
     public static int WeightedRandomRoll<T>(IReadOnlyList<T> weightList, Func<T, int> weightSelector, int totalWeight, TakenModifierSet ignoredIndexes = default)
     {
         var randomNumber = Next(totalWeight);

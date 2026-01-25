@@ -88,7 +88,7 @@ Dagger,Prefix,AddAttackPower,0,0,10,20,50
 Dagger,Prefix,AddAttackPercent,0,0,3,6,50
 Dagger,Prefix,PureHpDrain,0,0,10,20,50
 Dagger,Prefix,IgnoreDef,0,0,10,20,50
-Dagger,Prefix,Range,0,0,1,1,50
+Dagger,Prefix,AddRange,0,0,1,1,50
 Dagger,Prefix,DoubleAttackChance,0,0,8,15,50
 Dagger,Suffix,AddHit,0,0,10,15,50
 Dagger,Suffix,AddCrit,0,0,5,10,50
@@ -100,7 +100,7 @@ Sword,Prefix,AddAttackPower,0,0,10,20,50
 Sword,Prefix,AddAttackPercent,0,0,3,6,50
 Sword,Prefix,PureHpDrain,0,0,10,20,50
 Sword,Prefix,IgnoreDef,0,0,10,20,50
-Sword,Prefix,Range,0,0,1,1,50
+Sword,Prefix,AddRange,0,0,1,1,50
 Sword,Suffix,AddHit,0,0,10,15,50
 Sword,Suffix,AddCrit,0,0,5,10,50
 Sword,Suffix,AddCritDamage,0,0,5,10,50
@@ -111,7 +111,7 @@ Spear,Prefix,AddAttackPower,0,0,10,20,50
 Spear,Prefix,AddAttackPercent,0,0,3,6,50
 Spear,Prefix,PureHpDrain,0,0,10,20,50
 Spear,Prefix,IgnoreDef,0,0,10,20,50
-Spear,Prefix,Range,0,0,1,1,50
+Spear,Prefix,AddRange,0,0,1,1,50
 Spear,Suffix,AddHit,0,0,10,15,50
 Spear,Suffix,AddCrit,0,0,5,10,50
 Spear,Suffix,AddCritDamage,0,0,5,10,50
@@ -122,7 +122,7 @@ Axe,Prefix,AddAttackPower,0,0,10,20,50
 Axe,Prefix,AddAttackPercent,0,0,3,6,50
 Axe,Prefix,PureHpDrain,0,0,10,20,50
 Axe,Prefix,IgnoreDef,0,0,10,20,50
-Axe,Prefix,Range,0,0,1,1,50
+Axe,Prefix,AddRange,0,0,1,1,50
 Axe,Suffix,AddHit,0,0,10,15,50
 Axe,Suffix,AddCrit,0,0,5,10,50
 Axe,Suffix,AddCritDamage,0,0,5,10,50
@@ -143,7 +143,7 @@ Instrument,Prefix,AddAttackPower,0,0,10,20,50
 Instrument,Prefix,AddAttackPercent,0,0,3,6,50
 Instrument,Prefix,PureHpDrain,0,0,10,20,50
 Instrument,Prefix,IgnoreDef,0,0,10,20,50
-Instrument,Prefix,Range,0,0,1,1,50
+Instrument,Prefix,AddRange,0,0,1,1,50
 Instrument,Suffix,AddHit,0,0,10,15,50
 Instrument,Suffix,AddCrit,0,0,5,10,50
 Instrument,Suffix,AddCritDamage,0,0,5,10,50
@@ -154,7 +154,7 @@ Whip,Prefix,AddAttackPower,0,0,10,20,50
 Whip,Prefix,AddAttackPercent,0,0,3,6,50
 Whip,Prefix,PureHpDrain,0,0,10,20,50
 Whip,Prefix,IgnoreDef,0,0,10,20,50
-Whip,Prefix,Range,0,0,1,1,50
+Whip,Prefix,AddRange,0,0,1,1,50
 Whip,Suffix,AddHit,0,0,10,15,50
 Whip,Suffix,AddCrit,0,0,5,10,50
 Whip,Suffix,AddCritDamage,0,0,5,10,50
@@ -165,7 +165,7 @@ Mace,Prefix,AddAttackPower,0,0,10,20,50
 Mace,Prefix,AddAttackPercent,0,0,3,6,50
 Mace,Prefix,PureHpDrain,0,0,10,20,50
 Mace,Prefix,IgnoreDef,0,0,10,20,50
-Mace,Prefix,Range,0,0,1,1,50
+Mace,Prefix,AddRange,0,0,1,1,50
 Mace,Suffix,AddHit,0,0,10,15,50
 Mace,Suffix,AddCrit,0,0,5,10,50
 Mace,Suffix,AddCritDamage,0,0,5,10,50
@@ -176,7 +176,7 @@ Book,Prefix,AddAttackPower,0,0,10,20,50
 Book,Prefix,AddAttackPercent,0,0,3,6,50
 Book,Prefix,PureHpDrain,0,0,10,20,50
 Book,Prefix,IgnoreDef,0,0,10,20,50
-Book,Prefix,Range,0,0,1,1,50
+Book,Prefix,AddRange,0,0,1,1,50
 Book,Suffix,AddHit,0,0,10,15,50
 Book,Suffix,AddCrit,0,0,5,10,50
 Book,Suffix,AddCritDamage,0,0,5,10,50
@@ -187,7 +187,7 @@ Book,Suffix,OnAttackSilence,0,0,20,40,50
 2HAxe,Prefix,AddAttackPercent,0,0,6,12,50
 2HAxe,Prefix,PureHpDrain,0,0,20,40,50
 2HAxe,Prefix,IgnoreDef,0,0,20,40,50
-2HAxe,Prefix,Range,0,0,1,2,50
+2HAxe,Prefix,AddRange,0,0,1,2,50
 2HAxe,Suffix,AddHit,0,0,15,30,50
 2HAxe,Suffix,AddCrit,0,0,10,20,50
 2HAxe,Suffix,AddCritDamage,0,0,10,20,50
@@ -198,7 +198,7 @@ Book,Suffix,OnAttackSilence,0,0,20,40,50
 2HSword,Prefix,AddAttackPercent,0,0,6,12,50
 2HSword,Prefix,PureHpDrain,0,0,20,40,50
 2HSword,Prefix,IgnoreDef,0,0,20,40,50
-2HSword,Prefix,Range,0,0,1,2,50
+2HSword,Prefix,AddRange,0,0,1,2,50
 2HSword,Suffix,AddHit,0,0,15,30,50
 2HSword,Suffix,AddCrit,0,0,10,20,50
 2HSword,Suffix,AddCritDamage,0,0,10,20,50
@@ -209,7 +209,7 @@ Book,Suffix,OnAttackSilence,0,0,20,40,50
 2HSpear,Prefix,AddAttackPercent,0,0,6,12,50
 2HSpear,Prefix,PureHpDrain,0,0,20,40,50
 2HSpear,Prefix,IgnoreDef,0,0,20,40,50
-2HSpear,Prefix,Range,0,0,1,2,50
+2HSpear,Prefix,AddRange,0,0,1,2,50
 2HSpear,Suffix,AddHit,0,0,15,30,50
 2HSpear,Suffix,AddCrit,0,0,10,20,50
 2HSpear,Suffix,AddCritDamage,0,0,10,20,50
@@ -220,7 +220,7 @@ Book,Suffix,OnAttackSilence,0,0,20,40,50
 2HMace,Prefix,AddAttackPercent,0,0,6,12,50
 2HMace,Prefix,PureHpDrain,0,0,20,40,50
 2HMace,Prefix,IgnoreDef,0,0,20,40,50
-2HMace,Prefix,Range,0,0,1,2,50
+2HMace,Prefix,AddRange,0,0,1,2,50
 2HMace,Suffix,AddHit,0,0,15,30,50
 2HMace,Suffix,AddCrit,0,0,10,20,50
 2HMace,Suffix,AddCritDamage,0,0,10,20,50
@@ -231,7 +231,7 @@ Katar,Prefix,AddAttackPower,0,0,20,40,50
 Katar,Prefix,AddAttackPercent,0,0,6,12,50
 Katar,Prefix,PureHpDrain,0,0,20,40,50
 Katar,Prefix,IgnoreDef,0,0,20,40,50
-Katar,Prefix,Range,0,0,1,2,50
+Katar,Prefix,AddRange,0,0,1,2,50
 Katar,Suffix,AddHit,0,0,15,30,50
 Katar,Suffix,AddCrit,0,0,10,20,50
 Katar,Suffix,AddCritDamage,0,0,10,20,50

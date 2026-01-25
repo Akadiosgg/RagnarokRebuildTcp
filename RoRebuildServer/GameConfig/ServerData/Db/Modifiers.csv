@@ -272,4 +272,4 @@ Id,Name,TypeFlags,Description,DisplayScale
 270,OnAttackStone,Status | Attack,"{modifierValue}% Chance to Petrify on Attack",10
 271,OnAttackFreeze,Status | Attack,"{modifierValue}% Chance to Freeze on Attack",10
 272,OnAttackSleep,Status | Attack,"{modifierValue}% Chance to Sleep on Attack",10
-273,Range,None,"{modifierValue} Range",1
+273,AddRange,None,"{modifierValue} Range",1

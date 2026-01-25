@@ -44,7 +44,7 @@ namespace Assets.Scripts.UI.ConfigWindow
 
             EnableWASDControls.isOn = GameConfig.Data.EnableWASDControls;
 
-            EnableColoredDamageNumbers.isOn = GameConfig.Data.UseColoredDamageNumbers;
+            EnableColoredDamageNumbers.isOn = !GameConfig.Data.UseColoredDamageNumbers;
         }
     }
 }

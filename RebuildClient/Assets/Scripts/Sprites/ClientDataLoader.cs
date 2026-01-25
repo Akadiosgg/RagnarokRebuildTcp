@@ -126,6 +126,7 @@ namespace Assets.Scripts.Sprites
             // MapDataPath,
             EquipmentSpriteDataPath,
             ItemDescDataPath,
+            ModDescriptionDataPath,
             CardPrefixDataPath,
             ServerVersionDataPath,
             PatchNoteDataPath,

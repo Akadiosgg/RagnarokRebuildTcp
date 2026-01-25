@@ -28,7 +28,7 @@ public class StatusPoisonReact : StatusEffectBase
         var isPoison = req.Element == AttackElement.Poison;
         if (!isPoison && attacker.IsElementBaseType(CharacterElement.Poison1))
         {
-            if(info.IsDamageResult || req.SkillSource != CharacterSkill.None)
+            if (info.IsDamageResult || req.SkillSource != CharacterSkill.None)
                 isPoison = true;
         }
 
@@ -37,7 +37,7 @@ public class StatusPoisonReact : StatusEffectBase
             if (ch.Character.Position.DistanceTo(attacker.Character.Position) > 14)
                 return StatusUpdateResult.Continue;
 
-            if(ch.Character.State == CharacterState.Sitting)
+            if (ch.Character.State == CharacterState.Sitting)
                 ch.Character.SitStand(false);
 
             var res = ch.CalculateMeleeAttack(attacker, (0.5f + 0.1f * state.Value1) * state.Value2);
@@ -69,7 +69,7 @@ public class StatusPoisonReact : StatusEffectBase
         var level = 1;
         if (ch.Character.Type == CharacterType.Player)
             level = ch.Player.MaxAvailableLevelOfSkill(CharacterSkill.Envenom);
-        
+
         var skill = new SkillCastInfo()
         {
             Skill = CharacterSkill.Envenom,

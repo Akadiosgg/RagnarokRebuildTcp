@@ -1,4 +1,4 @@
-
+﻿
 using RebuildSharedData.Data;
 using RoRebuildServer.Data;
 using RoRebuildServer.Logging;
@@ -93,19 +93,18 @@ public class ModifierList
 
         for (int i = 0; i < modifierCount; i++)
         {
-            var affixIndex = affixList[i] ? 1 : 0;
-            var modifierWeights = ModifierWeights[affixIndex];
-            var modIndex = GameRandom.WeightedRandomRoll(modifierWeights, x => x.Weight, affixWeights[affixIndex], takenModifiers[affixIndex]);
+            var affixIndex = affixList[i] ? 1 : 0; // 0 = Prefix, 1 = Suffix
+            var modifierWeights = ModifierWeights[affixIndex]; // List of modifier weights for the current affixType and item
+            var modIndex = GameRandom.WeightedRandomRoll(modifierWeights, x => x.Weight, affixWeights[affixIndex], takenModifiers[affixIndex]); // Choose modifier from modifierlist based on weights, excluding already taken mods
             var modifierId = modifierWeights[modIndex].ModifierId;
-            var tierInfoList = Modifiers[affixIndex][modifierId];
-            var tierIndex = GameRandom.WeightedRandomRoll(tierInfoList, x => x.Weight, ModifierWeights[affixIndex][modIndex].Weight);
+            var tierInfoList = Modifiers[affixIndex][modifierId]; // List of tier infos for the chosen modifier
+            var tierIndex = GameRandom.WeightedRandomRoll(tierInfoList, x => x.Weight, ModifierWeights[affixIndex][modIndex].Weight); // Choose tier from tierinfo list based on weights
             var tierInfo = Modifiers[affixIndex][modifierId][tierIndex];
-            var modifierValue = (short)GameRandom.NextInclusive(tierInfo.MinValue, tierInfo.MaxValue);
-            affixWeights[affixIndex] -= ModifierWeights[affixIndex][modIndex].Weight;
+            var modifierValue = (short)GameRandom.NextInclusive(tierInfo.MinValue, tierInfo.MaxValue); // Choose modifier value within the chosen tier's min and max values
+            affixWeights[affixIndex] -= ModifierWeights[affixIndex][modIndex].Weight; // Update affixWeights and takenModifiers to exclude the chosen modifier
             takenModifiers[affixIndex].Add((byte)modIndex);
-            
             item.SetModifierIdAt(i, modifierId);
-            item.SetModifierValueAt(i, modifierValue);  
+            item.SetModifierValueAt(i, modifierValue);
         }
 
     }

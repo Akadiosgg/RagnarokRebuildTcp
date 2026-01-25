@@ -37,8 +37,9 @@ namespace RoRebuildServer.Simulation.StatusEffects._2ndJobs
             state.Value3 = (short)totalDamage;
             if (totalDamage >= state.Value2 || totalDamage > short.MaxValue)
                 return StatusUpdateResult.EndStatus;
-
-            var eleMod = ch.GetElementalReductionForReceivedAttack(null, AttackElement.Poison);
+            
+            var attackElement = AttackElement.Poison;
+            var eleMod = ch.GetElementalReductionForReceivedAttack(null, ref attackElement);
 
             if (totalDamage * eleMod / 100 > ch.GetStat(CharacterStat.Hp))
                 return StatusUpdateResult.EndStatus;

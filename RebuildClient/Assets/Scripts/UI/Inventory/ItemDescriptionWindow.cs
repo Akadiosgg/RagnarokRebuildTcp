@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using Assets.Scripts.PlayerControl;
 using Assets.Scripts.Sprites;
@@ -16,13 +17,16 @@ namespace Assets.Scripts.UI.Inventory
         public Sprite DefaultItemPortrait;
         public Image PortraitContainer;
         public TextMeshProUGUI ItemName;
+        public TextMeshProUGUI ItemType;
         public TextMeshProUGUI ItemDescription;
+        public TextMeshProUGUI ItemWeight;
+        public TextMeshProUGUI ItemLevel;
         public RectTransform WindowRect;
+        public Image ItemWeightIcon;
+        public Image ItemLevelIcon;
 
+        public RectTransform ItemInfo;
         public GameObject CardSocketPanel;
-
-        public GameObject ModPanel;
-        public TextMeshProUGUI ModDescriptions;
 
         public Button ShowIllustrationButton;
 
@@ -66,9 +70,64 @@ namespace Assets.Scripts.UI.Inventory
         private void DisplayDescription(Sprite collection)
         {
             var item = inventoryItem.ItemData;
+            var sb = new StringBuilder();
+            switch(item.ItemClass)
+            {
+                case ItemClass.Equipment:
+                    ItemLevel.enabled = true;
+                    ItemLevelIcon.enabled = true;
+                    ItemType.text = EquipPositionToTypeText(item.Position);
+                    if (item.Defense > 0)
+                        sb.AppendLine($"<color=#606060>Defense:</color> {item.Defense}");
+                    if (item.MagicDef > 0)
+                        sb.AppendLine($"<color=#606060>Magic Defense:</color> {item.MagicDef}");
+                    if (item.Flee > 0)
+                        sb.AppendLine($"<color=#606060>Flee:</color> {item.Flee}");
+                    if (item.MinLvl > 1)
+                        sb.AppendLine($"<color=#606060>Required Level:</color> {item.MinLvl}");
+                    for (var i = 0; i < 8; i++)
+                    {
+                        var modId = inventoryItem.UniqueItem.ModifierIdAt(i);
+                        var modValue = inventoryItem.UniqueItem.ModifierValueAt(i);
+                        if (modId <= 0 || modValue == 0)
+                            continue;
+                        string signedValue = modValue > 0 ? $"+{modValue}" : modValue.ToString();
+                        sb.AppendLine("<color=#000060>" + ClientDataLoader.Instance.GetModDescription(modId).Replace("{modifierValue}", signedValue) + "</color>");
+                    }
+                    break;
+                case ItemClass.Weapon:
+                    ItemLevel.enabled = true;
+                    ItemLevelIcon.enabled = true;
+                    ItemType.text = WeaponClassToTypeText(item.WeaponClass);
+                    if(inventoryItem.UniqueItem.Refine > 0)
+                        sb.AppendLine($"<color=#606060>Attack:</color> <color=#000060>{item.Attack + 2 * inventoryItem.UniqueItem.Refine}</color> ({item.Attack})");
+                    else
+                        sb.AppendLine($"<color=#606060>Attack:</color> {item.Attack}");
+                    sb.AppendLine($"<color=#606060>Attacks per Second:</color> {item.AttackSpeed.ToString("0.0#", CultureInfo.InvariantCulture)}");
+                    if (item.Range > 1)
+                        sb.AppendLine($"<color=#606060>Range:</color> {item.Range}");
+                    if (item.MinLvl > 1)
+                        sb.AppendLine($"<color=#606060>Required Level:</color> {item.MinLvl}");
+                    for (var i = 0; i < 8; i++)
+                    {
+                        var modId = inventoryItem.UniqueItem.ModifierIdAt(i);
+                        var modValue = inventoryItem.UniqueItem.ModifierValueAt(i);
+                        if (modId <= 0 || modValue == 0)
+                            continue;
+                        string signedValue = modValue > 0 ? $"+{modValue}" : modValue.ToString();
+                        sb.AppendLine("<color=#000060>" + ClientDataLoader.Instance.GetModDescription(modId).Replace("{modifierValue}", signedValue) + "</color>");
+                    }
+                    break;
+                default:
+                    ItemLevel.enabled = false;
+                    ItemLevelIcon.enabled = false;
+                    ItemType.text = item.ItemClass.ToString();
+                    break;
+            }
 
             ItemName.text = inventoryItem.ProperName();
-            ItemDescription.text = ClientDataLoader.Instance.GetItemDescription(item.Code);
+            ItemWeight.text = (item.Weight / 10).ToString();
+            ItemDescription.text = ClientDataLoader.Instance.GetItemDescription(item.Code) + sb.ToString();
             PortraitContainer.sprite = collection;
 
             ShowWindow();
@@ -77,6 +136,8 @@ namespace Assets.Scripts.UI.Inventory
 
             ShowIllustrationButton.gameObject.SetActive(item.ItemClass == ItemClass.Card);
 
+
+
             if (!item.IsUnique || (item.Slots <= 0 && inventoryItem.UniqueItem.SlotData(0) <= 0) || CardSocketEntries == null || CardSocketEntries.Count == 0)
             {
                 CardSocketPanel.SetActive(false);
@@ -84,6 +145,7 @@ namespace Assets.Scripts.UI.Inventory
             else
             {
                 CardSocketPanel.SetActive(true);
+                ItemLevel.text = inventoryItem.UniqueItem.ItemLevel.ToString();
                 var hasSlots = item.Slots > 0 && (inventoryItem.UniqueItem.Flags & (byte)UniqueItemFlags.CraftedItem) == 0;
 
                 for (var i = 0; i < CardSocketEntries.Count; i++)
@@ -106,31 +168,59 @@ namespace Assets.Scripts.UI.Inventory
                 }
             }
 
-            var modCount = 0;
-            var sb = new StringBuilder();
-            for (var i = 0; i < 8; i++)
-            {
-                var modId = inventoryItem.UniqueItem.ModifierIdAt(i);
-                var modValue = inventoryItem.UniqueItem.ModifierValueAt(i);
-                if (modId <= 0 || modValue == 0)
-                    continue;
-                modCount++;
-                string signedValue = modValue > 0 ? $"+{modValue}" : modValue.ToString();
-                sb.AppendLine(ClientDataLoader.Instance.GetModDescription(modId).Replace("{modifierValue}", signedValue)); //maybe presplit mod descriptions at {modifierValue} during data load for performance?
-            }
-            
-            if (modCount == 0)
-                ModPanel.SetActive(false);
-            else
-            {
-                ModDescriptions.text = sb.ToString().TrimEnd('\n');
-                ModPanel.SetActive(true);
-            }
-                
-
             ItemDescription.ForceMeshUpdate();
             Vector2 preferredDimensions = ItemDescription.GetPreferredValues(415, 0); //300 minus 20 for margins
-            WindowRect.sizeDelta = new Vector2(626, Mathf.Max(246, preferredDimensions.y + 70));
+            WindowRect.sizeDelta = new Vector2(626, Mathf.Max(260, preferredDimensions.y + 70));
+        }
+
+        public string EquipPositionToTypeText(EquipPosition equipPosition)
+        {
+            switch (equipPosition)
+            {
+                case EquipPosition.HeadUpper:
+                    return "Upper Head";
+                case EquipPosition.HeadMid:
+                    return "Middle Head";
+                case EquipPosition.HeadLower:
+                    return "Lower Head";
+                case EquipPosition.HeadUpper | EquipPosition.HeadMid:
+                    return "Upper & Middle Head";
+                case EquipPosition.HeadMid | EquipPosition.HeadLower:
+                    return "Middle & Lower Head";
+                case EquipPosition.HeadUpper | EquipPosition.HeadLower:
+                    return "Upper & Lower Head";
+                case EquipPosition.HeadUpper | EquipPosition.HeadMid | EquipPosition.HeadLower:
+                    return "Head (All Slots)";
+                case EquipPosition.Body:
+                    return "Armor";
+                case EquipPosition.OffHand:
+                    return "Shield";
+                case EquipPosition.Garment:
+                    return "Garment";
+                case EquipPosition.Footgear:
+                    return "Footgear";
+                case EquipPosition.Accessory:
+                    return "Accessory";
+                default:
+                    return "Unknown";
+            }
+        }
+
+        public string WeaponClassToTypeText(string WeaponClass)
+        {
+            switch (WeaponClass)
+            {
+                case "2HSword":
+                    return "Two-Handed Sword";
+                case "2HSpear":
+                    return "Two-Handed Spear";
+                case "2HRod":
+                    return "Two-Handed Rod";
+                case "2HAxe":
+                    return "Two-Handed Axe";
+                default:
+                    return WeaponClass;
+            }
         }
 
         public void RightClickCardSlot(int slot)

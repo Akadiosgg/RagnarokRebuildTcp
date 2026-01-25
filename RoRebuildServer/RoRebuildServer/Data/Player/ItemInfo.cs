@@ -22,6 +22,7 @@ public class ItemInfo
 public class WeaponInfo
 {
     public int Attack;
+    public float AttackSpeed;
     public int Range;
     public int CardSlots;
     public int WeaponClass;

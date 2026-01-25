@@ -767,6 +767,7 @@ internal class DataLoader
             var weaponInfo = new WeaponInfo()
             {
                 Attack = entry.Attack,
+                AttackSpeed = entry.AttackSpeed,
                 Range = entry.Range,
                 CardSlots = entry.Slot,
                 Element = entry.Property,

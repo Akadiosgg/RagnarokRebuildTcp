@@ -13,15 +13,27 @@ public class ItemData
     public int Weight;
     public int Price;
     public int SellPrice;
-    public int Slots;
-    public int ItemRank;
-    public int SubType;
     public bool IsUnique;
-    public bool IsRefinable;
     public ItemClass ItemClass;
     public ItemUseType UseType;
-    public EquipPosition Position;
     public string Sprite;
+    // For unique items
+    public EquipPosition Position;
+    public bool IsRefinable;
+    public int ItemRank;
+    public int Slots;
+    public int MinLvl;
+    public string EquipGroup;
+    // For weapons
+    public int Attack;
+    public float AttackSpeed;
+    public string WeaponClass;
+    public int Range;
+    public int SubType;
+    // For equipment
+    public int Defense;
+    public int Flee;
+    public int MagicDef;
 }
 
 [Serializable]

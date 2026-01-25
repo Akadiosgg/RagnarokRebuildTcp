@@ -207,8 +207,9 @@ class Program
                 .Replace("<status>", "<color=#800000>")
                 .Replace("</skill>", "</color>")
                 .Replace("</status>", "</color>")
-                .Replace("<desc>", "<color=#808080>")
+                .Replace("<desc>", "<color=#606060>")
                 .Replace("</desc>", "</color>")
+                .Replace("<color=#808080", "<color=#606060")
             ;
     }
 
@@ -258,19 +259,35 @@ class Program
 
                 var l2 = FixDescriptionTags(line);
 
-                if (l2.StartsWith("<color=#808080>"))
+                if (l2.StartsWith("<color=#606060>"))
                     hasDescription = true;
-                if (lineNum > 0)
+
+
+                if(Path.GetFileName(descFile) == "DescWeapons.txt" || Path.GetFileName(descFile) == "DescEquipment.txt")
                 {
-                    if (hasDescription && lineNum == 1 && !string.IsNullOrWhiteSpace(l2.Trim()))
-                        sb.Append("<line-height=120%>\n<line-height=100%>");
+                    if (hasDescription && !string.IsNullOrWhiteSpace(l2.Trim()) && lineNum == 0)
+                    {
+                        sb.Append(l2);
+                        lineNum++;
+                    }
                     else
+                        continue;
+                }
+                else
+                {
+                    if (lineNum > 0)
+                    {
+                        //if (hasDescription && lineNum == 1 && !string.IsNullOrWhiteSpace(l2.Trim()))
+                        //    sb.Append("<line-height=120%>\n<line-height=100%>");
+                        //else
                         sb.Append("\n");
+                    }
+
+                    sb.Append(l2);
+
+                    lineNum++;
                 }
 
-                sb.Append(l2);
-
-                lineNum++;
             }
 
             if (!string.IsNullOrWhiteSpace(curItem) && sb.Length > 0)
@@ -310,12 +327,10 @@ class Program
             if (desc.Contains("[Properties]"))
             {
                 var s = desc.Split("[Properties]");
-                if (s[0].EndsWith("<line-height=120%>\n<line-height=100%>"))
-                    s[0] = s[0].Substring(0, s[0].Length - "<line-height=120%>\n<line-height=100%>".Length);
-                desc = $"{s[0].TrimEnd()}<line-height=120%>\n<line-height=100%>{s[1].Trim()}\nWeight: <color=#777777>{item.Weight / 10f:0.#}</color>";
+                if (s[0].EndsWith("\n"))
+                    s[0] = s[0].Substring(0, s[0].Length - "\n".Length);
+                desc = $"{s[0].TrimEnd()}\n{s[1].Trim()}";
             }
-            else
-                desc += $"<line-height=120%>\n</line-height=100%>Weight: <color=#777777>{item.Weight / 10f:0.#}</color>";
 
             itemDescriptions.Add(new ItemDescription() { Code = item.Code, Description = desc });
         }
@@ -347,7 +362,8 @@ class Program
             else
                 desc = curDesc;
 
-            desc += $"<line-height=120%>\n</line-height=100%>Weight: <color=#777777>{item.Weight / 10f}</color>";
+            desc += "\n";
+            //desc += $"<line-height=120%>\n</line-height=100%>Weight: <color=#777777>{item.Weight / 10f}</color>";
             itemDescriptions.Add(new ItemDescription() { Code = item.Code, Description = desc });
         }
 
@@ -371,7 +387,13 @@ class Program
                 Weight = entry.Weight,
                 Sprite = entry.Sprite,
                 Position = entry.Position == WeaponPosition.MainHand ? EquipPosition.MainHand : EquipPosition.BothHands,
-                SubType = classDef.Id
+                SubType = classDef.Id,
+                Attack = entry.Attack,
+                AttackSpeed = entry.AttackSpeed,
+                Range = entry.Range,
+                WeaponClass = entry.Type,
+                MinLvl = entry.MinLvl,
+                EquipGroup = entry.EquipGroup
             };
             itemList.Items.Add(item);
 
@@ -379,6 +401,7 @@ class Program
                 displaySpriteList.AppendLine($"{entry.Code}\t{entry.WeaponSprite}");
 
             //fill in item description data
+
             if (!itemDescLookup.TryGetValue(item.Code, out var curDesc))
             {
                 missingItemDescriptions.Add(entry.Code);
@@ -387,33 +410,37 @@ class Program
             else
                 desc = curDesc;
 
-            var breakable = entry.Breakable.ToLower() == "yes";
-            var refinable = entry.Refinable.ToLower() == "yes";
+            desc += "\n";
+            //var breakable = entry.Breakable.ToLower() == "yes";
+            //var refinable = entry.Refinable.ToLower() == "yes";
 
 
-            var equipGroup = equipGroupDescriptions.TryGetValue(entry.EquipGroup, out var groupName) ? groupName : "<i>Currently unequippable by any job</i>";
-            desc += $"<line-height=120%>\n</line-height=100%>";
+            //var equipGroup = equipGroupDescriptions.TryGetValue(entry.EquipGroup, out var groupName) ? groupName : "<i>Currently unequippable by any job</i>";
+
             //desc += $"<line-height=120%>\n</line-height=100%>Type: <color=#777777>Weapon</color>";
-            desc += $"Class: <color=#777777>{classDef.Name}</color>\n";
+            //desc += $"Class: <color=#777777>{classDef.Name}</color>\n";
 
-            if (classDef.Name == "Bow" && classDef.Name == "Rod")
-                breakable = true; //this isn't actually true but we don't need to show this value for bows and rods
+            //if (classDef.Name == "Bow" && classDef.Name == "Rod")
+            //    breakable = true; //this isn't actually true but we don't need to show this value for bows and rods
 
-            if (!breakable && !refinable)
-                desc += "Durability: <color=#777777>Unbreakable, Unrefinable</color>\n";
-            else if (!refinable)
-                desc += "Durability: <color=#777777>Unrefinable</color>\n";
-            else if (!breakable)
-                desc += "Durability: <color=#777777>Unbreakable</color>\n";
+            //if (!breakable && !refinable)
+            //    desc += "Durability: <color=#777777>Unbreakable, Unrefinable</color>\n";
+            //else if (!refinable)
+            //    desc += "Durability: <color=#777777>Unrefinable</color>\n";
+            //else if (!breakable)
+            //    desc += "Durability: <color=#777777>Unbreakable</color>\n";
+            //desc += $"<line-height=120%>\n</line-height=100%>";
+            //desc += "\n<color=#777777>Attack:</color> {Attack}";
+            //desc += "\n<color=#777777>Attack Speed:</color> {AttackSpeed}";
+            //if (entry.Property != AttackElement.Neutral && entry.Property != AttackElement.None)
+            //    desc += $"Property: <color=#777777>{entry.Property}</color>\n";
+            //desc += "Weight: <color=#777777>{Weight}</color>\n";
+            //desc += $"Weapon Level: <color=#777777>{entry.Rank}</color>\n";
+            //if (entry.MinLvl > 1)
+            //    desc += "\n<color=#777777>Required Level:</color> {MinLvl}";
+            //desc += $"Jobs: <color=#777777>{equipGroup}</color>";
+            //desc += "Item Level: <color=#c0c0c0>{ItemLevel}</color>\n";
 
-            desc += $"Attack: <color=#777777>{entry.Attack}</color>\n";
-            if (entry.Property != AttackElement.Neutral && entry.Property != AttackElement.None)
-                desc += $"Property: <color=#777777>{entry.Property}</color>\n";
-            desc += $"Weight: <color=#777777>{item.Weight / 10f}</color>\n";
-            desc += $"Weapon Level: <color=#777777>{entry.Rank}</color>\n";
-            if (entry.MinLvl > 1)
-                desc += $"Required Level: <color=#777777>{entry.MinLvl}</color>\n";
-            desc += $"Jobs: <color=#777777>{equipGroup}</color>";
             itemDescriptions.Add(new ItemDescription() { Code = item.Code, Description = desc });
         }
 
@@ -437,7 +464,11 @@ class Program
                 SellPrice = itemData.SellToStoreValue,
                 Weight = entry.Weight,
                 Sprite = entry.Sprite,
-                Position = pos
+                Position = pos,
+                Flee = entry.Flee,
+                Defense = entry.Defense,
+                MagicDef = entry.MagicDef,
+                MinLvl = entry.MinLvl,
             };
             itemList.Items.Add(item);
 
@@ -453,58 +484,58 @@ class Program
             else
                 desc = curDesc;
 
+            desc += "\n";
+            //var equipGroup = equipGroupDescriptions.TryGetValue(entry.EquipGroup, out var groupName) ? groupName : "<i>Currently unequippable by any job</i>";
+            //var type = entry.Type switch
+            //{
+            //    EquipPosition.Headgear => "Headgear",
+            //    EquipPosition.Armor => "Body",
+            //    EquipPosition.Boots => "Footgear",
+            //    EquipPosition.Garment => "Garment",
+            //    EquipPosition.Accessory => "Accessory",
+            //    EquipPosition.Shield => "Shield",
+            //    _ => "Unknown"
+            //};
 
-            var equipGroup = equipGroupDescriptions.TryGetValue(entry.EquipGroup, out var groupName) ? groupName : "<i>Currently unequippable by any job</i>";
-            var type = entry.Type switch
-            {
-                EquipPosition.Headgear => "Headgear",
-                EquipPosition.Armor => "Body",
-                EquipPosition.Boots => "Footgear",
-                EquipPosition.Garment => "Garment",
-                EquipPosition.Accessory => "Accessory",
-                EquipPosition.Shield => "Shield",
-                _ => "Unknown"
-            };
+            //if (entry.Type == EquipPosition.Headgear)
+            //{
+            //    var headPosition = entry.Position switch
+            //    {
+            //        HeadgearPosition.Top => "Top",
+            //        HeadgearPosition.Mid => "Mid",
+            //        HeadgearPosition.Bottom => "Lower",
+            //        HeadgearPosition.TopMid => "Top + Mid",
+            //        HeadgearPosition.TopBottom => "Top + Lower",
+            //        HeadgearPosition.MidBottom => "Mid + Lower",
+            //        HeadgearPosition.All => "All",
+            //        _ => "N/A"
+            //    };
+            //    type += $" ({headPosition})";
+            //}
 
-            if (entry.Type == EquipPosition.Headgear)
-            {
-                var headPosition = entry.Position switch
-                {
-                    HeadgearPosition.Top => "Top",
-                    HeadgearPosition.Mid => "Mid",
-                    HeadgearPosition.Bottom => "Lower",
-                    HeadgearPosition.TopMid => "Top + Mid",
-                    HeadgearPosition.TopBottom => "Top + Lower",
-                    HeadgearPosition.MidBottom => "Mid + Lower",
-                    HeadgearPosition.All => "All",
-                    _ => "N/A"
-                };
-                type += $" ({headPosition})";
-            }
-
-            desc += $"<line-height=120%>\n</line-height=100%>Type: <color=#777777>{type}</color>";
+            //desc += $"<line-height=120%>\n</line-height=100%>Type: <color=#777777>{type}</color>";
 
             //this is a mess, but basically you can't refine or break accessories or headgear that don't occupy the top headgear slot
-            bool IsMidOrLower(HeadgearPosition p) => ((p & HeadgearPosition.Mid) > 0 || (p & HeadgearPosition.Bottom) > 0);
+            //bool IsMidOrLower(HeadgearPosition p) => ((p & HeadgearPosition.Mid) > 0 || (p & HeadgearPosition.Bottom) > 0);
 
-            if (entry.Type != EquipPosition.Accessory)
-            {
-                if (entry.Breakable.ToLower() == "no" && entry.Refinable.ToLower() == "no" && !IsMidOrLower(entry.Position))
-                    desc += "\nDurability: <color=#777777>Unbreakable, Unrefinable</color>";
-                else if (entry.Refinable.ToLower() == "no" && (entry.Type != EquipPosition.Headgear || (entry.Position & HeadgearPosition.Top) > 0))
-                    desc += "\nDurability: <color=#777777>Unrefinable</color>";
-                else if (entry.Breakable.ToLower() == "no" && !IsMidOrLower(entry.Position))
-                    desc += "\nDurability: <color=#777777>Unbreakable</color>";
-            }
+            //if (entry.Type != EquipPosition.Accessory)
+            //{
+            //    if (entry.Breakable.ToLower() == "no" && entry.Refinable.ToLower() == "no" && !IsMidOrLower(entry.Position))
+            //        desc += "\n<color=#777777>Durability:</color> Unbreakable, Unrefinable";
+            //    else if (entry.Refinable.ToLower() == "no" && (entry.Type != EquipPosition.Headgear || (entry.Position & HeadgearPosition.Top) > 0))
+            //        desc += "\n<color=#777777>Durability:</color> Unrefinable";
+            //    else if (entry.Breakable.ToLower() == "no" && !IsMidOrLower(entry.Position))
+            //        desc += "\n<color=#777777>Durability:</color> Unbreakable";
+            //}
 
-            desc += $"\nDefense: <color=#777777>{entry.Defense}</color>";
-            if (entry.MagicDef > 0)
-                desc += $"\nMagic Defense: <color=#777777>{entry.MagicDef}</color>";
-            desc += $"\nWeight: <color=#777777>{item.Weight / 10f}</color>";
-            if (entry.MinLvl > 1)
-                desc += $"\nRequired Level: <color=#777777>{entry.MinLvl}</color>";
-            if (entry.EquipGroup != "AllJobs")
-                desc += $"\nJobs: <color=#777777>{equipGroup}</color>";
+            //desc += $"\n<color=#777777>Defense:</color> {entry.Defense}";
+            //if (entry.MagicDef > 0)
+            //    desc += $"\n<color=#777777>Magic Defense:</color> {entry.MagicDef}";
+            //desc += $"\n<color=#777777>Weight:</color> {item.Weight / 10f}";
+            //if (entry.MinLvl > 1)
+            //    desc += $"\n<color=#777777>Required Level:</color> {entry.MinLvl}";
+            //if (entry.EquipGroup != "AllJobs")
+            //    desc += $"\n<color=#777777>Jobs:</color> {equipGroup}";
             itemDescriptions.Add(new ItemDescription() { Code = item.Code, Description = desc });
         }
 
@@ -551,9 +582,8 @@ class Program
                 desc = curDesc;
 
             //desc = "<color=#808080>A card with an illustration of a monster on it.</color>";
-            desc += "<line-height=120%>\n</line-height=100%>";
-            desc += $"Sockets In: <color=#777777>{type}</color>";
-            desc += $"\nWeight: <color=#777777>{item.Weight / 10f}</color>";
+            desc += "\n";
+            desc += $"<color=#777777>Sockets In:</color> {type}";
             itemDescriptions.Add(new ItemDescription() { Code = item.Code, Description = desc });
         }
 
@@ -589,10 +619,9 @@ class Program
             else
                 desc = curDesc;
 
-            desc += $"<line-height=120%>\n</line-height=100%>Attack: <color=#777777>{entry.Attack}</color>\n";
+            desc += $"\n<color=#777777>Attack:</color> {entry.Attack}\n";
             if (entry.Property != AttackElement.Neutral && entry.Property != AttackElement.None)
-                desc += $"Property: <color=#777777>{entry.Property}</color>\n";
-            desc += $"Weight: <color=#777777>{item.Weight / 10f:0.#}</color>";
+                desc += $"<color=#777777>Property:</color> {entry.Property}\n";
             itemDescriptions.Add(new ItemDescription() { Code = item.Code, Description = desc });
         }
 
@@ -602,7 +631,6 @@ class Program
 
         var json = JsonSerializer.Serialize(itemList, options);
         var itemDir = Path.Combine(outPath, "items.json");
-
 
         var cardJson = JsonSerializer.Serialize(prefixList, options);
         var cardDir = Path.Combine(outPath, "cardprefixes.json");
