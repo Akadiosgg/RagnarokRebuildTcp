@@ -537,7 +537,7 @@ public partial class CombatEntity
 
             if (attackerType == CharacterType.Player && isPhysical) //only players and physical attacks get these bonuses
             {
-                racialMod += racialMod * GetStat(CharacterStat.AddAttackRaceFormless + (int)targetRace) / 100;
+                racialMod += racialMod * GetStat(CharacterStat.AddAttackRaceFormless + (int)targetRace) / 100; //stack multiplicatively with race% resist modifiers
 
                 //damage/resist vs tag
                 if (defenderType == CharacterType.Monster)
@@ -598,7 +598,7 @@ public partial class CombatEntity
 
         //physical defense
         if (!flags.HasFlag(AttackFlags.IgnoreDefense))
-            (defCut, subDef) = target.GetDefenseReductionForReceivedAttack(this, 0, flags, defMod, mdefMod);
+            (defCut, subDef) = target.GetDefenseReductionForReceivedAttack(this, attackerPenalty, flags, defMod, 100);
 
         //------------------------------
         // Combined damage calculation

@@ -10,6 +10,7 @@ using RebuildSharedData.Enum.EntityStats;
 using RoRebuildServer.Data;
 using RoRebuildServer.EntityComponents.Character;
 using RoRebuildServer.Simulation.Items;
+using RoRebuildServer.Simulation.Util;
 
 namespace RoRebuildServer.Simulation.Skills.SkillHandlers;
 
@@ -19,6 +20,9 @@ public abstract class SkillHandlerTrap : SkillHandlerBase
     protected abstract CharacterSkill SkillType();
     protected virtual int Catalyst() => -1;
     protected virtual int CatalystCount() => 1;
+
+    protected virtual Map.AoEOverlapCheckType GetOverlapType(CombatEntity src) =>
+        src.Character.Type == CharacterType.Player ? Map.AoEOverlapCheckType.NoOverlap : Map.AoEOverlapCheckType.TileInArea;
 
     public override SkillValidationResult ValidateTarget(CombatEntity source, CombatEntity? target, Position position,
         int lvl, bool isIndirect, bool isItemSource)
@@ -58,7 +62,7 @@ public abstract class SkillHandlerTrap : SkillHandlerBase
             distance = 0;
 
         var effectiveArea = Area.CreateAroundPoint(position, distance);
-        if (map.DoesAreaOverlapWithTrapsOrCharacters(effectiveArea))
+        if (map.DoesAreaOverlapWithTrapsOrCharacters(effectiveArea, GetOverlapType(source)))
         {
             if (source.Character.Type == CharacterType.Player)
                 CommandBuilder.SkillFailed(source.Player, SkillValidationResult.TrapTooClose);
@@ -98,6 +102,24 @@ public abstract class TrapBaseEvent : NpcBehaviorBase
     protected virtual bool AllowAutoAttackMove => false;
     protected virtual bool BlockMultipleActivations => true;
     protected virtual bool InheritOwnerFacing => false;
+    public virtual bool CanBeRemoved => true;
+    public virtual bool CanBeTriggered => true;
+    public virtual int ReturnItemOnRemoval => 1065; //trap
+
+    protected int SkillLevel(Npc npc) => npc.ValuesInt[(int)TrapValue.SkillLevel];
+
+    private protected enum TrapValue : byte
+    {
+        SkillLevel = 0,
+        ActiveDuration = 1,
+        TriggeredFlag = 2,
+        TargetData = 3
+    }
+
+    public virtual bool CanBeAutoAttacked => AllowAutoAttackMove;
+
+    //private void SetValue(Npc npc, TrapValue flag, int value) => npc.ValuesInt[(int)flag] = value;
+    //private int GetValue(Npc npc, TrapValue flag) => npc.ValuesInt[(int)flag];
 
     public override void InitEvent(Npc npc, int param1, int param2, int param3, int param4, string? paramString)
     {
@@ -118,9 +140,9 @@ public abstract class TrapBaseEvent : NpcBehaviorBase
         }
 
         npc.RevealAsEffect(EffectType(), "");
-        npc.ValuesInt[0] = param1;
-        npc.ValuesInt[2] = 0;
-
+        npc.ValuesInt[(int)TrapValue.SkillLevel] = param1;
+        npc.ValuesInt[(int)TrapValue.TriggeredFlag] = 0;
+        npc.ValuesInt[(int)TrapValue.TargetData] = -1;
 
         var ce = npc.Character.CombatEntity;
         ce.SetStat(CharacterStat.MaxHp, 5);
@@ -136,7 +158,7 @@ public abstract class TrapBaseEvent : NpcBehaviorBase
         };
 
         var aoe = World.Instance.GetNewAreaOfEffect();
-        aoe.Init(npc.Character, Area.CreateAroundPoint(npc.Character.Position, 1), AoeType.SpecialEffect, targeting, Duration(npc.ValuesInt[0]), 0.25f, 0, 0);
+        aoe.Init(npc.Character, Area.CreateAroundPoint(npc.Character.Position, 1), AoeType.SpecialEffect, targeting, Duration(npc.ValuesInt[(int)TrapValue.SkillLevel]), 0.25f, 0, 0);
         aoe.TriggerOnFirstTouch = true;
         aoe.CheckStayTouching = false; //if they die or something in the aoe and lose their status we want to give it back promptly
         aoe.Class = AoEClass.Trap;
@@ -144,6 +166,7 @@ public abstract class TrapBaseEvent : NpcBehaviorBase
 
         npc.AreaOfEffect = aoe;
         npc.Character.Map!.CreateAreaOfEffect(aoe);
+        npc.Character.State = CharacterState.Idle;
         npc.StartTimer(50);
     }
 
@@ -153,7 +176,11 @@ public abstract class TrapBaseEvent : NpcBehaviorBase
             return false;
         if (attacker.Character.Type == CharacterType.Monster)
             return false;
-        if (skill == CharacterSkill.None) return AllowAutoAttackMove;
+        if (battleNpc.Character.State == CharacterState.Activated)
+            return false;
+        if (skill == CharacterSkill.None)
+            return true;
+        //if (skill == CharacterSkill.None) return AllowAutoAttackMove; //don't do this, skill will always be null in most checks
 
         var attr = SkillHandler.GetSkillAttributes(skill);
         return attr.SkillTarget == SkillTarget.Ground && attr.SkillClassification == SkillClass.Physical;
@@ -182,65 +209,88 @@ public abstract class TrapBaseEvent : NpcBehaviorBase
 
     public override void OnTimer(Npc npc, float lastTime, float newTime)
     {
-        if (newTime > Duration(npc.ValuesInt[0]))
+        if (npc.Character.State == CharacterState.Activated)
         {
-            OnNaturalExpiration(npc);
-            npc.EndEvent();
+            if (newTime > npc.TimerEnd)
+            {
+                //OnTrapRemoval(npc);
+                npc.EndEvent();
+            }
+
+            return;
         }
 
-        if (npc.ValuesInt[2] > 0)
+        if (newTime > Duration(npc.ValuesInt[(int)TrapValue.SkillLevel]))
+        {
+            if (OnNaturalExpiration(npc))
+            {
+                //OnTrapRemoval(npc);
+                npc.EndEvent();
+                return;
+            }
+        }
+
+        if (npc.ValuesInt[(int)TrapValue.TriggeredFlag] > 0)
+        {
+            //OnTrapRemoval(npc);
             npc.EndEvent();
+            return;
+        }
     }
 
-    public virtual void OnNaturalExpiration(Npc npc) { }
+    public virtual bool OnNaturalExpiration(Npc npc) => HunterTrapExpiration(npc);
 
-    protected void HunterTrapExpiration(Npc npc)
+    protected bool HunterTrapExpiration(Npc npc)
     {
         if (npc.Owner.TryGet<WorldObject>(out var owner) && owner.Type != CharacterType.Player)
-            return;
+            return true;
 
         var item = new GroundItem(npc.Character.Position, 1065, 1);
         npc.Character.Map?.DropGroundItem(ref item);
+
+        return true;
     }
 
-    public abstract bool TriggerTrap(Npc npc, CombatEntity src, CombatEntity target, int skillLevel);
+    public bool ActivateTrapWithoutTouchEvent(Npc npc)
+    {
+        if (!npc.Owner.TryGet<CombatEntity>(out var owner))
+        {
+            ChangeToActivatedState(npc, 1f);
+            return false;
+        }
+
+        TriggerTrap(npc, owner, null, npc.ValuesInt[(int)TrapValue.SkillLevel]);
+        return false;
+    }
+
+    public abstract bool TriggerTrap(Npc npc, CombatEntity src, CombatEntity? target, int skillLevel);
 
     public override void OnAoEInteraction(Npc npc, CombatEntity target, AreaOfEffect aoe)
     {
-        if (npc.Character == target.Character || target.Character.ClassId == 3999)
+        if (npc.Character == target.Character || target.Character.ClassId == 3999 || npc.Character.State == CharacterState.Activated || target.Character.State == CharacterState.Dead)
             return;
 
-        if (BlockMultipleActivations && npc.ValuesInt[2] > 0)
+        if (BlockMultipleActivations && npc.ValuesInt[(int)TrapValue.TriggeredFlag] > 0)
             return;
 
         if (!npc.Owner.TryGet<CombatEntity>(out var owner) || owner.Character.Map != npc.Character.Map)
         {
-            npc.ValuesInt[2] = 1;
+            npc.ValuesInt[(int)TrapValue.TriggeredFlag] = 1;
         }
         else
         {
-            if (TriggerTrap(npc, owner, target, npc.ValuesInt[0]))
-                npc.ValuesInt[2] = 1;
+            if (!target.IsValidTarget(owner, false, false))
+                return;
+            if (TriggerTrap(npc, owner, target, npc.ValuesInt[(int)TrapValue.SkillLevel]))
+                npc.ValuesInt[(int)TrapValue.TriggeredFlag] = 1;
         }
     }
 
-    private static int FlyingTag = -1;
-
-    protected bool IsFlying(CombatEntity target)
+    protected void ChangeToActivatedState(Npc npc, float newActiveDurationTime = 2f)
     {
-        if (target.Character.Type != CharacterType.Monster)
-            return false;
-
-        if (FlyingTag == -1)
-        {
-            if (!DataManager.TagToIdLookup.TryGetValue("Flying", out FlyingTag))
-                return false;
-        }
-
-        var mb = target.Character.Monster.MonsterBase;
-        if (mb.Code == "CLOCK")
-            return false; //I really should do something better for this, but I want them trappable but still affected by cards that work against flying
-
-        return target.Character.Monster.MonsterBase.Tags?.Contains(FlyingTag) ?? false;
+        npc.Character.State = CharacterState.Activated;
+        CommandBuilder.SendChangeActivatedStateAutoVis(npc.Character);
+        npc.ResetTimer();
+        npc.TimerEnd = newActiveDurationTime;
     }
 }

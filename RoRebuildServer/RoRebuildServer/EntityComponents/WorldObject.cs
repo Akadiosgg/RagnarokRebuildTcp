@@ -68,10 +68,10 @@ public class WorldObject : IEntityAutoReset
         {
             cellPosition = value;
             WorldPosition = value; //cast to FloatPosition
-//#if DEBUG
-//            if (Map != null && !Map.GetChunkForPosition(cellPosition).AllEntities.Contains(Entity))
-//                throw new Exception("OHNO!");
-//#endif
+            //#if DEBUG
+            //            if (Map != null && !Map.GetChunkForPosition(cellPosition).AllEntities.Contains(Entity))
+            //                throw new Exception("OHNO!");
+            //#endif
         }
     }
 
@@ -511,6 +511,15 @@ public class WorldObject : IEntityAutoReset
             Events = null;
             return;
         }
+    }
+
+    public void SwapToActivatedState()
+    {
+        if (State == CharacterState.Activated)
+            return;
+
+        State = CharacterState.Activated;
+        CommandBuilder.SendChangeActivatedStateAutoVis(this);
     }
 
     public void StopSitting()

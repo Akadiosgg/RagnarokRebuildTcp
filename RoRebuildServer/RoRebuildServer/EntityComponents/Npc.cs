@@ -58,6 +58,7 @@ public class Npc : IEntityAutoReset
     public double TimerUpdateRate;
     public double LastTimerUpdate;
     public double TimerStart;
+    public double TimerEnd;
 
     private bool touchDisabled;
     public bool HasTouch;
@@ -530,7 +531,7 @@ public class Npc : IEntityAutoReset
 
         EnsureMobListCreated();
 
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
             CreateSingleMonsterWithAutoOwnership(chara.Map, monster, area);
     }
 
@@ -546,7 +547,7 @@ public class Npc : IEntityAutoReset
 
         EnsureMobListCreated();
 
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
             CreateSingleMonsterWithAutoOwnership(chara.Map, monster, area);
     }
 
@@ -706,8 +707,8 @@ public class Npc : IEntityAutoReset
 
             var saleEntry = ItemsForSale[saleItemId];
 
-            var dcValue = saleEntry.Item2 * discount / 100;
-            totalCost += (saleEntry.Item2 - dcValue) * count;
+            var dcValue = saleEntry.id * discount / 100;
+            totalCost += (saleEntry.price - dcValue) * count;
             totalWeight += info.Weight * count;
         }
 
@@ -886,29 +887,29 @@ Error:
     }
 
 
-    public void ActivateAndHide(float duration)
-    {
-        var chara = Entity.Get<WorldObject>();
+    //public void ActivateAndHide(float duration)
+    //{
+    //    var chara = Entity.Get<WorldObject>();
 
-        if (chara.AdminHidden)
-            return; //npc already hidden
+    //    if (chara.State == CharacterState.Activated)
+    //        return; //npc already hidden
 
-        if (chara.Map == null)
-            throw new Exception($"Npc {FullName} attempting to execute ActivateAndHide, but the npc is not currently attached to a map.");
+    //    if (chara.Map == null)
+    //        throw new Exception($"Npc {FullName} attempting to execute ActivateAndHide, but the npc is not currently attached to a map.");
 
-        chara.AdminHidden = true;
+    //    chara.SwapToActivatedState();
 
-        using var notifyList = EntityListPool.Get();
+    //    using var notifyList = EntityListPool.Get();
 
-        var visible = chara.GetVisiblePlayerList();
-        if (visible == null)
-            return;
-        foreach (var e in visible)
-            notifyList.Add(e);
-        CommandBuilder.AddRecipients(notifyList);
-        CommandBuilder.SendRemoveEntityMulti(chara, CharacterRemovalReason.Activation, duration);
-        CommandBuilder.ClearRecipients();
-    }
+    //    var visible = chara.GetVisiblePlayerList();
+    //    if (visible == null)
+    //        return;
+    //    foreach (var e in visible)
+    //        notifyList.Add(e);
+    //    CommandBuilder.AddRecipients(notifyList);
+    //    CommandBuilder.SendRemoveEntityMulti(chara, CharacterRemovalReason.Activation, duration);
+    //    CommandBuilder.ClearRecipients();
+    //}
 
 
     public void HideFromView()
@@ -1265,6 +1266,8 @@ Error:
             AreaOfEffect = null;
         }
 
+        Behavior.OnEventEnd(this);
+
         Owner = Entity.Null;
         World.Instance.FullyRemoveEntity(ref Entity);
     }
@@ -1445,7 +1448,7 @@ Error:
 
     public void MoveLockAllMyMonsters(Area area)
     {
-        if (MobCount <= 0)
+        if (MobCount <= 0 || Mobs == null)
             return;
         foreach (var m in Mobs)
         {

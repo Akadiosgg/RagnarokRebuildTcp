@@ -424,9 +424,9 @@ namespace Assets.Scripts.Sprites
             foreach (var skill in skills.Items)
             {
                 skill.Icon = "skill_" + skill.Icon;
-                skill.Description = skill.Description.Replace("\r\n", "\n");
-                skill.Description = skill.Description.Replace("<br>\n", "<br>"); //should do this elsewhere honestly...
-                skill.Description = skill.Description.Replace("\n", "<line-height=25>\n</line-height>");
+                skill.DescEn = skill.DescEn.Replace("\r\n", "\n");
+                skill.DescEn = skill.DescEn.Replace("<br>\n", "<br>"); //should do this elsewhere honestly...
+                skill.DescEn = skill.DescEn.Replace("\n", "<line-height=25>\n</line-height>");
                 skillData.Add(skill.SkillId, skill);
             }
 
@@ -1014,6 +1014,7 @@ namespace Assets.Scripts.Sprites
             control.Name = param.Name;
             control.IsAlly = true;
             control.IsInteractable = false;
+            control.CharacterState = param.State;
 
             control.ConfigureEntity(param.ServerId, param.Position, param.Facing);
             if (type < NpcEffectType.AnkleSnare || type > NpcEffectType.ShockwaveTrap)
@@ -1071,6 +1072,9 @@ namespace Assets.Scripts.Sprites
                     //DummyGroundEffect.Create(obj, "VenomDust");
                     VenomDustEffect.Create(control);
                     break;
+                case NpcEffectType.FirePillar:
+                    FirePillarEffect.Create(control);
+                    break;
                 case NpcEffectType.AnkleSnare:
                     AttachPrefabToControllable(control, "Assets/Effects/Prefabs/ModelAnkleSnare.prefab");
                     break;
@@ -1083,6 +1087,7 @@ namespace Assets.Scripts.Sprites
                     break;
                 case NpcEffectType.ClaymoreTrap:
                     AttachPrefabToControllable(control, "Assets/Effects/Prefabs/ModelClaymoreTrap.prefab");
+                    control.IsAttackable = true;
                     break;
                 case NpcEffectType.FlasherTrap:
                     AttachPrefabToControllable(control, "Assets/Effects/Prefabs/ModelFlasherTrap.prefab");
@@ -1121,6 +1126,9 @@ namespace Assets.Scripts.Sprites
                     if (sprite != null)
                         sprite.Controllable = target;
                     target.EntityObject = obj2;
+                    
+                    if(target.EntityObject.TryGetComponent<IEntityActionHandler>(out var handler))
+                        handler.ChangeCharacterState(target.CharacterState);
                 }
             };
         }
@@ -1140,6 +1148,7 @@ namespace Assets.Scripts.Sprites
             control.Name = param.Name;
             control.IsAlly = true;
             control.IsInteractable = false;
+            control.CharacterState = param.State;
 
             control.ConfigureEntity(param.ServerId, param.Position, param.Facing);
             control.EnsureFloatingDisplayCreated().SetUp(control, param.Name, param.MaxHp, 0, false, false);
@@ -1155,6 +1164,9 @@ namespace Assets.Scripts.Sprites
                     var sprite = obj2.GetComponent<RoSpriteAnimator>();
                     if (sprite != null)
                         sprite.Controllable = control;
+
+                    if (obj2.TryGetComponent<ServerControllable>(out var ctrl) && ctrl.EntityObject && ctrl.EntityObject.TryGetComponent<IEntityActionHandler>(out var handler))
+                        handler.ChangeCharacterState(ctrl.CharacterState);                   
                 }
             };
 

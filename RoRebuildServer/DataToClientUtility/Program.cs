@@ -91,6 +91,7 @@ class Program
                     Sprite = e.Sprite,
                     SoundFile = e.SoundFile,
                     Offset = e.Offset,
+                    Scale = e.Scale,
                     PrefabName = e.PrefabName,
                     IsLooping = e.Flags?.Contains("Loop") ?? false,
                 });
@@ -204,13 +205,11 @@ class Program
 
     private static string FixDescriptionTags(string line)
     {
-        return line.Replace("<skill>", "<color=#0000FF>")
-                .Replace("<status>", "<color=#800000>")
-                .Replace("</skill>", "</color>")
-                .Replace("</status>", "</color>")
-                .Replace("<desc>", "<color=#606060>")
-                .Replace("</desc>", "</color>")
-                .Replace("<color=#808080", "<color=#606060")
+        return line.Replace("<skill>", "<color=#0000FF>").Replace("</skill>", "</color>")
+                .Replace("<status>", "<color=#800000>").Replace("</status>", "</color>")
+                .Replace("<element>", "<color=#800000>").Replace("</element>", "</color>")
+                .Replace("<item>", "<color=#777777>").Replace("</item>", "</color>")
+                .Replace("<desc>", "<color=#808080>").Replace("</desc>", "</color>")
             ;
     }
 
@@ -1072,8 +1071,9 @@ class Program
             skill.SkillId = Enum.Parse<CharacterSkill>(id);
             if (skill.Name == null) skill.Name = id;
             if (skill.Icon == null) skill.Icon = "nv_basic";
+            //if (string.IsNullOrWhiteSpace(skill.DescEn) && skillDesc.TryGetValue(skill.SkillId, out var desc))
             if (skillDesc.TryGetValue(skill.SkillId, out var desc))
-                skill.Description = desc;
+                skill.DescEn = desc;
             skillOut.Add(skill);
         }
 

@@ -492,6 +492,7 @@ public partial class CombatEntity : IEntityAutoReset
             case CharacterStat.Range:
                 if (HasBodyState(BodyStateFlags.Blind) && stat > ServerConfig.MaxAttackRangeWhileBlind)
                     stat = ServerConfig.MaxAttackRangeWhileBlind;
+                return int.Min(stat, 14);
                 break;
             case CharacterStat.MoveSpeedBonus:
                 if (stat < -99)
@@ -1579,6 +1580,9 @@ public partial class CombatEntity : IEntityAutoReset
     public void ExecuteCombatResult(DamageInfo damageInfo, bool sendPacket = true, bool showAttackMotion = true)
     {
         var target = damageInfo.Target.Get<CombatEntity>();
+
+        if (Character.State == CharacterState.Sitting)
+            Character.SitStand(false); //the client will change their motion to standing, so we may as well make sure that's right
 
         if (sendPacket)
         {
