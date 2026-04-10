@@ -1,4 +1,5 @@
-﻿using RebuildSharedData.Util;
+﻿using RebuildSharedData.Enum.EntityStats;
+using RebuildSharedData.Util;
 
 namespace RebuildSharedData.Data;
 
@@ -46,18 +47,16 @@ public unsafe struct UniqueItem : ISerializableItem
     public byte Refine;
     public Guid UniqueId;
     public fixed int Data[4];
-    public fixed short ModifierId[8];
-    public fixed short ModifierValue[8];
+    public fixed int Modifiers[8];
 
     public static int Size => 73; //Id(4) + ItemLevel(1) Count(2) + Flags(1) + Refine (1) + UniqueId(16) + Data(4 * 4) + Modifiers(8 * (2 + 2))
 
     public void SetItemLevel(byte itemLevel) => ItemLevel = itemLevel;
     public int SlotData(int slot) => Data[slot];
     public int SetSlotData(int slot, int val) => Data[slot] = val;
-    public short ModifierIdAt(int index) => ModifierId[index];
-    public short ModifierValueAt(int index) => ModifierValue[index];
-    public void SetModifierIdAt(int index, short val) => ModifierId[index] = val;
-    public void SetModifierValueAt(int index, short val) => ModifierValue[index] = val;
+    public short GetModifierIdAt(int index) => (short)(Modifiers[index] >> 16 & 0xFFFF);
+    public short GetModifierValueAt(int index) => (short)(Modifiers[index] & 0xFFFF);
+    public void SetModifierAt(int index, short id, short value) => Modifiers[index] = (id << 16) | (value & 0xFFFF);
 
 
     public void Serialize(IBinaryMessageWriter msg)
@@ -74,8 +73,7 @@ public unsafe struct UniqueItem : ISerializableItem
         
         for (var i = 0; i < 8; i++)
         {
-            msg.Write(ModifierId[i]);
-            msg.Write(ModifierValue[i]);
+            msg.Write(Modifiers[i]);
         }
     }
 
@@ -102,8 +100,7 @@ public unsafe struct UniqueItem : ISerializableItem
 
         for (var i = 0; i < 8; i++)
         {
-            entry.ModifierId[i] = br.ReadInt16();
-            entry.ModifierValue[i] = br.ReadInt16();
+            entry.Modifiers[i] = br.ReadInt32();
         }
 
 
@@ -122,5 +119,26 @@ public unsafe struct UniqueItem : ISerializableItem
         }
 
         return false;
+    }
+
+    public unsafe (int, int) FetchWeaponModifications()
+    {
+        //int[] weaponDamage = new int[(int)AttackElement.Special];
+        int weaponDamage = 0;
+        int weaponAttackPercent = 0;
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                if (GetModifierIdAt(i) == 274)
+                {
+                    weaponAttackPercent = GetModifierValueAt(i);
+                }
+                if (GetModifierIdAt(i) == 275)
+                {
+                    weaponDamage = GetModifierValueAt(i);
+                }
+            }
+        }
+        return (weaponDamage, weaponAttackPercent);
     }
 }

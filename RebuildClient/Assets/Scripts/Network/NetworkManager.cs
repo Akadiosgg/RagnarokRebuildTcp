@@ -1476,14 +1476,15 @@ namespace Assets.Scripts.Network
             SendMessage(msg);
         }
 
-        public void SendSocketItem(int targetItem, int srcItem)
+        public void SendSocketItem(int targetItem, int srcItem, int replaceSlot = -1)
         {
             var msg = StartMessage();
             
             msg.Write((byte)PacketType.SocketEquipment);
             msg.Write(targetItem);
             msg.Write(srcItem);
-            
+            msg.Write(replaceSlot);
+
             SendMessage(msg);
         }
 

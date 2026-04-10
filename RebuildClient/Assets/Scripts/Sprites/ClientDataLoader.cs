@@ -69,7 +69,7 @@ namespace Assets.Scripts.Sprites
         private readonly Dictionary<string, ClientMapEntry> mapDataLookup = new();
         private readonly Dictionary<string, string> displaySpriteList = new();
         private readonly Dictionary<string, string> itemDescriptionTable = new();
-        private readonly Dictionary<short, string> modDescriptionTable = new();
+        private readonly Dictionary<short, ModDescription> modDescriptionTable = new();
         private readonly Dictionary<int, CardPrefixData> cardPrefixPostfixTable = new();
         private readonly Dictionary<int, EmoteData> emoteDataTable = new();
         private readonly Dictionary<int, StatusEffectData> statusEffectData = new();
@@ -165,7 +165,7 @@ namespace Assets.Scripts.Sprites
         public bool TryGetItemByName(string name, out ItemData item) => itemNameLookup.TryGetValue(name, out item);
         public bool TryGetItemById(int id, out ItemData item) => itemIdLookup.TryGetValue(id, out item);
         public string GetItemDescription(string itemCode) => itemDescriptionTable.GetValueOrDefault(itemCode, "No description available.");
-        public string GetModDescription(short modId) => modDescriptionTable.GetValueOrDefault(modId, "No mod description available.");
+        public ModDescription GetModDescription(short modId) => modDescriptionTable.GetValueOrDefault(modId, null);
         public CardPrefixData GetCardPrefixData(int id) => cardPrefixPostfixTable.GetValueOrDefault(id, null);
         public StatusEffectData GetStatusEffect(int id) => statusEffectData.GetValueOrDefault(id, null);
 
@@ -472,7 +472,7 @@ namespace Assets.Scripts.Sprites
 
             var modDescriptions = JsonUtility.FromJson<Wrapper<ModDescription>>(ReadStreamingAssetFile(ModDescriptionDataPath));
             foreach (var desc in modDescriptions.Items)
-                modDescriptionTable.Add(desc.ModId, desc.Description);
+                modDescriptionTable.Add(desc.ModId, desc);
 
             var notes = JsonUtility.FromJson<Wrapper<PatchNotes>>(ReadStreamingAssetFile(PatchNoteDataPath));
 

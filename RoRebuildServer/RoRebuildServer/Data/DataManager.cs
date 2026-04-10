@@ -46,6 +46,7 @@ public static class DataManager
     public static ReadOnlyDictionary<string, short> ModifierIdByName;
     public static ReadOnlyDictionary<int, ModifierList> weaponClassModifierList;
     public static ReadOnlyDictionary<EquipPosition, ModifierList> equipmentModifierList;
+    public static ReadOnlyDictionary<int, ModifierList> ItemIdModifierList;
     public static int[] modifierCountWeights = { 0, 25, 25, 25, 25 };
     public static int totalModifierCountWeight;
     public static int maxModifiers = modifierCountWeights.Length - 1;
@@ -59,6 +60,7 @@ public static class DataManager
     public static ReadOnlyDictionary<string, SavePosition> SavePoints;
 
     public static ReadOnlyDictionary<string, int> WeaponClasses;
+    public static ReadOnlyDictionary<int, int> WeaponClassSpread;
     public static ReadOnlyDictionary<int, string> WeaponClassToString;
     public static ReadOnlyDictionary<string, HashSet<int>> EquipGroupInfo;
     public static ReadOnlyDictionary<int, WeaponInfo> WeaponInfo;
@@ -118,30 +120,6 @@ public static class DataManager
             level = data.SpCost.Length;
 
         return data.SpCost[level - 1];
-    }
-
-    public static ModifierList? LookupModifierList(int itemId)
-    {
-        var itemInfo = ItemList[itemId]; //Check if mods should be rolled for this item
-        ModifierList? modList = null;
-        if (itemInfo.IsUnique)
-        {
-            switch (itemInfo.ItemClass)
-            {
-                case ItemClass.Weapon:
-                    var weaponInfo = WeaponInfo[itemId];
-                    modList = weaponClassModifierList[weaponInfo.WeaponClass];
-                    break;
-                case ItemClass.Equipment:
-                    var armorInfo = ArmorInfo[itemId];
-                    var headPos = armorInfo.HeadPosition;
-                    if (headPos == HeadgearPosition.Mid || headPos == HeadgearPosition.Bottom || headPos == HeadgearPosition.MidBottom) // Those can't have modifiers
-                        break;
-                    modList = equipmentModifierList[armorInfo.EquipPosition];
-                    break;
-            }
-        }
-        return modList;
     }
 
 
@@ -236,6 +214,7 @@ public static class DataManager
 
         Time.ResetDiagnosticsTimer();
 
+        ElementChart = loader.LoadElementChart();
         ServerVersionNumber = loader.LoadVersionInfo();
         monsterStats = loader.LoadMonsterStats();
         monsterAiList = loader.LoadAiStateMachines();
@@ -248,7 +227,7 @@ public static class DataManager
         JobMaxHpLookup = loader.LoadMaxHpChart();
         JobMaxSpLookup = loader.LoadMaxSpChart();
 
-        WeaponClasses = loader.LoadWeaponClasses();
+        (WeaponClasses, WeaponClassSpread) = loader.LoadWeaponClasses();
         WeaponClassToString = loader.GenerateWeaponclassNameById();
         EquipGroupInfo = loader.LoadEquipGroups();
         var items = loader.LoadItemsRegular();
@@ -263,17 +242,15 @@ public static class DataManager
 
         ItemIdByName = loader.GenerateItemIdByNameLookup();
         SavePoints = loader.LoadSavePoints().AsReadOnly();
-        ElementChart = loader.LoadElementChart();
         MvpMonsterCodes = loader.LoadMvpList();
 
         ModifierInfoList = loader.LoadModifiers();
         ModifierIdByName = loader.GenerateModifierIdByNameLookup();
-        (weaponClassModifierList, equipmentModifierList) = loader.LoadUniqueItemTypeModifiers(); //dependent on modifier lists loaded earlier
+        ItemIdModifierList = loader.LoadItemModifiers(); //dependent on modifier lists loaded earlier
         for (int i = 0; modifierCountWeights.Length > i; i++)
         {
             totalModifierCountWeight += modifierCountWeights[i];
         }
-
         var dataLoadTime = Time.SampleDiagnosticsTime();
 
         //load our compiled script assemblies

@@ -496,16 +496,16 @@ public class Player : IEntityAutoReset
             switch (statType)
             {
                 case CharacterStat.Attack:
-                    packet.Write(atk1 + Equipment.MainHandWeapon.MinRefineAtkBonus);
+                    packet.Write(atk1);
                     break;
                 case CharacterStat.Attack2:
-                    packet.Write(atk2 + Equipment.MainHandWeapon.MaxRefineAtkBonus);
+                    packet.Write(atk2);
                     break;
                 case CharacterStat.MagicAtkMin:
-                    packet.Write(matk1 + Equipment.MainHandWeapon.MinRefineAtkBonus);
+                    packet.Write(matk1);
                     break;
                 case CharacterStat.MagicAtkMax:
-                    packet.Write(matk2 + Equipment.MainHandWeapon.MaxRefineAtkBonus);
+                    packet.Write(matk2);
                     break;
                 case CharacterStat.Def:
                     packet.Write(CombatEntity.GetEffectiveStat(CharacterStat.Def));
@@ -815,7 +815,7 @@ public class Player : IEntityAutoReset
 
         //var jobAspd = jobInfo.WeaponTimings[Equipment.MainHandWeapon.WeaponClass];
         //if (Equipment.IsDualWielding)
-            //jobAspd = (jobAspd + jobInfo.WeaponTimings[Equipment.OffHandWeapon.WeaponClass]) * 0.7f;
+        //jobAspd = (jobAspd + jobInfo.WeaponTimings[Equipment.OffHandWeapon.WeaponClass]) * 0.7f;
         var weaponAttackTime = 0.8f;
         if (Equipment.MainHandWeapon.WeaponInfo != null)
         {
@@ -831,7 +831,7 @@ public class Player : IEntityAutoReset
         var dex = GetEffectiveStat(CharacterStat.Dex);
 
         var speedScore = 1 - (agi + dex / 4f) / 250f;
-        var attackSpeed = 100 / (100 + aspdBonus); //MathF.Pow(0.99f, aspdBonus);
+        var attackSpeed = 100f / (100f + aspdBonus); //MathF.Pow(0.99f, aspdBonus);
         var recharge = weaponAttackTime * speedScore * attackSpeed;
 
         if (HasPeco)

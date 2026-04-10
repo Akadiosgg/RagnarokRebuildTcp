@@ -65,9 +65,17 @@ namespace Assets.Scripts.PlayerControl
 
             if ((ItemData.Position & position) == 0)
                 return false;
-            
+
+            if (ItemData.Slots > 0)
+                return true;
+
+            return false;
+        }
+
+        public bool HasFreeSockets()
+        {
             var socketCount = ItemData.Slots;
-            
+
             for(var i = 0; i < socketCount; i++)
                 if (UniqueItem.SlotData(i) == 0)
                     return true;
@@ -172,7 +180,7 @@ namespace Assets.Scripts.PlayerControl
             if (sb.Length > 0)
                 sb.Append(" ");
             sb.Append(data.Name);
-            
+
             //postfixes
             for (var i = 0; i < uniqueSlot; i++)
             {
@@ -191,7 +199,7 @@ namespace Assets.Scripts.PlayerControl
 
             return sb.ToString();
         }
-        
+
         public bool Equals(InventoryItem other)
         {
             return BagSlotId == other.BagSlotId;
@@ -221,12 +229,12 @@ namespace Assets.Scripts.PlayerControl
                 return $"{data.Name}[{data.Slots}]";
             return data.Name;
         }
-        
+
         public static string MakeProperName(UniqueItem item, ItemData data)
         {
             if (data == null)
                 return $"Unknown Item";
-            
+
             if (data.IsUnique)
             {
                 var refine = "";
@@ -257,7 +265,7 @@ namespace Assets.Scripts.PlayerControl
                     refine = $"+{UniqueItem.Refine} ";
                 if (ItemData.Slots == 0)
                     return $"{refine}{ItemData.Name}";
-                return $"{refine}{MakeNameWithSockets()}[{ItemData.Slots}]";
+                return $"{refine}{ItemData.Name}[{ItemData.Slots}]";
             }
 
             if(Count > 1)
@@ -346,14 +354,14 @@ namespace Assets.Scripts.PlayerControl
                 for(var i = 0; i < 4; i++)
                     if (item.UniqueItem.SlotData(i) > 0)
                         isSocketed = true;
-                
+
                 if (isSocketed)
                     continue;
 
                 catalyst = item;
                 return true;
             }
-            
+
             catalyst = default;
             return false;
         }
@@ -368,11 +376,11 @@ namespace Assets.Scripts.PlayerControl
 
             UniqueItemIdToBagId.Remove(curItem.UniqueItem.UniqueId);
             UniqueItemIdToBagId[item.UniqueId] = bagId;
-            
+
             curItem.UniqueItem = item;
             inventoryLookup[bagId] = curItem;
         }
-        
+
         public void Deserialize(ClientInboundMessage msg)
         {
             inventoryLookup.Clear();

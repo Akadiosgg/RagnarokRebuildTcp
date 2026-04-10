@@ -37,6 +37,16 @@ public class MonsterDatabaseInfo
     public int Range { get; set; }
     public CharacterSize Size { get; set; }
     public CharacterElement Element { get; set; }
+    public int ResistNeutral { get; set; }
+    public int ResistFire { get; set; }
+    public int ResistWater { get; set; }
+    public int ResistWind { get; set; }
+    public int ResistEarth { get; set; }
+    public int ResistHoly { get; set; }
+    public int ResistDark { get; set; }
+    public int ResistGhost { get; set; }
+    public int ResistUndead { get; set; }
+    public int ResistPoison { get; set; }
     public CharacterRace Race { get; set; }
     public MonsterAiType AiType { get; set; }
     public CharacterSpecialType Special { get; set; }

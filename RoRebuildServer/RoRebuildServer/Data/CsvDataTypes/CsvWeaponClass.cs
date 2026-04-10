@@ -6,4 +6,5 @@ public class CsvWeaponClass
     public required string WeaponClass { get; set; }
     public required string FullName { get; set; }
     public required string HitSound { get; set; }
+    public required int DamageSpread { get; set; }
 }

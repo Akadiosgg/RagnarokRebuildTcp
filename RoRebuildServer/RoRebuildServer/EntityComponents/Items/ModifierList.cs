@@ -103,8 +103,7 @@ public class ModifierList
             var modifierValue = (short)GameRandom.NextInclusive(tierInfo.MinValue, tierInfo.MaxValue); // Choose modifier value within the chosen tier's min and max values
             affixWeights[affixIndex] -= ModifierWeights[affixIndex][modIndex].Weight; // Update affixWeights and takenModifiers to exclude the chosen modifier
             takenModifiers[affixIndex].Add((byte)modIndex);
-            item.SetModifierIdAt(i, modifierId);
-            item.SetModifierValueAt(i, modifierValue);
+            item.SetModifierAt(i, modifierId, modifierValue);
         }
 
     }

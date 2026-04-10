@@ -147,7 +147,7 @@ namespace Assets.Scripts.UI.Stats
 
             var softDef = totalVit * (100 + state.GetStat(CharacterStat.AddSoftDefPercent)) / 100;
 
-            var crit = 1 + (totalLuk / 3) + state.GetStat(CharacterStat.AddCrit);
+            var crit = 1 + (totalLuk) + state.GetStat(CharacterStat.AddCrit);
             if (state.WeaponClass == 16) //katar
                 crit *= 2;
 

@@ -1,5 +1,7 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
+using Microsoft.CodeAnalysis.VisualBasic.Syntax;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.Extensions.Primitives;
 using RebuildSharedData.ClientTypes;
 using RebuildSharedData.Data;
@@ -528,15 +530,18 @@ internal class DataLoader
         return csv.GetRecords<T>().ToList();
     }
 
-    public ReadOnlyDictionary<string, int> LoadWeaponClasses()
+    public (ReadOnlyDictionary<string, int>, ReadOnlyDictionary<int, int>) LoadWeaponClasses()
     {
         var weaponClasses = new Dictionary<string, int>();
+        var weaponSpread = new Dictionary<int, int>();
 
         var csv = GetCsvRows<CsvWeaponClass>("Db/WeaponClass.csv");
         foreach (var entry in csv)
+        {
             weaponClasses.Add(entry.WeaponClass, entry.Id);
-
-        return weaponClasses.AsReadOnly();
+            weaponSpread.Add(entry.Id, entry.DamageSpread);
+        }
+        return (weaponClasses.AsReadOnly(), weaponSpread.AsReadOnly());
     }
 
     public ReadOnlyDictionary<string, HashSet<int>> LoadEquipGroups()
@@ -613,7 +618,7 @@ internal class DataLoader
             var normalized = raw.Replace("|", ",").Replace(" ", "");
             if (!Enum.TryParse<ModTypeFlags>(normalized, true, out var flags))
                 throw new Exception($"Invalid flags: {normalized}");
-           
+
             var modifier = new ModifierInfo()
             {
                 Name = entry.Name,
@@ -626,8 +631,9 @@ internal class DataLoader
         return returnDictionary.AsReadOnly();
     }
 
-    public (ReadOnlyDictionary<int, ModifierList>, ReadOnlyDictionary<EquipPosition, ModifierList>) LoadUniqueItemTypeModifiers()
+    public ReadOnlyDictionary<int, ModifierList> LoadItemModifiers()
     {
+        var itemIdModifierList = new Dictionary<int, ModifierList>();
         var uniqueModifierData = new Dictionary<string, ModifierList>();
         var weaponModifiers = new Dictionary<int, ModifierList>();
         var armorModifiers = new Dictionary<EquipPosition, ModifierList>();
@@ -701,7 +707,40 @@ internal class DataLoader
                 throw new Exception($"UniqueItemTypeModifierList.csv contained an UniqueItemType of {uniqueItemType} that is not a WeaponClass or EquipPosition");
         }
 
-        return (weaponModifiers.AsReadOnly(), armorModifiers.AsReadOnly());
+        foreach (var entry in DataManager.ItemList)
+        {
+            var itemInfo = entry.Value;
+            var itemId = entry.Key;
+            var modList = (ModifierList?)null;
+            if (itemInfo.IsUnique)
+            {
+                switch (itemInfo.ItemClass)
+                {
+                    case ItemClass.Weapon:
+                        var weaponInfo = DataManager.WeaponInfo[itemId];
+                        if (weaponInfo.WeaponClass > 0 && weaponInfo.WeaponClass < 17) //Knuckles and gunslinger weapons are not in yet and they have a weapon class of 0 and > 17
+                        {
+                            ServerLogger.LogVerbose($"Assigning modifier list for {itemId} {itemInfo.Name} with weapon class {weaponInfo.WeaponClass}");
+                            modList = weaponModifiers[weaponInfo.WeaponClass];
+                        }
+                        break;
+                    case ItemClass.Equipment:
+                        var armorInfo = DataManager.ArmorInfo[itemId];
+                        var headPos = armorInfo.HeadPosition;
+                        if (headPos == HeadgearPosition.Mid || headPos == HeadgearPosition.Bottom || headPos == HeadgearPosition.MidBottom) // Those can't have modifiers
+                            break;
+                        ServerLogger.LogVerbose($"Assigning modifier list for {itemId} {itemInfo.Name} with equip position {armorInfo.EquipPosition}");
+                        modList = armorModifiers[armorInfo.EquipPosition];
+                        break;
+                }
+
+                if (modList != null)
+                    itemIdModifierList.Add(itemId, modList);
+            }
+
+        }
+
+        return itemIdModifierList.AsReadOnly();
     }
 
     public ReadOnlyDictionary<int, ArmorInfo> LoadItemsArmor(Dictionary<int, ItemInfo> itemList)
@@ -763,6 +802,7 @@ internal class DataLoader
 
             if (!DataManager.WeaponClasses.TryGetValue(entry.Type, out var weaponType))
                 weaponType = 0;
+            var damageSpread = DataManager.WeaponClassSpread.ContainsKey(weaponType) ? DataManager.WeaponClassSpread[weaponType] : 0;
 
             var weaponInfo = new WeaponInfo()
             {
@@ -779,8 +819,8 @@ internal class DataLoader
                 IsRefinable = entry.Refinable == "Yes"
             };
             returnList.Add(entry.Id, weaponInfo);
-        }
 
+        }
         return returnList.AsReadOnly();
     }
 
@@ -1113,7 +1153,17 @@ internal class DataLoader
                 Special = monster.Special,
                 Name = monster.Name,
                 Tags = tags,
-                SpecialFlags = flags
+                SpecialFlags = flags,
+                ResistNeutral = 100 - DataManager.ElementChart.GetAttackModifier(AttackElement.Neutral, monster.Element),
+                ResistEarth = 100 - DataManager.ElementChart.GetAttackModifier(AttackElement.Earth, monster.Element),
+                ResistFire = 100 - DataManager.ElementChart.GetAttackModifier(AttackElement.Fire, monster.Element),
+                ResistWater = 100 - DataManager.ElementChart.GetAttackModifier(AttackElement.Water, monster.Element),
+                ResistWind = 100 - DataManager.ElementChart.GetAttackModifier(AttackElement.Wind, monster.Element),
+                ResistDark = 100 - DataManager.ElementChart.GetAttackModifier(AttackElement.Dark, monster.Element),
+                ResistGhost = 100 - DataManager.ElementChart.GetAttackModifier(AttackElement.Ghost, monster.Element),
+                ResistHoly = 100 - DataManager.ElementChart.GetAttackModifier(AttackElement.Holy, monster.Element),
+                ResistPoison = 100 - DataManager.ElementChart.GetAttackModifier(AttackElement.Poison, monster.Element),
+                ResistUndead = 100 - DataManager.ElementChart.GetAttackModifier(AttackElement.Undead, monster.Element),
             });
         }
 

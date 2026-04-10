@@ -1,4 +1,5 @@
 ﻿using RebuildSharedData.Enum;
+using RebuildSharedData.Enum.EntityStats;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
@@ -27,6 +28,7 @@ public class ItemData
     // For weapons
     public int Attack;
     public float AttackSpeed;
+    public AttackElement AttackElement;
     public string WeaponClass;
     public int Range;
     public int SubType;

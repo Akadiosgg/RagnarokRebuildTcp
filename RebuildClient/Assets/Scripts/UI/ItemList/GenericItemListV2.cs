@@ -66,7 +66,7 @@ namespace Assets.Scripts.UI
             if (!isActive)
                 return;
             isActive = false;
-            OnPressOk();
+            OnPressOk?.Invoke();
         }
 
         public void OnCancel()
@@ -74,12 +74,11 @@ namespace Assets.Scripts.UI
             if (!isActive)
                 return;
             isActive = false;
-            OnPressCancel();
+            OnPressCancel?.Invoke();
         }
 
         public override void HideWindow()
         {
-            OnCancel();
             base.HideWindow();
         }
 
@@ -99,6 +98,17 @@ namespace Assets.Scripts.UI
             entry.gameObject.SetActive(false);
         }
 
+        public void ClearEntries()
+        {
+            for (int i = ItemListParentBox.childCount - 1; i >= 0; i--)
+            {
+                var child = ItemListParentBox.GetChild(i);
+                var entry = child.GetComponent<ItemListEntryV2>();
+                if (entry != null)
+                    ReturnItemListEntry(entry);
+            }
+        }
+
         public ItemListEntryV2 GetNewEntry()
         {
             if (UnusedEntries == null || !UnusedEntries.TryPop(out var entry))
@@ -115,6 +125,7 @@ namespace Assets.Scripts.UI
 
         public void SetActive() => isActive = true;
 
+        public void SetInactive() => isActive = false;
         public void Init()
         {
             OkButton.gameObject.SetActive(HasSubmitButtons);

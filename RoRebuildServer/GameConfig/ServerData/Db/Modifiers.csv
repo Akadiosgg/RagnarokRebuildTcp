@@ -135,7 +135,7 @@ Id,Name,TypeFlags,Description,DisplayScale
 133,OnMeleeAttackBlind,Status | Attack,"{modifierValue}% Melee Chance to Blind",10
 134,OnMeleeAttackSilence,Status | Attack,"{modifierValue}% Melee Chance to Silence",10
 135,OnMeleeAttackCurse,Status | Attack,"{modifierValue}% Melee Chance to Curse",10
-136,OnMeleeAttackPoison,Status | Attack,"{modifierValue}% Melee Chance to Poison",10
+136,OnMeleeAttackPoison,Status | Attack,"{modifierValue}% Melee Chance to Poison",100
 137,OnMeleeAttackConfusion,Status | Attack,"{modifierValue}% Melee Chance to Confuse",10
 138,OnMeleeAttackHeavyPoison,Status | Attack,"{modifierValue}% Melee Chance to Heavy Poison",10
 139,OnMeleeAttackBleeding,Status | Attack,"{modifierValue}% Melee Chance to Bleed",10
@@ -273,3 +273,6 @@ Id,Name,TypeFlags,Description,DisplayScale
 271,OnAttackFreeze,Status | Attack,"{modifierValue}% Chance to Freeze on Attack",10
 272,OnAttackSleep,Status | Attack,"{modifierValue}% Chance to Sleep on Attack",10
 273,AddRange,None,"{modifierValue} Range",1
+274,AddWeaponAttackPercent,Attack,"{modifierValue}% Weapon Damage",1
+275,AddWeaponAttack,Attack,"{modifierValue} Weapon Damage",1
+276,ColdBolt3OnAttack,Attack,"{modifierValue}% Chance to Cast Cold Bolt 3 on Attack",10

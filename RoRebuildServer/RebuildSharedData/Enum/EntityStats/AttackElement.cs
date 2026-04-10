@@ -12,7 +12,7 @@
         Dark,
         Holy,
         Ghost,
-        Special,
+        Special, // AttackElement.Special is equal to number of possible elements
         None
     }
 }

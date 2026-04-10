@@ -175,7 +175,7 @@ public class DamageIndicator : MonoBehaviour
             AttackElement.Ghost => "#BABCBB",
             AttackElement.Special => "#FFFFFF",
             AttackElement.None => "#FFFFFF",
-            _ => null
+            _ => "#FFFFFF"
         };
     }
 

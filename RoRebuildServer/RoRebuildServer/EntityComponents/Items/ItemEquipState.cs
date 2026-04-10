@@ -6,6 +6,7 @@ using RebuildSharedData.Util;
 using RoRebuildServer.Data;
 using RoRebuildServer.Data.CsvDataTypes;
 using RoRebuildServer.Data.Player;
+using RoRebuildServer.EntityComponents.Character;
 using RoRebuildServer.Logging;
 using RoRebuildServer.Networking;
 using RoRebuildServer.Simulation.StatusEffects.Setup;
@@ -48,11 +49,12 @@ public struct WeaponAttackInfo
 {
     public WeaponInfo? WeaponInfo;
     public AttackElement OverrideElement;
-    public int MinRefineAtkBonus;
-    public int MaxRefineAtkBonus;
+    public int Refines;
+    public int AddWeaponAttackPercent;
+    public int AddWeaponAttack;
 
     public int WeaponClass => WeaponInfo?.WeaponClass ?? 0;
-    public int WeaponAttackPower => WeaponInfo?.Attack ?? 0;
+    public int WeaponAttack => WeaponInfo?.Attack ?? 0;
     public int WeaponLevel => WeaponInfo?.WeaponLevel ?? 0;
 
     public AttackElement WeaponElement
@@ -67,19 +69,19 @@ public struct WeaponAttackInfo
 
     public WeaponAttackInfo() => Reset();
 
-    public WeaponAttackInfo(WeaponInfo info, int minRefineAtkBonus, int maxRefineAtkBonus)
+    public WeaponAttackInfo(WeaponInfo info, int refines, int addWeaponAttack, int addWeaponAttackPercent)
     {
         WeaponInfo = info;
-        MinRefineAtkBonus = minRefineAtkBonus;
-        MaxRefineAtkBonus = maxRefineAtkBonus;
+        Refines = refines;
+        AddWeaponAttackPercent = addWeaponAttackPercent;
+        AddWeaponAttack = addWeaponAttack;
         OverrideElement = AttackElement.None;
     }
 
     public void Reset()
     {
         WeaponInfo = null;
-        MinRefineAtkBonus = 0;
-        MaxRefineAtkBonus = 0;
+        Refines = 0;
         OverrideElement = AttackElement.None;
     }
 }
@@ -540,14 +542,17 @@ public class ItemEquipState
             else
             {
                 var wLvl = weapon.WeaponLevel - 1;
+                var refines = item.Refine;
+                int weaponDamage;
+                var weaponDamagePercent = 0;
+                (weaponDamage, weaponDamagePercent) = item.FetchWeaponModifications();
+                //var refBonus = item.Refine * attackPerRefine[wLvl];
+                //var overRefBonus = 0;
+                //var overRefine = item.Refine - overRefineLevel[wLvl];
+                //if (overRefine > 0)
+                //    overRefBonus = overRefine * overRefineAttackBonus[wLvl];
 
-                var refBonus = item.Refine * attackPerRefine[wLvl];
-                var overRefBonus = 0;
-                var overRefine = item.Refine - overRefineLevel[wLvl];
-                if (overRefine > 0)
-                    overRefBonus = overRefine * overRefineAttackBonus[wLvl];
-
-                var weaponInfo = new WeaponAttackInfo(weapon, refBonus, refBonus + overRefBonus);
+                var weaponInfo = new WeaponAttackInfo(weapon, refines, weaponDamage, weaponDamagePercent);
 
                 if (slot == EquipSlot.Weapon)
                 {
@@ -604,12 +609,12 @@ public class ItemEquipState
         {
             unsafe //apply item modifiers to the player
             {
-                var modId = item.ModifierId[k];
-                var modValue = item.ModifierValue[k];
+                var modId = item.GetModifierIdAt(k);
+                var modValue = item.GetModifierValueAt(k);
                 if (modId == 0)
                     continue;
                 if(!DataManager.ModifierInfoList.TryGetValue(modId, out var modifierData))
-                    throw new Exception($"Attempting to run OnEquip for modifier {modId} on item {item.Id}, but the modifier doesn't appear to exist in the database.");
+                    throw new Exception($"Attempting to run OnEquip for modifier {modId} on item {item.Id}, but the modifier doesn't appear to exist in the modifier list.");
                 modifierData.Interaction?.OnEquip(Player, Player.CombatEntity, this, default, slot, modValue);
             }
         }
@@ -718,8 +723,8 @@ public class ItemEquipState
         {
             unsafe //run unequip interactions for modifiers
             {
-                var modId = item.ModifierId[k];
-                var modValue = item.ModifierValue[k];
+                var modId = item.GetModifierIdAt(k);
+                var modValue = item.GetModifierValueAt(k);
                 if (modId == 0)
                     continue;
                 if (!DataManager.ModifierInfoList.TryGetValue(modId, out var modifierData))

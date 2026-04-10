@@ -46,4 +46,5 @@ public class PlayerWeaponClass
     public string Name;
     public string WeaponClass;
     public List<string> HitSounds;
+    public int DamageSpread;
 }

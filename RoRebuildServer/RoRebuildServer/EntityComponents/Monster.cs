@@ -443,6 +443,16 @@ public partial class Monster : IEntityAutoReset
         SetStat(CharacterStat.Int, MonsterBase.Int);
         SetStat(CharacterStat.Dex, MonsterBase.Dex);
         SetStat(CharacterStat.Luk, MonsterBase.Luk);
+        SetStat(CharacterStat.AddResistElementNeutral, MonsterBase.ResistNeutral);
+        SetStat(CharacterStat.AddResistElementFire, MonsterBase.ResistFire);
+        SetStat(CharacterStat.AddResistElementWater, MonsterBase.ResistWater);
+        SetStat(CharacterStat.AddResistElementWind, MonsterBase.ResistWind);
+        SetStat(CharacterStat.AddResistElementEarth, MonsterBase.ResistEarth);
+        SetStat(CharacterStat.AddResistElementHoly, MonsterBase.ResistHoly);
+        SetStat(CharacterStat.AddResistElementDark, MonsterBase.ResistDark);
+        SetStat(CharacterStat.AddResistElementPoison, MonsterBase.ResistPoison);
+        SetStat(CharacterStat.AddResistElementGhost, MonsterBase.ResistGhost);
+        SetStat(CharacterStat.AddResistElementUndead, MonsterBase.ResistUndead);
         SetTiming(TimingStat.MoveSpeed, MonsterBase.MoveSpeed);
         SetTiming(TimingStat.SpriteAttackTiming, MonsterBase.AttackDamageTiming);
         SetTiming(TimingStat.HitDelayTime, MonsterBase.HitTime);
@@ -561,15 +571,16 @@ public partial class Monster : IEntityAutoReset
                     if (topContributor != null)
                         item.SetExclusivePickupTime(topContributor, isMvp ? 8f : 4f);
 
-                    var modList = DataManager.LookupModifierList(d.Id);
-                    if(modList != null)
+                    var modList = (ModifierList?)null;
+                    if (DataManager.ItemIdModifierList.ContainsKey(d.Id))
+                        modList = DataManager.ItemIdModifierList[d.Id];
+
+                    if (modList != null)
                     {
                         item.UniqueItem.SetItemLevel((byte)MonsterBase.Level);
                         modList.GenerateModifiersForNewItem(ref item.UniqueItem);
                     }
-                        
 
-                        
                     Character.Map.DropGroundItem(ref item);
                     hasDrop = true;
                     dropId++;

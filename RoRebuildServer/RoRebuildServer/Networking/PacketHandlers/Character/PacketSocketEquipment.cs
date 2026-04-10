@@ -29,6 +29,7 @@ public class PacketSocketEquipment : IClientPacketHandler
 
         var targetBagId = msg.ReadInt32();
         var srcBagId = msg.ReadInt32();
+        var replaceSlot = msg.ReadInt32();
 
         if (!inventory.GetItem(targetBagId, out var targetItem) || targetItem.Type != ItemType.UniqueItem) //get the target item from our inventory
         {
@@ -98,10 +99,25 @@ public class PacketSocketEquipment : IClientPacketHandler
             }
         }
 
-        if (targetSlot < 0) // if there are no free slots
+        if (targetSlot < 0) //if there are no free slots, use the replace slot
+            targetSlot = replaceSlot;
+
+        if (targetSlot < 0) // if there are no free slots or no replace slot is specified
         {
             ServerLogger.LogWarning($"Player {player} tried to socket item {srcData.Code} into an item {targetData.Code}, but it has no free slots.");
             goto OnError;
+        }
+
+        if (targetSlot >= maxSlots) //if the client is trying to replace a slot that doesn't exist
+        {
+            ServerLogger.LogWarning($"Player {player} tried to socket item {srcData.Code} into an item {targetData.Code}, but they specified an invalid slot to replace.");
+            goto OnError;
+        }
+
+        if(targetItem.UniqueItem.SlotData(targetSlot) == srcData.Id)
+        {
+            CommandBuilder.ErrorMessage(connection, $"Could not perform socketing, the same card is already socketed in that slot.");
+            return;
         }
 
         if (!player.TryRemoveItemFromInventory(srcData.Id, 1))
@@ -110,7 +126,10 @@ public class PacketSocketEquipment : IClientPacketHandler
             goto OnError;
         }
 
+
+
         var item = targetItem.UniqueItem;
+
         item.SetSlotData(targetSlot, srcData.Id);
         CommandBuilder.RemoveItemFromInventory(player, srcBagId, 1);
         CommandBuilder.PlayerUpdateInventoryItemState(player, targetBagId, item);

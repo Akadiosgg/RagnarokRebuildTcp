@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using Assets.Scripts.Network;
+﻿using Assets.Scripts.Network;
 using Assets.Scripts.PlayerControl;
 using Assets.Scripts.Sprites;
 using RebuildSharedData.Data;
 using RebuildSharedData.Enum;
+using System;
+using System.Collections.Generic;
+using UnityEditor.PackageManager.UI;
 using UnityEngine;
 
 namespace Assets.Scripts.UI
@@ -14,7 +15,9 @@ namespace Assets.Scripts.UI
         private static CardSocketWindow instance;
         private GenericItemListV2 cardWindow;
         private Dictionary<int, ItemListEntryV2> itemList;
+        private Dictionary<int, ItemListEntryV2> cardList;
         private ItemListEntryV2 selectedItem;
+        private ItemListEntryV2 CardToReplace;
         private InventoryItem srcItem;
 
         public void SelectItem(int entryId)
@@ -27,16 +30,81 @@ namespace Assets.Scripts.UI
             }
 
             selectedItem = itemList[entryId];
+            UiManager.Instance.ItemDescriptionWindow.ShowItemDescription(PlayerState.Instance.Inventory.GetInventoryItem(selectedItem.ItemId));
             cardWindow.OkButton.interactable = true;
         }
 
-        public void OnOk()
+        public void SelectCardToReplace(int entryId)
+        {
+            if (CardToReplace != null)
+            {
+                if (CardToReplace.UniqueEntryId == entryId)
+                    return;
+                CardToReplace.Unselect();
+            }
+
+            CardToReplace = cardList[entryId];
+            cardWindow.OkButton.interactable = true;
+        }
+
+        public void OnSocket()
         {
             if(srcItem.Id != 0 && selectedItem != null)
-                NetworkManager.Instance.SendSocketItem(selectedItem.ItemId, srcItem.Id);
+            {
+                var item = PlayerState.Instance.Inventory.GetInventoryItem(selectedItem.ItemId);
+                if(item.HasFreeSockets())
+                {
+                    NetworkManager.Instance.SendSocketItem(selectedItem.ItemId, srcItem.Id);
+                    cardWindow.HideWindow();
+                    Destroy(gameObject);
+                }
+                else
+                {
+                    cardWindow.SetInactive();
+                    CardToReplace = null;
+                    cardWindow.ClearEntries();
+                    cardList = new Dictionary<int, ItemListEntryV2>();
+
+                    cardWindow.TitleBar.text = $"Replace Card ({srcItem.ProperName()})";
+                    cardWindow.OkButtonText.text = "Replace";
+                    cardWindow.OkButton.interactable = false;
+                    cardWindow.OnPressOk = OnReplace;
+
+                    for (var i = 0; i < item.ItemData.Slots; i++)
+                    {
+                        var cardId = item.UniqueItem.SlotData(i);
+                        var socketedCard = ClientDataLoader.Instance.GetItemById(cardId);
+                        var sprite = ClientDataLoader.Instance.GetIconAtlasSprite(socketedCard.Sprite);
+                        var entry = cardWindow.GetNewEntry();
+                        entry.Assign(DragItemType.None, sprite, cardId, 1);
+                        entry.UniqueEntryId = i;
+                        entry.ItemName.text = socketedCard.Name;
+                        entry.HideCount();
+                        entry.ItemName.rectTransform.anchorMax = new Vector2(1, 1); //resize to full width
+                        entry.RightText.text = "";
+                        entry.CanDrag = false;
+                        entry.CanSelect = true;
+                        entry.EventOnSelect = SelectCardToReplace;
+                        cardList.Add(i, entry);
+                    }
+                    cardWindow.SetActive();
+                }
+            }
+
+
+        }
+
+        public void OnReplace()
+        {
+            if (srcItem.Id != 0 && selectedItem != null && CardToReplace != null)
+            {
+                //var item = PlayerState.Instance.Inventory.GetInventoryItem(selectedItem.ItemId);
+                NetworkManager.Instance.SendSocketItem(selectedItem.ItemId, srcItem.Id, CardToReplace.UniqueEntryId);
+            }
             cardWindow.HideWindow();
             Destroy(gameObject);
         }
+
 
         public void OnCancel()
         {
@@ -47,7 +115,7 @@ namespace Assets.Scripts.UI
         public void OnDoubleClick(int id)
         {
             SelectItem(id);
-            OnOk();
+            OnSocket();
         }
 
         public void Init(GenericItemListV2 window, InventoryItem itemToSocket, List<InventoryItem> validCandidates)
@@ -68,7 +136,8 @@ namespace Assets.Scripts.UI
             window.OkButtonText.text = "Socket";
             window.TitleBar.text = $"Insert Card ({itemToSocket.ProperName()})";
             window.OnPressCancel = OnCancel;
-            window.OnPressOk = OnOk;
+            window.OnPressOk = OnSocket;
+            window.OnCloseWindow = OnCancel;
 
             var state = PlayerState.Instance;
 
@@ -90,7 +159,7 @@ namespace Assets.Scripts.UI
                 entry.CanDrag = false;
                 entry.CanSelect = true;
                 entry.EventOnSelect = SelectItem;
-                entry.EventDoubleClick = OnDoubleClick;
+                //entry.EventDoubleClick = OnDoubleClick;
                 itemList.Add(id, entry);
                 id++;
             }

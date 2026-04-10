@@ -1,11 +1,13 @@
-﻿using System.Collections.Generic;
-using System.Globalization;
-using System.Text;
-using Assets.Scripts.PlayerControl;
+﻿using Assets.Scripts.PlayerControl;
 using Assets.Scripts.Sprites;
 using Assets.Scripts.Utility;
+using RebuildSharedData.ClientTypes;
 using RebuildSharedData.Data;
 using RebuildSharedData.Enum;
+using RebuildSharedData.Enum.EntityStats;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -38,6 +40,7 @@ namespace Assets.Scripts.UI.Inventory
         private InventoryItem inventoryItem;
         private bool isInit;
 
+        public int GetInventoryItemBagId() => inventoryItem.BagSlotId;
         private void Init()
         {
             if (isInit)
@@ -83,40 +86,60 @@ namespace Assets.Scripts.UI.Inventory
                         sb.AppendLine($"<color=#606060>Magic Defense:</color> {item.MagicDef}");
                     if (item.Flee > 0)
                         sb.AppendLine($"<color=#606060>Flee:</color> {item.Flee}");
-                    if (item.MinLvl > 1)
-                        sb.AppendLine($"<color=#606060>Required Level:</color> {item.MinLvl}");
                     for (var i = 0; i < 8; i++)
                     {
-                        var modId = inventoryItem.UniqueItem.ModifierIdAt(i);
-                        var modValue = inventoryItem.UniqueItem.ModifierValueAt(i);
+                        var modId = inventoryItem.UniqueItem.GetModifierIdAt(i);
+                        ModDescription modDescription = ClientDataLoader.Instance.GetModDescription(modId);
+                        if(modDescription == null)
+                        {
+                            sb.AppendLine($"<color=#000060>Unknown Modifier {modId}</color>");
+                            continue;
+                        }
+                        var modValue = (float)inventoryItem.UniqueItem.GetModifierValueAt(i) / modDescription.DisplayScale;
                         if (modId <= 0 || modValue == 0)
                             continue;
-                        string signedValue = modValue > 0 ? $"+{modValue}" : modValue.ToString();
-                        sb.AppendLine("<color=#000060>" + ClientDataLoader.Instance.GetModDescription(modId).Replace("{modifierValue}", signedValue) + "</color>");
+                        string signedValue = modValue.ToString("+0.##;-0.##;0", CultureInfo.InvariantCulture); //> 0 ? $"+{modValue}" : modValue.ToString();
+                        sb.AppendLine("<color=#000060>" + modDescription.Description.Replace("{modifierValue}", signedValue) + "</color>");
                     }
+                    ItemLevel.text = item.MinLvl.ToString();
                     break;
                 case ItemClass.Weapon:
                     ItemLevel.enabled = true;
                     ItemLevelIcon.enabled = true;
                     ItemType.text = WeaponClassToTypeText(item.WeaponClass);
-                    if(inventoryItem.UniqueItem.Refine > 0)
-                        sb.AppendLine($"<color=#606060>Attack:</color> <color=#000060>{item.Attack + 2 * inventoryItem.UniqueItem.Refine}</color> ({item.Attack})");
+                    var weaponDamagePercent = 0;
+                    var weaponDamage = 0;
+                    (weaponDamage, weaponDamagePercent) = inventoryItem.UniqueItem.FetchWeaponModifications();
+                    if (inventoryItem.UniqueItem.Refine > 0 || weaponDamagePercent > 0 || weaponDamage > 0)
+                    {
+                        var attackValue = (int)((item.Attack + weaponDamage) * (1f + 3f * inventoryItem.UniqueItem.Refine / 100f) * (1f + weaponDamagePercent / 100f));
+                        sb.AppendLine($"<color=#606060>Attack: </color><color=#000060>{attackValue}</color> ({item.Attack})");
+                    }
                     else
                         sb.AppendLine($"<color=#606060>Attack:</color> {item.Attack}");
                     sb.AppendLine($"<color=#606060>Attacks per Second:</color> {item.AttackSpeed.ToString("0.0#", CultureInfo.InvariantCulture)}");
+                    if (item.AttackElement is not AttackElement.Neutral and not AttackElement.None and not AttackElement.Special)
+                        sb.AppendLine($"<color=#606060>Element:</color> {item.AttackElement.ToString()}");
                     if (item.Range > 1)
                         sb.AppendLine($"<color=#606060>Range:</color> {item.Range}");
-                    if (item.MinLvl > 1)
-                        sb.AppendLine($"<color=#606060>Required Level:</color> {item.MinLvl}");
+                    //if (item.MinLvl > 1)
+                    //    sb.AppendLine($"<color=#606060>Required Level:</color> {item.MinLvl}");
                     for (var i = 0; i < 8; i++)
                     {
-                        var modId = inventoryItem.UniqueItem.ModifierIdAt(i);
-                        var modValue = inventoryItem.UniqueItem.ModifierValueAt(i);
+                        var modId = inventoryItem.UniqueItem.GetModifierIdAt(i);
+                        ModDescription modDescription = ClientDataLoader.Instance.GetModDescription(modId);
+                        if (modDescription == null)
+                        {
+                            sb.AppendLine($"<color=#000060>Unknown Modifier {modId}</color>");
+                            continue;
+                        }
+                        var modValue = (float)inventoryItem.UniqueItem.GetModifierValueAt(i) / modDescription.DisplayScale;
                         if (modId <= 0 || modValue == 0)
                             continue;
-                        string signedValue = modValue > 0 ? $"+{modValue}" : modValue.ToString();
-                        sb.AppendLine("<color=#000060>" + ClientDataLoader.Instance.GetModDescription(modId).Replace("{modifierValue}", signedValue) + "</color>");
+                        string signedValue = modValue.ToString("+0.##;-0.##;0", CultureInfo.InvariantCulture); //> 0 ? $"+{modValue}" : modValue.ToString();
+                        sb.AppendLine("<color=#000060>" + modDescription.Description.Replace("{modifierValue}", signedValue) + "</color>");
                     }
+                    ItemLevel.text = item.MinLvl.ToString();
                     break;
                 default:
                     ItemLevel.enabled = false;
@@ -125,7 +148,7 @@ namespace Assets.Scripts.UI.Inventory
                     break;
             }
 
-            ItemName.text = inventoryItem.ProperName();
+            ItemName.text = inventoryItem.ToString();
             ItemWeight.text = (item.Weight / 10).ToString();
             ItemDescription.text = ClientDataLoader.Instance.GetItemDescription(item.Code) + sb.ToString();
             PortraitContainer.sprite = collection;
@@ -145,7 +168,6 @@ namespace Assets.Scripts.UI.Inventory
             else
             {
                 CardSocketPanel.SetActive(true);
-                ItemLevel.text = inventoryItem.UniqueItem.ItemLevel.ToString();
                 var hasSlots = item.Slots > 0 && (inventoryItem.UniqueItem.Flags & (byte)UniqueItemFlags.CraftedItem) == 0;
 
                 for (var i = 0; i < CardSocketEntries.Count; i++)
@@ -243,6 +265,10 @@ namespace Assets.Scripts.UI.Inventory
                 AddressableUtility.LoadSprite(gameObject, collectionPath, DisplayDescription);
         }
 
+        public void RefreshItemDescription()
+        {
+            ShowItemDescription(inventoryItem);
+        }
         public void ShowItemDescription(int itemId)
         {
             //we aren't related to an inventory item, so we'll have to fake it.

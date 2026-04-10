@@ -57,7 +57,8 @@ class Program
             modList.Add(new ModDescription()
             {
                 ModId = entry.Id,
-                Description = entry.Description
+                Description = entry.Description,
+                DisplayScale = entry.DisplayScale
             });
             
         }
@@ -390,6 +391,7 @@ class Program
                 SubType = classDef.Id,
                 Attack = entry.Attack,
                 AttackSpeed = entry.AttackSpeed,
+                AttackElement = entry.Property,
                 Range = entry.Range,
                 WeaponClass = entry.Type,
                 MinLvl = entry.MinLvl,
@@ -951,7 +953,8 @@ class Program
                 Id = w.Id,
                 Name = w.FullName,
                 WeaponClass = w.WeaponClass,
-                HitSounds = w.HitSound.Split('/').Select(a => a + ".ogg").ToList()
+                HitSounds = w.HitSound.Split('/').Select(a => a + ".ogg").ToList(),
+                DamageSpread = w.DamageSpread
             }).ToList()
         );
 

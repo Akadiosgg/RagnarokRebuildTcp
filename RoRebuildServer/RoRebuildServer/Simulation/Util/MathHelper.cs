@@ -36,10 +36,12 @@ public static class MathHelper
             //50 def -> 48.2% reduction     110 def -> 85.2% reduction
             //60 def -> 56.0% reduction     120 def -> 89.5% reduction
 
-            if (i < 300)
-                DefTable[i] = 1 - i / 1000f;
-            else
-                DefTable[i] = MathF.Max(0.1f, MathF.Pow(0.99f, i / 10f - 30) - 0.3f);
+            DefTable[i] = 100f / (100f + i);
+
+            //if (i < 300)
+            //    DefTable[i] = 1 - i / 1000f;
+            //else
+            //    DefTable[i] = MathF.Max(0.1f, MathF.Pow(0.99f, i / 10f - 30) - 0.3f);
         }
     }
 
@@ -139,11 +141,11 @@ public static class MathHelper
 
     public static float DefValueLookup(int value, int refineDef = 0)
     {
-        var intVal = value * 10 + refineDef * 7;
+        var intVal = value; //* 10 + refineDef * 7;
         if (intVal >= 0 && intVal < DefTable.Length)
             return DefTable[intVal];
-
-        return MathF.Max(0.1f, MathF.Pow(0.99f, intVal / 10f - 30) - 0.3f);
+        return DefTable[DefTable.Length - 1];
+        //return MathF.Max(0.1f, MathF.Pow(0.99f, intVal / 10f - 30) - 0.3f);
     }
 
     public static int Clamp(this int val, int min, int max)
