@@ -26,12 +26,19 @@ namespace Assets.Scripts.UI.Hud
         private float chatEnd;
         private bool chatShowsCastName;
 
+        //keeps the chat bubble from dropping into the cast bar's spot once the cast bar itself is gone;
+        //cleared only when the bubble that was up alongside the cast is itself cleared
+        private bool castBarGapReserved;
+
         private bool isHovering;
         private bool isTargeting;
         private bool hasContent;
+        private float emptyAt = -1f;
         private Transform ownerTransform;
         private float cachedGlueScale = -1f;
         private float cachedZoomScale = -1f;
+        private bool belowFeetDirty = true;
+        private bool aboveHeadDirty = true;
         private float rawStandingHeightPx;
         private float rawSittingHeightPx;
         private float rawSitDepthPx;
@@ -72,9 +79,13 @@ namespace Assets.Scripts.UI.Hud
             isHovering = false;
             isTargeting = false;
             hasContent = false;
+            emptyAt = -1f;
             chatShowsCastName = false;
+            castBarGapReserved = false;
             cachedGlueScale = -1f;
             cachedZoomScale = -1f;
+            belowFeetDirty = true;
+            aboveHeadDirty = true;
         }
 
         public void AttachTo(ServerControllable owner)
@@ -101,7 +112,8 @@ namespace Assets.Scripts.UI.Hud
 
             if (!hasContent)
             {
-                Close(); //created but never given any content
+                if (Time.timeSinceLevelLoad - emptyAt >= Manager.LingerDuration)
+                    Close(); //stayed empty past the linger grace period
                 return;
             }
 
@@ -150,7 +162,7 @@ namespace Assets.Scripts.UI.Hud
                 return; //already visible, keeps its existing text
             namePlate = Manager.AttachNamePlate(gameObject);
             namePlate.text = name;
-            InvalidatePositions();
+            InvalidateBelowFeet();
         }
 
         private void HideNamePlate()
@@ -159,7 +171,7 @@ namespace Assets.Scripts.UI.Hud
                 return;
             Manager.ReturnNamePlate(namePlate.gameObject);
             namePlate = null;
-            InvalidatePositions();
+            InvalidateBelowFeet();
         }
 
         public void StartCasting(float castTime)
@@ -171,7 +183,8 @@ namespace Assets.Scripts.UI.Hud
             castStart = Time.timeSinceLevelLoad;
             castEnd = castStart + castTime;
             castBar.gameObject.SetActive(true);
-            InvalidatePositions();
+            castBarGapReserved = true;
+            InvalidateAboveHead();
         }
 
         public void CancelCasting()
@@ -182,14 +195,11 @@ namespace Assets.Scripts.UI.Hud
                 castBar = null;
             }
 
-            //a cast-name bubble goes away with the cast; regular chat stays
+            //a cast-name bubble goes away with the cast; regular chat stays (and keeps the gap reserved)
             if (chatBubble != null && chatShowsCastName)
-            {
-                Manager.ReturnChatBubble(chatBubble.gameObject);
-                chatBubble = null;
-            }
+                ClearChatBubble();
 
-            InvalidatePositions();
+            InvalidateAboveHead();
         }
 
         public void ExtendCasting(float addTime)
@@ -214,9 +224,27 @@ namespace Assets.Scripts.UI.Hud
             if (chatBubble == null)
                 return;
 
+            ClearChatBubble();
+            InvalidateAboveHead();
+        }
+
+        //removes the chat bubble and resets everything that describes it - anywhere the bubble goes
+        //away should go through here so those fields can't drift out of sync with each other
+        private void ClearChatBubble()
+        {
             Manager.ReturnChatBubble(chatBubble.gameObject);
             chatBubble = null;
-            InvalidatePositions();
+            chatShowsCastName = false;
+            castBarGapReserved = false;
+        }
+
+        // Clears a leftover above-head slot reserved for a since-finished cast; call before showing an
+        // unrelated message (e.g. regular chat). No-op while a cast is active, since the message is
+        // then sitting above a real cast bar and should keep the slot once that bar disappears too.
+        public void ClearCastReservation()
+        {
+            if (castBar == null)
+                castBarGapReserved = false;
         }
 
         public void ShowChatBubbleMessage(string message, float visibleTime = 5f, bool isCastName = false)
@@ -224,13 +252,13 @@ namespace Assets.Scripts.UI.Hud
             if (chatBubble == null)
             {
                 chatBubble = Manager.AttachChatBubble(gameObject);
-                InvalidatePositions(); //activate before SetText so TMP can measure the text
+                InvalidateAboveHead(); //activate before SetText so TMP can measure the text
             }
 
             chatShowsCastName = isCastName;
             chatBubble.SetText(message);
             chatEnd = Time.timeSinceLevelLoad + visibleTime;
-            InvalidatePositions();
+            InvalidateAboveHead();
         }
 
         public void ForceMpBarOn()
@@ -240,7 +268,7 @@ namespace Assets.Scripts.UI.Hud
 
             mpBar = Manager.AttachMpBar(gameObject);
             SetBarSize(mpBar);
-            InvalidatePositions();
+            InvalidateBelowFeet();
         }
 
         public void UpdateMp(int mp)
@@ -263,7 +291,7 @@ namespace Assets.Scripts.UI.Hud
                 return;
             Manager.ReturnHpBar(hpBar.gameObject);
             hpBar = null;
-            InvalidatePositions();
+            InvalidateBelowFeet();
         }
 
         public void ForceHpBarOn()
@@ -274,7 +302,7 @@ namespace Assets.Scripts.UI.Hud
             hpBar = Manager.AttachHpBar(gameObject);
             SetBarSize(hpBar);
             UpdateHp(controllable.Hp, controllable.Hp, false);
-            InvalidatePositions();
+            InvalidateBelowFeet();
         }
 
         public void UpdateHp(int oldHp, int hp, bool animate = true)
@@ -287,7 +315,7 @@ namespace Assets.Scripts.UI.Hud
                 hpBar = Manager.AttachHpBar(gameObject);
                 SetBarSize(hpBar);
                 hpBar.SetProgress(Ratio(oldHp, maxHp));
-                InvalidatePositions();
+                InvalidateBelowFeet();
             }
 
             var progress = Ratio(hp, maxHp);
@@ -332,9 +360,24 @@ namespace Assets.Scripts.UI.Hud
             return px;
         }
 
-        // Lifecycle gate; every attach and detach comes through here. A display only exists while it has
-        // content: going empty returns it to the pool, gaining content activates and relayouts it.
-        public void InvalidatePositions()
+        // Lifecycle gate for the below-feet stack (HP/MP bar, name plate); every attach/detach of those
+        // comes through here. Above-head has its own independent counterpart - see InvalidateAboveHead.
+        public void InvalidateBelowFeet()
+        {
+            belowFeetDirty = true;
+            InvalidateContent();
+        }
+
+        // Lifecycle gate for the above-head stack (cast bar, chat bubble); see InvalidateBelowFeet.
+        public void InvalidateAboveHead()
+        {
+            aboveHeadDirty = true;
+            InvalidateContent();
+        }
+
+        // Going empty starts a linger timer (checked in Tick) instead of releasing immediately; gaining
+        // content activates the display and relayouts whichever stack was just marked dirty.
+        private void InvalidateContent()
         {
             if (controllable == null)
                 return; //already released
@@ -342,11 +385,12 @@ namespace Assets.Scripts.UI.Hud
             hasContent = namePlate != null || castBar != null || hpBar != null || mpBar != null || chatBubble != null;
             if (!hasContent)
             {
-                Close();
+                if (emptyAt < 0f)
+                    emptyAt = Time.timeSinceLevelLoad; //bridges brief gaps without releasing back to the pool
                 return;
             }
 
-            cachedGlueScale = -1f;
+            emptyAt = -1f;
             var cf = CameraFollower.Instance;
             if (!gameObject.activeSelf)
             {
@@ -358,17 +402,29 @@ namespace Assets.Scripts.UI.Hud
         }
 
         // Anchors use the glue scale to stay pinned to the sprite's feet/head; elements themselves scale
-        // by the zoom factor (1 unless ScalePlayerDisplayWithZoom is on).
+        // by the zoom factor (1 unless ScalePlayerDisplayWithZoom is on). A scale change relayouts both
+        // stacks; otherwise each stack only relayouts if something was actually attached/detached from it.
         public void RefreshPositionsIfChanged(float glueScale, float zoomScale)
         {
-            if (Mathf.Approximately(cachedGlueScale, glueScale) && Mathf.Approximately(cachedZoomScale, zoomScale))
+            var scaleChanged = !Mathf.Approximately(cachedGlueScale, glueScale) || !Mathf.Approximately(cachedZoomScale, zoomScale);
+            if (!scaleChanged && !belowFeetDirty && !aboveHeadDirty)
                 return;
+
             cachedGlueScale = glueScale;
             cachedZoomScale = zoomScale;
             CaptureSpriteHeights();
 
-            LayoutBelowFeet(glueScale, zoomScale);
-            LayoutAboveHead(glueScale, zoomScale);
+            if (scaleChanged || belowFeetDirty)
+            {
+                LayoutBelowFeet(glueScale, zoomScale);
+                belowFeetDirty = false;
+            }
+
+            if (scaleChanged || aboveHeadDirty)
+            {
+                LayoutAboveHead(glueScale, zoomScale);
+                aboveHeadDirty = false;
+            }
         }
 
         // HP bar, MP bar, name plate stacked downward below the feet; the topmost present one sits at the anchor.
@@ -395,7 +451,16 @@ namespace Assets.Scripts.UI.Hud
             var cursor = 0f;
             var first = true;
 
-            PlaceStacked(castBar?.transform, 0f, anchorY, 1f, zoomScale, ref cursor, ref first);
+            if (castBar != null)
+                PlaceStacked(castBar.transform, 0f, anchorY, 1f, zoomScale, ref cursor, ref first);
+            else if (castBarGapReserved && chatBubble != null)
+            {
+                //cast bar is gone but its slot stays reserved until the bubble above it clears
+                var reservedHeight = ((RectTransform)Manager.CastBarTemplate.transform).sizeDelta.y * zoomScale;
+                cursor = anchorY + reservedHeight;
+                first = false;
+            }
+
             PlaceStacked(chatBubble?.transform, 0f, anchorY, 1f, zoomScale, ref cursor, ref first);
         }
 
@@ -432,7 +497,7 @@ namespace Assets.Scripts.UI.Hud
             {
                 Manager.ReturnHpBar(hpBar.gameObject);
                 hpBar = null;
-                InvalidatePositions();
+                InvalidateBelowFeet();
             }
         }
 
@@ -442,12 +507,11 @@ namespace Assets.Scripts.UI.Hud
             {
                 if (Time.timeSinceLevelLoad > chatEnd)
                 {
-                    Manager.ReturnChatBubble(chatBubble.gameObject);
-                    chatBubble = null;
-                    InvalidatePositions();
+                    ClearChatBubble();
+                    InvalidateAboveHead();
                 }
                 else if (chatBubble.RefreshBorderIfNeeded())
-                    InvalidatePositions();
+                    InvalidateAboveHead();
             }
 
             if (castBar != null)

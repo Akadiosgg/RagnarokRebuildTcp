@@ -45,7 +45,6 @@ namespace Assets.Scripts.UI.Hud
             endTime = Time.timeSinceLevelLoad + 3f;
             
             LayoutRebuilder.ForceRebuildLayoutImmediate(Rect);
-            Text.ForceMeshUpdate();
         }
 
         public void Update()

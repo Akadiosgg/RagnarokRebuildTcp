@@ -106,9 +106,7 @@ namespace Assets.Scripts.UI
 
             TooltipBox.gameObject.SetActive(true);
 
-            TooltipText.ForceMeshUpdate(true, true);
-
-            Vector2 preferredDimensions = TooltipText.GetPreferredValues(tooltipWidth - 20, Mathf.Infinity); //300 minus 20 for margins
+            Vector2 preferredDimensions = TooltipText.GetPreferredValues(TooltipText.text, tooltipWidth - 20, Mathf.Infinity); //300 minus 20 for margins
             TooltipBox.sizeDelta = new Vector2(tooltipWidth, Mathf.Ceil(preferredDimensions.y + 8f));
             LayoutRebuilder.ForceRebuildLayoutImmediate(TooltipBox);
             PositionTooltipNextToEntry(entry);

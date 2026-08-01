@@ -172,7 +172,11 @@ namespace Assets.Scripts.Network
             }
 
             if (FloatingDisplay != null)
-                FloatingDisplay.InvalidatePositions();
+            {
+                //sitting shifts both stacks (body dips below the feet, head tucks lower above it)
+                FloatingDisplay.InvalidateBelowFeet();
+                FloatingDisplay.InvalidateAboveHead();
+            }
         }
 
         public CharacterFloatingDisplay EnsureFloatingDisplayCreated()
@@ -449,6 +453,7 @@ namespace Assets.Scripts.Network
         public void DialogBox(string text)
         {
             EnsureFloatingDisplayCreated();
+            FloatingDisplay.ClearCastReservation(); //a regular message has nothing to do with any cast
             FloatingDisplay.ShowChatBubbleMessage(text, 8f);
         }
 

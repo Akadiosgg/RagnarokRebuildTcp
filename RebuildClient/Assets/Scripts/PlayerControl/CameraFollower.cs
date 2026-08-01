@@ -1167,7 +1167,7 @@ namespace Assets.Scripts
                     if (mouseHoverTarget.IsAlly)
                         mouseHoverTarget.ShowHoverNamePlate(mouseHoverTarget.DisplayName);
                     else
-                        mouseHoverTarget.ShowHoverNamePlate("<color=#FFAAAA>" + mouseHoverTarget.DisplayName); //yeah this is stupid
+                        mouseHoverTarget.ShowHoverNamePlate($"<color=#FFAAAA>{mouseHoverTarget.DisplayName}</color>");
                 }
             }
             else

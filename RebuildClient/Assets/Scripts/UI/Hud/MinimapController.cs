@@ -434,6 +434,7 @@ namespace Assets.Scripts.UI.Hud
 
         public void ApplyOpacity()
         {
+            GameConfig.InitializeIfNecessary();
             var opacity = GameConfig.Data.MinimapOpacity;
             var visible = opacity > 0f;
 

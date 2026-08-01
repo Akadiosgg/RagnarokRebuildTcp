@@ -1,5 +1,4 @@
 ﻿using Assets.Scripts.Network;
-using Assets.Scripts.UI.ConfigWindow;
 using TMPro;
 using UnityEngine;
 
@@ -9,6 +8,10 @@ namespace Assets.Scripts.UI.Hud
     {
         public TextMeshProUGUI ItemText;
         public GroundItem Item;
+
+        // Gap from the item's center to the text, in sprite pixels, scaled by OverlayGlueScale so it
+        // reads consistently regardless of UI scale/zoom - a single tuned constant, like HpBarOffsetPx.
+        private const float BelowItemOffsetPx = 25f;
 
         public void ShowItem(GroundItem item)
         {
@@ -46,13 +49,11 @@ namespace Assets.Scripts.UI.Hud
                 out var localPoint
             );
 
+            localPoint.y -= BelowItemOffsetPx * cf.OverlayGlueScale;
+
             rect.anchoredPosition = localPoint;
 
-            var d = 70 / cf.Distance;
-
-            if (!GameConfig.Data.ScalePlayerDisplayWithZoom)
-                d = 1f;
-
+            var d = cf.OverlayRootScale;
             rect.localScale = new Vector3(d, d, d);
         }
 

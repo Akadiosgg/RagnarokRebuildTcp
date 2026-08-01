@@ -16,6 +16,13 @@ namespace Assets.Scripts.UI.Hud
         
         public Transform PoolRoot;
 
+        //peak concurrent instances expected; pools still grow past this via Instantiate if exceeded
+        public int PrewarmRootCount = 100;
+        public int PrewarmElementCount = 100;
+
+        //grace period an emptied display stays attached before releasing back to the pool
+        public float LingerDuration = 5f;
+
         //one pool per template
         private readonly Dictionary<GameObject, Stack<GameObject>> pools = new();
         private readonly List<CharacterFloatingDisplay> activeDisplays = new();
@@ -108,6 +115,24 @@ namespace Assets.Scripts.UI.Hud
             DisplayRootTemplate.SetActive(false);
 
             DisplayRootTemplate.GetComponent<CharacterFloatingDisplay>().Manager = this;
+
+            Prewarm(DisplayRootTemplate, PrewarmRootCount);
+            Prewarm(NamePlateTemplate, PrewarmElementCount);
+            Prewarm(CastBarTemplate, PrewarmElementCount);
+            Prewarm(HpBarTemplate, PrewarmElementCount);
+            Prewarm(MpBarTemplate, PrewarmElementCount);
+            Prewarm(TextBubbleTemplate, PrewarmElementCount);
+        }
+
+        private void Prewarm(GameObject template, int count)
+        {
+            var pool = PoolFor(template);
+            for (var i = 0; i < count; i++)
+            {
+                var obj = Instantiate(template, PoolRoot);
+                obj.SetActive(false);
+                pool.Push(obj);
+            }
         }
     }
 }
