@@ -77,6 +77,7 @@ namespace Assets.Scripts.UI.Hud
             public Image Icon;
             public RectTransform Rect;
             public Vector2Int Position;
+            public float Size; //the zoom the icon was last placed at
             public CharacterDisplayType Type;
         }
 
@@ -139,6 +140,10 @@ namespace Assets.Scripts.UI.Hud
             if (!gameObject.activeInHierarchy || MapImage == null || mapSprite == null)
                 return;
 
+            //moving an icon dirties the canvas, so skip the ones already placed for this zoom
+            if (iconData.MapIcon != null && pos == iconData.Position && Mathf.Approximately(curSize, iconData.Size))
+                return;
+
             var scale = 0.3f;
             if (type == CharacterDisplayType.Boss || type == CharacterDisplayType.Mvp)
                 scale = 0.4f;
@@ -194,6 +199,10 @@ namespace Assets.Scripts.UI.Hud
             var s = scale * ObjectScaleFactor * (1 / curSize);
 
             mapIcon.transform.localScale = Vector3.one * s;
+
+            //a zoom or map change replays every icon from these
+            iconData.Position = pos;
+            iconData.Size = curSize;
         }
 
         public void SetPlayerPosition(Vector2Int pos, float angle)
