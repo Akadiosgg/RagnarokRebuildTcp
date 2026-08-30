@@ -185,7 +185,6 @@ internal class ZoneWorker : BackgroundService
         private int lastGen0;
         private int lastGen1;
         private int lastGen2;
-        private long lastAllocated;
 
         private double totalMs;
         private double peakMs;
@@ -209,7 +208,6 @@ internal class ZoneWorker : BackgroundService
             lastGen0 = GC.CollectionCount(0);
             lastGen1 = GC.CollectionCount(1);
             lastGen2 = GC.CollectionCount(2);
-            lastAllocated = GC.GetTotalAllocatedBytes(false);
         }
 
         public void Record(double elapsedMs)
@@ -234,20 +232,18 @@ internal class ZoneWorker : BackgroundService
             var gen0 = GC.CollectionCount(0) - lastGen0;
             var gen1 = GC.CollectionCount(1) - lastGen1;
             var gen2 = GC.CollectionCount(2) - lastGen2;
-            var allocKbPerSec = (GC.GetTotalAllocatedBytes(false) - lastAllocated) / 1024d / window;
             var heapMb = GC.GetTotalMemory(false) / (1024d * 1024d);
 
             //Most windows collect nothing, so the generation breakdown only earns its space when one of them ran.
             var gc = gen0 + gen1 + gen2 == 0
                 ? ""
-                : $" / GC {(GC.GetTotalPauseDuration() - lastGcPause).TotalMilliseconds:F1}ms (g0 {gen0} g1 {gen1} g2 {gen2})";
+                : $" | GC {(GC.GetTotalPauseDuration() - lastGcPause).TotalMilliseconds:F1}ms (g0 {gen0} g1 {gen1} g2 {gen2})";
 
             //Avg and Peak cover the work only, Tick is the whole loop period including the sleep. So Tick is the
             //rate the simulation steps at, and Tick minus Avg is time spent waiting.
-            ServerLogger.Log($"[ZoneWorker] {players} players. Last {window:F0}s:" +
-                             $" Avg {totalMs / frames:F2}ms / Peak {peakMs:F2}ms / Tick {window / frames * 1000d:F2}ms" +
-                             $" / {overBudget} over {budgetMs:F0}ms" +
-                             $" / Alloc {allocKbPerSec:F0}KB/s / Heap {heapMb:F0}MB{gc}");
+            ServerLogger.Log($"[ZoneWorker] {players} players | {window:F0}s | Avg {totalMs / frames:F2}ms" +
+                             $" | Peak {peakMs:F2}ms | Tick {window / frames * 1000d:F2}ms | Over {overBudget}" +
+                             $" | Heap {heapMb:F0}MB{gc}");
 
             windowStart = Time.ElapsedTime;
             nextReport = Time.ElapsedTime + reportInterval;
