@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using Assets.Scripts.Network;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,7 +16,7 @@ namespace Assets.Scripts.UI.Hud
 
         private const int GraphWidth = 160; //one column per tick, so 16s of history
         private const int GraphHeight = 100;
-        private const float CeilingMs = 25f; //fixed scale, taller frames clamp to the top row
+        private const float CeilingMs = 100f; //fixed scale, taller frames clamp to the top row
         private const int TraceRadius = 1; //texels either side of the sample, so the line is centred
 
         private const int NoPreviousSample = -1;
@@ -79,12 +80,23 @@ namespace Assets.Scripts.UI.Hud
             elapsed -= RefreshSeconds; //carry the remainder so the cadence doesn't drift
 
             var meanMs = sum / count;
-            Label.SetText("{0:1} MS {1:0} FPS", meanMs, 1000f / meanMs);
+            SetLabel(meanMs);
             AppendColumn(bucketMax);
 
             sum = 0f;
             count = 0;
             bucketMax = 0f;
+        }
+
+        private void SetLabel(float meanMs)
+        {
+            var network = NetworkManager.Instance;
+
+            //Both rows end in MS, so right alignment stacks the latency directly under the frame time.
+            if (network == null || network.Latency.Current < 0)
+                Label.SetText("{0:0} FPS {1:1} MS\n-- MS", 1000f / meanMs, meanMs);
+            else
+                Label.SetText("{0:0} FPS {1:1} MS\n{2:0} MS", 1000f / meanMs, meanMs, network.Latency.Current);
         }
 
         private void BeginSampling()
@@ -107,7 +119,7 @@ namespace Assets.Scripts.UI.Hud
             framesSeen = 0;
             previousY = NoPreviousSample;
 
-            Label.SetText("-- MS -- FPS");
+            Label.SetText("-- FPS -- MS\n-- MS");
 
             Array.Clear(pixels, 0, pixels.Length);
             Commit();

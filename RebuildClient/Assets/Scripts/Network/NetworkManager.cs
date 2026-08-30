@@ -56,6 +56,10 @@ namespace Assets.Scripts.Network
 
         //private static NetClient client;
 
+        private const float PingIntervalSeconds = 1f; //this is the keep-alive, so it doubles as the latency sample rate
+
+        public readonly LatencyTracker Latency = new();
+
         private float lastPing;
         private bool isReady;
         private bool isConnected;
@@ -245,6 +249,7 @@ namespace Assets.Scripts.Network
             Debug.Log($"Connecting to server at target {serverPath}...");
 
             lastPing = Time.time;
+            Latency.Reset();
 
             socket.Connect();
         }
@@ -276,6 +281,7 @@ namespace Assets.Scripts.Network
             Debug.Log($"Connecting to server at target {serverPath}...");
 
             lastPing = Time.time;
+            Latency.Reset();
 
             socket.Connect();
         }
@@ -427,6 +433,7 @@ namespace Assets.Scripts.Network
             Debug.Log($"Connecting to server at target {serverPath}...");
 
             lastPing = Time.time;
+            Latency.Reset();
 
             socket.Connect();
         }
@@ -1329,6 +1336,7 @@ namespace Assets.Scripts.Network
         {
             var msg = StartMessage();
             msg.Write((byte)PacketType.Ping);
+            msg.Write(NetworkClock.Ms); //the server echoes this back so we can measure the round trip
 
             SendMessage(msg);
         }
@@ -2074,7 +2082,7 @@ namespace Assets.Scripts.Network
 
             if (state == WebSocketState.Open)
             {
-                if (lastPing + 5 < Time.time)
+                if (lastPing + PingIntervalSeconds < Time.time)
                 {
                     SendPing();
                     //Debug.Log("Sending keep alive packet.");

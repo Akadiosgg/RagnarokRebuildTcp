@@ -11,6 +11,7 @@ public enum PacketType : byte
     PlayerReady,
     EnterServer,
     Ping,
+    [ServerOnlyPacket] Pong,
     [ServerOnlyPacket] CreateEntity,
     [ServerOnlyPacket] CreateEntity2,
     StartWalk,
