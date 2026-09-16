@@ -93,6 +93,7 @@ namespace Assets.Scripts.Effects
 		BlueWaterfallEffect,
 		DiscoLights,
 		MapPillar,
+		Guard,
 	}
 
 	public enum PrimitiveType
@@ -124,12 +125,15 @@ namespace Assets.Scripts.Effects
 		Texture3D,
 		WarpPortal,
 		Wind,
+		Guard,
 	}
 
 	public partial class RagnarokEffectData
 	{
 		static RagnarokEffectData()
 		{
+			effectHandlers.Add(EffectType.Guard, new Assets.Scripts.Effects.EffectHandlers.General.GuardEffect());
+			primitiveHandlers.Add(PrimitiveType.Guard, new Assets.Scripts.Effects.PrimitiveHandlers.GuardPrimitive());
 			effectHandlers.Add(EffectType.ForestLightEffect, new Assets.Scripts.Effects.EffectHandlers.ForestLightEffect());
 			effectHandlers.Add(EffectType.MapWarpEffect, new Assets.Scripts.Effects.EffectHandlers.MapWarpEffect());
 			effectHandlers.Add(EffectType.CastEffect, new Assets.Scripts.Effects.EffectHandlers.CastEffect());

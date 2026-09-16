@@ -241,7 +241,7 @@ namespace Assets.Scripts
             return path;
         }
 
-        public static Texture2D GetOrImportTextureToProject(string textureName, string importPath, string outputPath, bool keyOnBlack = false)
+        public static Texture2D GetOrImportTextureToProject(string textureName, string importPath, string outputPath, bool keyOnBlack = false, bool preserveSourceExtension = false)
         {
 
             var texturePath = ResolveTexturePath(textureName, importPath);
@@ -250,7 +250,11 @@ namespace Assets.Scripts
 
             if (File.Exists(texturePath))
             {
-                var textureBaseName = Path.GetFileNameWithoutExtension(NormalizeTextureRelativePath(textureName));
+                var normalizedName = NormalizeTextureRelativePath(textureName);
+                // STR layers can reference both a BMP and a TGA with the same base name.
+                var textureBaseName = preserveSourceExtension
+                    ? Path.GetFileName(normalizedName)
+                    : Path.GetFileNameWithoutExtension(normalizedName);
                 var textureOutputDirectory = Path.Combine(outputPath, DirectoryHelper.GetRelativeDirectory(importPath, Path.GetDirectoryName(texturePath)));
                 var pngPath = ToProjectRelativeAssetPath(Path.Combine(textureOutputDirectory, textureBaseName + ".png"));
                 

@@ -63,6 +63,8 @@ namespace Assets.Scripts.Effects
         FirePillar,
         CircleMaterial,
         CircleMaterialCenter,
+        Guard,
+        GuardGlow,
         EffectMaterialMax
     }
 
@@ -78,6 +80,8 @@ namespace Assets.Scripts.Effects
         RingYellow,
         RingWhite,
         Lens2,
+        Guard,
+        GuardGlow,
         EffectTextureMax
     }
 
@@ -211,6 +215,8 @@ namespace Assets.Scripts.Effects
                 EffectTextureType.AlphaCenter => "alpha_center",
                 EffectTextureType.MagicViolet => "magic_violet",
                 EffectTextureType.Lens2 => "lens2",
+                EffectTextureType.Guard => "guardk",
+                EffectTextureType.GuardGlow => "guardk2",
                 _ => null
             };
             if (texName == null)
@@ -366,6 +372,12 @@ namespace Assets.Scripts.Effects
                         break;
                     case EffectMaterialType.WhiteRing:
                         SetUpTextureMaterial(mat, ShaderCache.Instance.AdditiveShader, GetOrLoadEffectTexture(EffectTextureType.RingWhite));
+                        break;
+                    case EffectMaterialType.Guard:
+                        SetUpTextureMaterial(mat, ShaderCache.Instance.AlphaBlendParticleShader, GetOrLoadEffectTexture(EffectTextureType.Guard));
+                        break;
+                    case EffectMaterialType.GuardGlow:
+                        SetUpTextureMaterial(mat, ShaderCache.Instance.AdditiveShader, GetOrLoadEffectTexture(EffectTextureType.GuardGlow));
                         break;
                     case EffectMaterialType.TeleportPillar:
                         SetUpTextureMaterial(mat, ShaderCache.Instance.AdditiveShader, GetOrLoadEffectTexture(EffectTextureType.MagicViolet),

@@ -1,10 +1,11 @@
-﻿using System.Collections;
-using Assets.Scripts.Effects;
+﻿using Assets.Scripts.Effects;
 using Assets.Scripts.Sprites;
 using Assets.Scripts.UI.ConfigWindow;
 using Assets.Scripts.Utility;
 using RebuildSharedData.Enum;
+using System.Collections;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Assets.Scripts.Network
 {
@@ -103,7 +104,25 @@ namespace Assets.Scripts.Network
                 item.velocity = 20f;
             }
 
+            item.StartCoroutine(item.ShowDropEffect());
+
             return item;
+        }
+
+        private IEnumerator ShowDropEffect()
+        {
+            // Wait for terrain positioning and for the item to land.
+            while (!isReady || IsAnimated)
+                yield return null;
+
+            var effectRoot = new GameObject("RedDropEffect");
+            effectRoot.transform.SetParent(transform, false);
+            // Draw the beam behind sprites, including those rendered by the sprite batcher.
+            effectRoot.AddComponent<SortingGroup>().sortingOrder = -1;
+
+            var camera = CameraFollower.Instance;
+            camera.AttachEffectToEntity("DropItemRedBottom", effectRoot);
+            camera.AttachEffectToEntity("DropItemRedTop", effectRoot);
         }
 
         public void Update()

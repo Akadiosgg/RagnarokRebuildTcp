@@ -1488,6 +1488,9 @@ namespace Assets.Scripts
                 case "GrandCross":
                     GrandCrossEffect.Create(target);
                     return;
+                case "Guard":
+                    GuardEffect.Create(target);
+                    return;
             }
 
             if (EffectCache.TryGetValue(effect, out var prefab) && prefab != null)

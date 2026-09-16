@@ -1347,7 +1347,7 @@ namespace Assets.Scripts.Network
             var direction = SpriteAnimator != null ? SpriteAnimator.Direction : RoAnimationHelper.GetFacingForAngle(Angle);
             di.DoDamage(TextIndicatorType.Miss, "<font-weight=\"300\">Guard", new Vector3(0f, 0.6f, 0f), height, direction, color, false);
             di.AttachDamageIndicator(this);
-            AudioManager.Instance.OneShotSoundEffect(Id, "kyrie_guard.ogg", transform.position, 0.8f);
+            GuardEffect.Create(gameObject);
         }
 
         public void AttachHealIndicator(int damage)
