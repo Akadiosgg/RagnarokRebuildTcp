@@ -64,7 +64,7 @@ namespace Assets.Scripts.Network.IncomingPacketHandlers.Combat
 
                 if (result == AttackResult.Block)
                 {
-                    target.Messages.SendBlockEvent(time);
+                    target.Messages.SendBlockEvent(attacker, time);
                     return;
                 }
 

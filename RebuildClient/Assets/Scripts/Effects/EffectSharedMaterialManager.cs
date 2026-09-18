@@ -65,6 +65,11 @@ namespace Assets.Scripts.Effects
         CircleMaterialCenter,
         Guard,
         GuardGlow,
+        ShieldBoomerang,
+        ReflectShield,
+        DevotionLink,
+        Defender,
+        Providence,
         EffectMaterialMax
     }
 
@@ -82,6 +87,7 @@ namespace Assets.Scripts.Effects
         Lens2,
         Guard,
         GuardGlow,
+        ShieldBoomerang,
         EffectTextureMax
     }
 
@@ -217,6 +223,7 @@ namespace Assets.Scripts.Effects
                 EffectTextureType.Lens2 => "lens2",
                 EffectTextureType.Guard => "guardk",
                 EffectTextureType.GuardGlow => "guardk2",
+                EffectTextureType.ShieldBoomerang => "shield_boomerang",
                 _ => null
             };
             if (texName == null)
@@ -373,11 +380,26 @@ namespace Assets.Scripts.Effects
                     case EffectMaterialType.WhiteRing:
                         SetUpTextureMaterial(mat, ShaderCache.Instance.AdditiveShader, GetOrLoadEffectTexture(EffectTextureType.RingWhite));
                         break;
+                    case EffectMaterialType.ShieldBoomerang:
+                        SetUpTextureMaterial(mat, ShaderCache.Instance.AlphaBlendParticleShader, GetOrLoadEffectTexture(EffectTextureType.ShieldBoomerang));
+                        break;
+                    case EffectMaterialType.ReflectShield:
+                    case EffectMaterialType.Providence:
+                        SetUpTextureMaterial(mat, ShaderCache.Instance.AlphaBlendParticleShader, GetOrLoadEffectTexture(EffectTextureType.RingYellow));
+                        break;
+                    case EffectMaterialType.DevotionLink:
+                        SetUpTextureMaterial(mat, ShaderCache.Instance.AdditiveShader, Resources.Load<Texture2D>("cloud11"));
+                        break;
+                    case EffectMaterialType.Defender:
+                        SetUpTextureMaterial(mat, ShaderCache.Instance.AlphaBlendParticleShader, Resources.Load<Texture2D>("ring_black"));
+                        break;
                     case EffectMaterialType.Guard:
-                        SetUpTextureMaterial(mat, ShaderCache.Instance.AlphaBlendParticleShader, GetOrLoadEffectTexture(EffectTextureType.Guard));
+                        // Native guardK layers: SrcAlpha / One (additive).
+                        SetUpTextureMaterial(mat, ShaderCache.Instance.AdditiveShader, GetOrLoadEffectTexture(EffectTextureType.Guard));
                         break;
                     case EffectMaterialType.GuardGlow:
-                        SetUpTextureMaterial(mat, ShaderCache.Instance.AdditiveShader, GetOrLoadEffectTexture(EffectTextureType.GuardGlow));
+                        // Native guardK2 layer: SrcAlpha / InvSrcAlpha (normal transparency).
+                        SetUpTextureMaterial(mat, ShaderCache.Instance.AlphaBlendParticleShader, GetOrLoadEffectTexture(EffectTextureType.GuardGlow));
                         break;
                     case EffectMaterialType.TeleportPillar:
                         SetUpTextureMaterial(mat, ShaderCache.Instance.AdditiveShader, GetOrLoadEffectTexture(EffectTextureType.MagicViolet),

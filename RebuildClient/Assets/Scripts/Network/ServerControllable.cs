@@ -1064,7 +1064,7 @@ namespace Assets.Scripts.Network
                     SpriteAnimator.AnimSpeed = AttackMotionTime / 0.5f;
                 else
                     SpriteAnimator.AnimSpeed = 1f;
-                SpriteAnimator.ChangeMotion(SpriteMotion.Casting, true);
+                SpriteAnimator.ChangeMotion(RoAnimationHelper.GetSkillMotionForJob(OverrideClassId), true);
             }
             else
                 SpriteAnimator.ChangeMotion(SpriteMotion.Attack1, true);
@@ -1339,17 +1339,6 @@ namespace Assets.Scripts.Network
             di.AttachDamageIndicator(this);
         }
 
-        private void AttachGuardIndicator()
-        {
-            var di = RagnarokEffectPool.GetDamageIndicator();
-            var height = 1f;
-            var color = "white";
-            var direction = SpriteAnimator != null ? SpriteAnimator.Direction : RoAnimationHelper.GetFacingForAngle(Angle);
-            di.DoDamage(TextIndicatorType.Miss, "<font-weight=\"300\">Guard", new Vector3(0f, 0.6f, 0f), height, direction, color, false);
-            di.AttachDamageIndicator(this);
-            GuardEffect.Create(gameObject);
-        }
-
         public void AttachHealIndicator(int damage)
         {
             var di = RagnarokEffectPool.GetDamageIndicator();
@@ -1598,7 +1587,7 @@ namespace Assets.Scripts.Network
                     AttachMissIndicator();
                     break;
                 case EntityMessageType.Guard:
-                    AttachGuardIndicator();
+                    GuardEffect.Create(gameObject, msg.Value1 != 0 ? msg.Position : (Vector3?)null);
                     break;
                 case EntityMessageType.AttackMotion:
                     OnMessageAttackMotion(msg);

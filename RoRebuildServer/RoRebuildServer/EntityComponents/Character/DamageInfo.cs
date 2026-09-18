@@ -14,6 +14,7 @@ public enum DamageApplicationFlags : byte
     SkipOnHitTriggers = 8,
     PhysicalDamage = 16,
     MagicalDamage = 32,
+    MeleeDamage = 64,
 }
 
 public struct DamageInfo
@@ -23,6 +24,7 @@ public struct DamageInfo
     public Position AttackPosition;
     public float Time;
     public float AttackMotionTime;
+    public float BlockDelay;
     public int Damage;
     public short DamageOffHand;
     public byte HitCount;

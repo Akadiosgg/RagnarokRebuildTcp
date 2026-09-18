@@ -173,11 +173,14 @@ namespace Assets.Scripts.Network.Messaging
             }
         }
 
-        public void SendBlockEvent(float time)
+        public void SendBlockEvent(ServerControllable source, float time)
         {
             var msg = EntityMessagePool.Borrow();
             msg.ActivationTime = Time.timeSinceLevelLoad + time;
             msg.Type = EntityMessageType.Guard;
+            // Preserve the incoming hit position even if its source moves or disappears before impact.
+            msg.Value1 = source != null ? 1 : 0;
+            msg.Position = source != null ? source.transform.position : Vector3.zero;
             
             EnqueueMessage(msg);
         }

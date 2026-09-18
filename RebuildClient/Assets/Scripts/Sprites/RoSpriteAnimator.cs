@@ -48,6 +48,28 @@ namespace Assets.Scripts.Sprites
         public Color Color = Color.white;
         public Color TransitionColor = Color.white;
         public float ColorTransitionSpeed = -1f;
+        private UnityEngine.Object effectTintOwner;
+        private Color effectTint = Color.white;
+        private Color EffectTint => effectTintOwner ? effectTint : Color.white;
+
+        public void BeginEffectTint(UnityEngine.Object owner)
+        {
+            effectTintOwner = owner;
+            effectTint = Color.white;
+        }
+
+        public void SetEffectTint(UnityEngine.Object owner, Color tint)
+        {
+            if (effectTintOwner == owner)
+                effectTint = tint;
+        }
+
+        public void ClearEffectTint(UnityEngine.Object owner)
+        {
+            if (effectTintOwner == owner)
+                effectTintOwner = null;
+        }
+
         public float Alpha { get; set; }
         public int SpriteOrder;
 
@@ -726,6 +748,7 @@ namespace Assets.Scripts.Sprites
 
             c = new Color(c.r * CurrentShade, c.g * CurrentShade, c.b * CurrentShade, Alpha);
             c *= BaseColor;
+            c *= EffectTint;
 
             if (SpriteRenderer != null)
                 SpriteRenderer.SetColor(c);
@@ -739,6 +762,7 @@ namespace Assets.Scripts.Sprites
             
             c = new Color(c.r * Parent.CurrentShade, c.g * Parent.CurrentShade, c.b * Parent.CurrentShade, Parent.Alpha);
             c *= Parent.BaseColor;
+            c *= Parent.EffectTint;
 
             if (SpriteRenderer != null)
                 SpriteRenderer.SetColor(c);

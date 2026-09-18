@@ -276,13 +276,20 @@ public class CharacterStatusContainer
         if (statusEffects == null || onCalculateDamageTakenEffects <= 0)
             return;
 
+        if (TryGetExistingStatus(CharacterStatusEffect.AutoGuard, out var guard))
+        {
+            var result = StatusEffectHandler.OnCalculateDamage(guard.Type, Owner, ref guard, ref req, ref di);
+            if (result == StatusUpdateResult.EndStatus)
+                RemoveStatusEffectOfType(CharacterStatusEffect.AutoGuard);
+        }
+
         Span<int> remove = stackalloc int[statusEffects.Count];
         var removeCount = 0;
 
         for (var i = 0; i < statusEffects.Count; i++)
         {
             var s = statusEffects[i];
-            if (StatusEffectHandler.GetUpdateMode(s.Type).HasFlag(StatusUpdateMode.OnCalculateDamageTaken))
+            if (s.Type != CharacterStatusEffect.AutoGuard && StatusEffectHandler.GetUpdateMode(s.Type).HasFlag(StatusUpdateMode.OnCalculateDamageTaken))
             {
                 var res = StatusEffectHandler.OnCalculateDamage(s.Type, Owner, ref s, ref req, ref di);
                 statusEffects[i] = s;

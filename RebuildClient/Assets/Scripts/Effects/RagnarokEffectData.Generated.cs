@@ -94,6 +94,12 @@ namespace Assets.Scripts.Effects
 		DiscoLights,
 		MapPillar,
 		Guard,
+		ShieldBoomerang,
+		ReflectShield,
+		DevotionLink,
+		Defender,
+		Providence,
+		Shrink,
 	}
 
 	public enum PrimitiveType
@@ -126,12 +132,22 @@ namespace Assets.Scripts.Effects
 		WarpPortal,
 		Wind,
 		Guard,
+		ShieldBoomerang,
+		DevotionLink,
 	}
 
 	public partial class RagnarokEffectData
 	{
 		static RagnarokEffectData()
 		{
+			effectHandlers.Add(EffectType.Shrink, new Assets.Scripts.Effects.EffectHandlers.Skills.Crusader.ShrinkEffect());
+			effectHandlers.Add(EffectType.Providence, new Assets.Scripts.Effects.EffectHandlers.Skills.Crusader.ProvidenceEffect());
+			effectHandlers.Add(EffectType.ShieldBoomerang, new Assets.Scripts.Effects.EffectHandlers.Skills.Crusader.ShieldBoomerangEffect());
+			effectHandlers.Add(EffectType.ReflectShield, new Assets.Scripts.Effects.EffectHandlers.Skills.Crusader.ReflectShieldEffect());
+			effectHandlers.Add(EffectType.Defender, new Assets.Scripts.Effects.EffectHandlers.Skills.Crusader.DefenderEffect());
+			effectHandlers.Add(EffectType.DevotionLink, new Assets.Scripts.Effects.EffectHandlers.Skills.Crusader.DevotionLinkEffect());
+			primitiveHandlers.Add(PrimitiveType.DevotionLink, new Assets.Scripts.Effects.PrimitiveHandlers.DevotionLinkPrimitive());
+			primitiveHandlers.Add(PrimitiveType.ShieldBoomerang, new Assets.Scripts.Effects.PrimitiveHandlers.ShieldBoomerangPrimitive());
 			effectHandlers.Add(EffectType.Guard, new Assets.Scripts.Effects.EffectHandlers.General.GuardEffect());
 			primitiveHandlers.Add(PrimitiveType.Guard, new Assets.Scripts.Effects.PrimitiveHandlers.GuardPrimitive());
 			effectHandlers.Add(EffectType.ForestLightEffect, new Assets.Scripts.Effects.EffectHandlers.ForestLightEffect());

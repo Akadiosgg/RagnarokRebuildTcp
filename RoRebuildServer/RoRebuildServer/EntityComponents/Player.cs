@@ -1821,6 +1821,9 @@ public class Player : IEntityAutoReset
         {
             di.Time = Time.ElapsedTimeFloat + di.TimeInSeconds * 0.5f;
 
+            if (di.Result == AttackResult.Block && di.BlockDelay > 0)
+                return di;
+
             var flags = AttackFlags.Physical | AttackFlags.NoTriggers | AttackFlags.OffHandWeapon | AttackFlags.IgnoreNullifyingGroundMagic | AttackFlags.NoDamageModifiers;
             if (di.Result == AttackResult.CriticalDamage)
                 flags |= AttackFlags.GuaranteeCrit; //if the original crits, offhand crits, otherwise, it doesn't

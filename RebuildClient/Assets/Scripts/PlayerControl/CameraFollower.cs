@@ -1491,6 +1491,24 @@ namespace Assets.Scripts
                 case "Guard":
                     GuardEffect.Create(target);
                     return;
+                case "ShieldBoomerang":
+                    ShieldBoomerangEffect.CreatePreview(target);
+                    return;
+                case "ReflectShield":
+                    ReflectShieldEffect.Create(target);
+                    return;
+                case "Defender":
+                    DefenderEffect.Create(target);
+                    return;
+                case "Shrink":
+                    ShrinkEffect.Create(target);
+                    return;
+                case "Devotion":
+                    DevotionLinkEffect.CreatePreview(target);
+                    break; // Continue below to attach the activation prefab from the same entry.
+                case "Providence":
+                    ProvidenceEffect.Create(target);
+                    break; // Continue below to attach the STR overlay from the same entry.
             }
 
             if (EffectCache.TryGetValue(effect, out var prefab) && prefab != null)

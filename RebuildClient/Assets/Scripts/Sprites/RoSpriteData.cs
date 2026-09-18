@@ -248,6 +248,15 @@ namespace Assets.Scripts
 	        return true;
         }
 
+        public static SpriteMotion GetSkillMotionForJob(int jobId)
+        {
+            return (JobType)jobId switch
+            {
+                JobType.JobCrusader => SpriteMotion.Standby,
+                _ => SpriteMotion.Casting
+            };
+        }
+
         public static int GetMotionIdForSprite(SpriteType type, SpriteMotion motion)
         {
             if (motion == SpriteMotion.Idle)

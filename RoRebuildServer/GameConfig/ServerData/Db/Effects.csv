@@ -148,3 +148,12 @@
 147,DropItemRedTop,TRUE,TRUE,FALSE,new_dropitem/dropitem_red/dropitem_red/dropitem_red,,drop_red,-1.6,,1,Loop
 148,DropItemRedBottom,TRUE,TRUE,FALSE,new_dropitem/dropitem_red/dropitem_red_bottom/dropitem_red_bottom,,,-1.6,,1,Loop
 149,Guard,FALSE,FALSE,TRUE,,,,0,,1,
+150,ShieldCharge,TRUE,TRUE,FALSE,shield_charge,,,-1.6,,1,
+151,ShieldBoomerang,FALSE,FALSE,TRUE,,,cru_shield boomerang,0,,1,
+152,ReflectShield,FALSE,FALSE,TRUE,,,,0,,1,
+153,HolyCross,TRUE,TRUE,FALSE,holy_cross,,cru_holy cross,0,,1,
+155,Devotion,TRUE,TRUE,TRUE,devotion,,,-1.2,,1,
+156,Defender,FALSE,FALSE,TRUE,,,,0,,1,
+157,Providence,TRUE,TRUE,TRUE,providence,,,0,,1,
+158,SpearQuicken,FALSE,TRUE,FALSE,,,,0,Assets/Effects/Prefabs/TwoHandQuicken.prefab,1,
+159,Shrink,FALSE,FALSE,TRUE,,,,0,,1,

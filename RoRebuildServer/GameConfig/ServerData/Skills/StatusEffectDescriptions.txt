@@ -150,3 +150,18 @@ Enemies you face will deal more damage and have higher health, but also give mor
 
 ::AdminHide
 You cannot be seen and you cannot be targeted.
+
+::AutoGuard
+Your shield has a chance to block physical attacks. A successful block briefly prevents movement.
+Ends when the duration expires, you remove your shield, or you deactivate the skill.
+
+::ReflectShield
+Returns a portion of received melee physical damage to the attacker without reducing the damage you take.
+Ends when the duration expires or you remove your shield.
+
+::SpearQuicken
+Increases attack speed while using a two-handed spear.
+Ends when the duration expires or you unequip your two-handed spear.
+
+::Providence
+Reduces damage from Holy attacks and Demon monsters.

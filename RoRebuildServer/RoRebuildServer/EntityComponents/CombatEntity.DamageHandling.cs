@@ -530,17 +530,20 @@ public partial class CombatEntity
                     }
                 }
 
-                //masteries, demonbane, etc
-                if (targetRace == CharacterRace.Demon || baseElementType == AttackElement.Undead)
-                    addDamage += Player.MaxLearnedLevelOfSkill(CharacterSkill.DemonBane) * 3;
+                if (!flags.HasFlag(AttackFlags.IgnoreWeaponBonuses))
+                {
+                    //masteries, demonbane, etc
+                    if (targetRace == CharacterRace.Demon || baseElementType == AttackElement.Undead)
+                        addDamage += Player.MaxLearnedLevelOfSkill(CharacterSkill.DemonBane) * 3;
 
-                if (targetRace == CharacterRace.Beast || targetRace == CharacterRace.Insect || target.IsFlying())
-                    addDamage += Player.MaxLearnedLevelOfSkill(CharacterSkill.BeastBane) * 5;
+                    if (targetRace == CharacterRace.Beast || targetRace == CharacterRace.Insect || target.IsFlying())
+                        addDamage += Player.MaxLearnedLevelOfSkill(CharacterSkill.BeastBane) * 5;
 
-                addDamage += GetStat(CharacterStat.WeaponMastery);
+                    addDamage += GetStat(CharacterStat.WeaponMastery);
 
-                if(Character.Player.MainWeaponClass > 0)
-                    addFinalDamage += GetStat(CharacterStat.AddRefineAttackPower);
+                    if (Character.Player.MainWeaponClass > 0)
+                        addFinalDamage += GetStat(CharacterStat.AddRefineAttackPower);
+                }
 
                 if (isRanged)
                     rangeMod += rangeMod * GetStat(CharacterStat.AddAttackRangedAttack) / 100;
@@ -558,7 +561,7 @@ public partial class CombatEntity
                 defMod = int.Clamp(100 - GetStat(CharacterStat.IgnoreDefRaceFormless + (int)targetRace) - GetStat(CharacterStat.IgnoreDefSmall + (int)defSize), 0, 100);
             }
 
-            if (Character.Type == CharacterType.Player && (flags & AttackFlags.IgnoreWeaponRefine) == 0)
+            if (Character.Type == CharacterType.Player && (flags & (AttackFlags.IgnoreWeaponRefine | AttackFlags.IgnoreWeaponBonuses)) == 0)
             {
                 var weapon = (flags & AttackFlags.OffHandWeapon) == 0 ? Player.Equipment.MainHandWeapon : Player.Equipment.OffHandWeapon;
                 addDamage += GameRandom.Next(weapon.MinRefineAtkBonus, weapon.MaxRefineAtkBonus); //works on both magic and physical!
@@ -641,6 +644,8 @@ public partial class CombatEntity
 
         if (damage > 0 && isPhysical)
             di.Flags |= DamageApplicationFlags.PhysicalDamage;
+        if (damage > 0 && isPhysical && !isMagical && !isRanged)
+            di.Flags |= DamageApplicationFlags.MeleeDamage;
         if (damage > 0 && flags.HasFlag(AttackFlags.Magical))
             di.Flags |= DamageApplicationFlags.MagicalDamage;
 
@@ -683,6 +688,12 @@ public partial class CombatEntity
 
         if (di.Source.Type == EntityType.Player && !di.Source.IsAlive())
             return;
+
+        if (di.Result == AttackResult.Block && di.BlockDelay > 0)
+        {
+            Character.AddMoveLockTime(di.BlockDelay, true);
+            return;
+        }
 
         //if (di.Source.IsAlive() && di.Source.TryGet<WorldObject>(out var enemy))
         //{

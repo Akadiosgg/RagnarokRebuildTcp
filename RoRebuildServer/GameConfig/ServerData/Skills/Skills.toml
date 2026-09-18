@@ -1096,8 +1096,103 @@ MaxLevel = 1
 #[SmithSpear]
 #[SmithAxe]
 
+#----------------------------------
+# Crusader
+#----------------------------------
 
+[Faith]
+Name = "Faith"
+Icon = "cr_trust"
+Target = "Passive"
+MaxLevel = 10
 
+[AutoGuard]
+Name = "Auto Guard"
+Icon = "cr_autoguard"
+Target = "Self"
+MaxLevel = 10
+SpCost = [12,14,16,18,20,22,24,26,28,30]
+AdjustableLevel = true
+
+[ShieldCharge]
+Name = "Shield Charge"
+Icon = "cr_shieldcharge"
+Target = "Enemy"
+MaxLevel = 5
+SpCost = [10]
+AdjustableLevel = true
+
+[ShieldBoomerang]
+Name = "Shield Boomerang"
+Icon = "cr_shieldboomerang"
+Target = "Enemy"
+MaxLevel = 5
+SpCost = [12]
+AdjustableLevel = true
+
+[ReflectShield]
+Name = "Reflect Shield"
+Icon = "cr_reflectshield"
+Target = "Self"
+MaxLevel = 10
+SpCost = [35,40,45,50,55,60,65,70,75,80]
+AdjustableLevel = true
+
+[HolyCross]
+Name = "Holy Cross"
+Icon = "cr_holycross"
+Target = "Enemy"
+MaxLevel = 10
+SpCost = [11,12,13,14,15,16,17,18,19,20]
+AdjustableLevel = true
+
+[GrandCross]
+Name = "Grand Cross"
+Icon = "cr_grandcross"
+Target = "Self"
+MaxLevel = 10
+SpCost = [37,44,51,58,65,72,79,86,93,100]
+AdjustableLevel = true
+InterruptMode = "NeverInterrupt"
+
+[Devotion]
+Name = "Devotion"
+Icon = "cr_devotion"
+Target = "Ally"
+MaxLevel = 5
+SpCost = [25]
+AdjustableLevel = true
+
+[Providence]
+Name = "Providence"
+Icon = "cr_providence"
+Target = "Ally"
+MaxLevel = 5
+SpCost = [30]
+AdjustableLevel = true
+
+[Defender]
+Name = "Defender"
+Icon = "cr_defender"
+Target = "Self"
+MaxLevel = 5
+SpCost = [30]
+AdjustableLevel = true
+
+[SpearQuicken]
+Name = "Spear Quicken"
+Icon = "cr_spearquicken"
+Target = "Self"
+MaxLevel = 10
+SpCost = [24,28,32,36,40,44,48,52,56,60]
+AdjustableLevel = true
+
+[Shrink]
+Name = "Shrink"
+Icon = "cr_shrink"
+Target = "Self"
+MaxLevel = 1
+SpCost = [15]
 
 #----------------------------------
 # Other skills

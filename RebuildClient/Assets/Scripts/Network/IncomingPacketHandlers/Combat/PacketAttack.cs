@@ -119,7 +119,7 @@ namespace Assets.Scripts.Network.IncomingPacketHandlers.Combat
                 
                 if (result.Result == AttackResult.Block)
                 {
-                    controllable2.Messages.SendBlockEvent(motionTime);
+                    controllable2.Messages.SendBlockEvent(controllable, motionTime);
                     return;
                 }
 

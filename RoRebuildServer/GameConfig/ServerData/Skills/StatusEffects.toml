@@ -495,3 +495,31 @@ Name = "Stolen From"
 Type = "Debuff"
 CanDisable = false
 CanDispel = false
+
+[AutoGuard]
+Name = "Auto Guard"
+Type = "Buff"
+Icon = "오토가드"
+CanDispel = true
+CanDisable = true
+
+[ReflectShield]
+Name = "Reflect Shield"
+Type = "Buff"
+Icon = "리플렉트쉴드"
+CanDispel = true
+CanDisable = true
+
+[SpearQuicken]
+Name = "Spear Quicken"
+Type = "Buff"
+Icon = "스피어퀴큰"
+CanDispel = true
+CanDisable = true
+
+[Providence]
+Name = "Providence"
+Type = "Buff"
+Icon = "신의뜻"
+CanDispel = true
+CanDisable = true

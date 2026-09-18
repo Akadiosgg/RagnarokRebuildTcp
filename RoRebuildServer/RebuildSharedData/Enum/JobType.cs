@@ -26,6 +26,6 @@ public enum JobType
     JobAlchemist = 19,
     JobSuperNovice = 20,
     JobGameMaster = 499,
-    JobPecoCrusader = 507,
-    JobPecoKnight = 513,
+    JobPecoKnight = 507,
+    JobPecoCrusader = 513,
 }

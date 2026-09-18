@@ -93,6 +93,7 @@ public class ItemEquipState
     public AmmoType AmmoType;
     public int AmmoAttackPower;
     public bool IsDualWielding => OffHandWeapon.WeaponClass > 0;
+    public bool HasShieldEquipped => hasShieldEquipped;
     public int DoubleAttackModifiers;
     public int WeaponRange;
     public AttackElement AmmoElement;
@@ -108,6 +109,7 @@ public class ItemEquipState
     private bool isOffHand;
     private readonly HeadgearPosition[] headgearMultiSlotInfo = new HeadgearPosition[3];
     private bool isTwoHandedWeapon;
+    private bool hasShieldEquipped;
     private static int[] attackPerRefine = [2, 3, 5, 7];
     private static int[] overRefineLevel = [7, 6, 5, 4];
     private static int[] overRefineAttackBonus = [3, 5, 8, 14];
@@ -122,6 +124,7 @@ public class ItemEquipState
             headgearMultiSlotInfo[i] = 0;
         AmmoId = -1;
         WeaponRange = 1;
+        hasShieldEquipped = false;
         MainHandWeapon.Reset();
         OffHandWeapon.Reset();
         ArmorElement = CharacterElement.Neutral1;
@@ -570,6 +573,9 @@ public class ItemEquipState
         {
             if (DataManager.ArmorInfo.TryGetValue(item.Id, out var armor))
             {
+                if (slot == EquipSlot.Shield)
+                    hasShieldEquipped = armor.EquipPosition.HasFlag(EquipPosition.Shield);
+
                 Player.AddStat(CharacterStat.Def, armor.Defense);
                 Player.AddStat(CharacterStat.MDef, armor.MagicDefense);
 
@@ -636,6 +642,9 @@ public class ItemEquipState
     private void UnEquipEvent(EquipSlot slot)
     {
         Debug.Assert(Player.Inventory != null);
+
+        if (slot == EquipSlot.Shield)
+            hasShieldEquipped = false;
 
         if (ItemSlots[(int)slot] <= 0)
             return;

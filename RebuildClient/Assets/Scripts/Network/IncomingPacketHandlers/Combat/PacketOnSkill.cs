@@ -152,6 +152,12 @@ namespace Assets.Scripts.Network.IncomingPacketHandlers.Combat
                 //we still want to execute when a special effect plays on a target though.
                 ClientSkillHandler.ExecuteSkill(null, ref attack);
 
+                if (result == AttackResult.Block && controllable2 != null)
+                {
+                    controllable2.Messages.SendBlockEvent(null, damageTiming);
+                    return;
+                }
+
                 if (hits > 0 && result != AttackResult.Miss && result != AttackResult.Invisible && controllable2 != null)
                 {
                     controllable2?.Messages.SendDamageEvent(null, motionTime, dmg, hits, result == AttackResult.CriticalDamage, dmgSound);
@@ -196,7 +202,7 @@ namespace Assets.Scripts.Network.IncomingPacketHandlers.Combat
                 
                 if (result == AttackResult.Block)
                 {
-                    controllable2.Messages.SendBlockEvent(damageTiming);
+                    controllable2.Messages.SendBlockEvent(controllable, damageTiming);
                     return;
                 }
 

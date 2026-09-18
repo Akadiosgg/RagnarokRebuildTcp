@@ -451,3 +451,51 @@ Favorable weapons for enemy size:<br>Small: Dagger, Book, Rod, Gun<br>Medium: 1h
 
 ::WeaponryResearch
 Adds +[SkillLevel * 2] HIT, increases your accuracy by +[SkillLevel * 2]%, and increases the damage dealt by physical attacks by +[SkillLevel * 3].
+
+//----------------Crusader-------------------
+
+::Faith
+Adds [SkillLevel * 200] MaxHP and [SkillLevel * 5]% Holy resistance.
+
+::AutoGuard
+While a shield is equipped, grants a chance to block physical attacks for 300 seconds. Use again to deactivate.
+Block chance by level: 5/10/14/18/21/24/26/28/29/30%.
+A successful block prevents movement for 0.3 seconds at levels 1-5, 0.2 seconds at levels 6-9, or 0.1 seconds at level 10.
+
+::ShieldCharge
+Requires a shield. Deals [100 + SkillLevel * 20]% ATK, knocks the target back [4 + SkillLevel] cells, and has a [15 + SkillLevel * 5]% base chance to stun.
+
+::ShieldBoomerang
+Throws your equipped shield for [100 + SkillLevel * 30]% damage. Shield weight and refinement affect damage.
+Range: [1 + SkillLevel * 2] cells.
+
+::ReflectShield
+While a shield is equipped, returns [10 + SkillLevel * 3]% of received melee physical damage to the attacker.
+Duration: 300 seconds.
+
+::HolyCross
+Deals [100 + SkillLevel * 35]% ATK as Holy physical damage with a [SkillLevel * 3]% base chance to inflict Blind.
+
+::GrandCross
+Creates three Holy damage pulses in a cross around you, using both ATK and MATK with a [100 + SkillLevel * 40]% damage multiplier.
+Consumes 20% of your current HP and also inflicts Holy recoil damage on you. Reduces defense during casting.
+Base cast time: 3 seconds. Casting cannot be interrupted.
+
+::Devotion
+Links an eligible party member to you, redirecting their received damage to you. The target's defenses determine the damage transferred.
+Protects up to [SkillLevel] party members for [15 + SkillLevel * 15] seconds, within [6 + SkillLevel] cells.
+Cannot target yourself or another Crusader. Your base levels must be within 10 levels of each other.
+
+::Providence
+Grants an ally [SkillLevel * 5]% resistance to Holy damage and Demon monsters for 180 seconds. Cannot target yourself or another Crusader.
+
+::Defender
+Requires a shield. Reduces incoming ranged physical damage by [5 + SkillLevel * 15]% for 180 seconds, at the cost of movement and attack speed.
+Attack speed penalty: [25 - SkillLevel * 5]%. Use again to deactivate.
+
+::SpearQuicken
+Requires a two-handed spear. Increases attack speed by [20 + SkillLevel]% for [SkillLevel * 30] seconds.
+
+::Shrink
+Quest skill. Requires a shield and an active Auto Guard effect.
+Successful blocks have a [AutoGuardLevel * 5]% chance to knock the attacker back 2 cells. Lasts 300 seconds; use again to deactivate.

@@ -76,6 +76,9 @@ public partial class CombatEntity : IEntityAutoReset
 
     public float CastTimeRemaining => !IsCasting ? 0 : CastingTime - Time.ElapsedTimeFloat;
 
+    public bool HasShieldEquipped =>
+        Character.Type != CharacterType.Player || Player.Equipment.HasShieldEquipped;
+
     public bool HasBodyState(BodyStateFlags flag) => (BodyState & flag) > 0;
     public void SetBodyState(BodyStateFlags flag) => BodyState |= flag;
     public void RemoveBodyState(BodyStateFlags flag) => BodyState &= ~flag;
@@ -1628,7 +1631,7 @@ public partial class CombatEntity : IEntityAutoReset
             }
         }
 
-        if (damageInfo.Damage != 0 || damageInfo.DamageOffHand > 0 || damageInfo.KnockBack > 0)
+        if (damageInfo.Damage != 0 || damageInfo.DamageOffHand > 0 || damageInfo.KnockBack > 0 || damageInfo.BlockDelay > 0)
             target.QueueDamage(damageInfo);
     }
 
