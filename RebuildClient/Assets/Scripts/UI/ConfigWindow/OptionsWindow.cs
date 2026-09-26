@@ -1,5 +1,4 @@
 using Assets.Scripts.Network;
-using UnityEngine;
 
 namespace Assets.Scripts.UI.ConfigWindow
 {

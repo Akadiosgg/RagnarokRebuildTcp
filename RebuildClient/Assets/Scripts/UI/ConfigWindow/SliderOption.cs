@@ -19,23 +19,28 @@ namespace Assets.Scripts.UI.ConfigWindow
             slider.onValueChanged.AddListener(OnChanged);
         }
 
+        // The range comes from GameConfig.BoundsFor.
+        private void ApplyBounds()
+        {
+            var bounds = GameConfig.BoundsFor(option);
+            slider.minValue = bounds.Min;
+            slider.maxValue = bounds.Max;
+        }
+
         private void OnDisable() => slider.onValueChanged.RemoveListener(OnChanged);
 
         private void OnChanged(float value) => GameConfig.Set(option, value, apply: !applyOnRelease);
 
         public void SyncFromConfig() => slider.SetValueWithoutNotify(GameConfig.Get(option));
 
-        public void Bind(RangeOption rangeOption, float min, float max, bool wholeNumbers, bool applyOnRelease)
+        public void Bind(RangeOption rangeOption, bool wholeNumbers, bool applyOnRelease)
         {
             option = rangeOption;
             this.applyOnRelease = applyOnRelease;
-            if (slider == null) slider = GetComponent<Slider>();
 
-            // Setting min/max re-clamps the value and fires onValueChanged; with the listener attached that
-            // would write the minimum back into config. Detach while setting the range, then re-sync.
+            // Setting the range fires onValueChanged, so detach to keep the clamped value out of config.
             slider.onValueChanged.RemoveListener(OnChanged);
-            slider.minValue = min;
-            slider.maxValue = max;
+            ApplyBounds();
             slider.wholeNumbers = wholeNumbers;
             SyncFromConfig();
             if (isActiveAndEnabled)

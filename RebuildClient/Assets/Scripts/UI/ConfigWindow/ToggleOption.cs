@@ -26,7 +26,6 @@ namespace Assets.Scripts.UI.ConfigWindow
         public void Bind(BoolOption boolOption)
         {
             option = boolOption;
-            if (toggle == null) toggle = GetComponent<Toggle>();
             if (isActiveAndEnabled) SyncFromConfig();
         }
     }

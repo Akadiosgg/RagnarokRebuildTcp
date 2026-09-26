@@ -1,37 +1,40 @@
 ﻿namespace Assets.Scripts.UI.ConfigWindow
 {
-    public enum OptionKind { Header, Toggle, Slider, Sound }
+    public enum OptionKind { Header, Toggle, Slider, Sound, ToggleNumber }
 
+    // A row's range comes from GameConfig.BoundsFor.
     public readonly struct OptionRow
     {
         public readonly OptionKind Kind;
         public readonly OptionCategory Category;
         public readonly string Label;
-        public readonly BoolOption Bool;    // Toggle, or the mute toggle of a Sound row
-        public readonly RangeOption Range;  // Slider, or the volume slider of a Sound row
-        public readonly float Min, Max;     // Slider / Sound
+        public readonly BoolOption Bool;    // Toggle, the mute toggle of a Sound row, or the toggle of a ToggleNumber row
+        public readonly RangeOption Range;  // Slider, the volume slider of a Sound row, or the number of a ToggleNumber row
         public readonly bool WholeNumbers;  // Slider / Sound
         public readonly bool ApplyOnRelease; // Slider (expensive applies, e.g. UI scale)
 
         private OptionRow(OptionKind kind, OptionCategory cat, string label, BoolOption b, RangeOption r,
-            float min, float max, bool whole, bool applyOnRelease)
+            bool whole, bool applyOnRelease)
         {
             Kind = kind; Category = cat; Label = label; Bool = b; Range = r;
-            Min = min; Max = max; WholeNumbers = whole; ApplyOnRelease = applyOnRelease;
+            WholeNumbers = whole; ApplyOnRelease = applyOnRelease;
         }
 
         public static OptionRow Header(OptionCategory cat, string label)
-            => new(OptionKind.Header, cat, label, default, default, 0, 0, false, false);
+            => new(OptionKind.Header, cat, label, default, default, false, false);
 
         public static OptionRow Toggle(OptionCategory cat, string label, BoolOption option)
-            => new(OptionKind.Toggle, cat, label, option, default, 0, 0, false, false);
+            => new(OptionKind.Toggle, cat, label, option, default, false, false);
 
         public static OptionRow Slider(OptionCategory cat, string label, RangeOption option,
-            float min, float max, bool wholeNumbers = false, bool applyOnRelease = false)
-            => new(OptionKind.Slider, cat, label, default, option, min, max, wholeNumbers, applyOnRelease);
+            bool wholeNumbers = false, bool applyOnRelease = false)
+            => new(OptionKind.Slider, cat, label, default, option, wholeNumbers, applyOnRelease);
 
         public static OptionRow Sound(OptionCategory cat, string label, RangeOption volume, BoolOption mute)
-            => new(OptionKind.Sound, cat, label, mute, volume, 0f, 100f, true, false);
+            => new(OptionKind.Sound, cat, label, mute, volume, true, false);
+
+        public static OptionRow ToggleNumber(OptionCategory cat, string label, BoolOption enabled, RangeOption value)
+            => new(OptionKind.ToggleNumber, cat, label, enabled, value, true, false);
     }
 
     public static partial class GameConfig
@@ -39,12 +42,17 @@
         public static readonly OptionRow[] Layout =
         {
             // ---- Game ----
-            OptionRow.Header(OptionCategory.Game, "Display"),
-            OptionRow.Slider(OptionCategory.Game, "Damage indicator size", RangeOption.DamageNumberSize, 0.2f, 2f),
-            OptionRow.Slider(OptionCategory.Game, "Damage indicator spacing", RangeOption.DamageSpacingSize, 0.4f, 1f),
-            OptionRow.Toggle(OptionCategory.Game, "Use old-school damage numbers", BoolOption.UseSpriteBasedDamageNumbers),
+            OptionRow.Header(OptionCategory.Game, "Graphics"),
             OptionRow.Toggle(OptionCategory.Game, "Enable sprite filtering (pixelated)", BoolOption.EnableSpriteFiltering),
             OptionRow.Toggle(OptionCategory.Game, "Enable X-ray view", BoolOption.EnableXRay),
+            OptionRow.Toggle(OptionCategory.Game, "VSync", BoolOption.VSync),
+            OptionRow.ToggleNumber(OptionCategory.Game, "Foreground FPS cap", BoolOption.LimitForegroundFps, RangeOption.ForegroundFpsLimit),
+            OptionRow.ToggleNumber(OptionCategory.Game, "Background FPS cap", BoolOption.LimitBackgroundFps, RangeOption.BackgroundFpsLimit),
+
+            OptionRow.Header(OptionCategory.Game, "Display"),
+            OptionRow.Slider(OptionCategory.Game, "Damage indicator size", RangeOption.DamageNumberSize),
+            OptionRow.Slider(OptionCategory.Game, "Damage indicator spacing", RangeOption.DamageSpacingSize),
+            OptionRow.Toggle(OptionCategory.Game, "Use old-school damage numbers", BoolOption.UseSpriteBasedDamageNumbers),
             OptionRow.Toggle(OptionCategory.Game, "Show exp gain over character", BoolOption.ShowExpGainOnKill),
             OptionRow.Toggle(OptionCategory.Game, "Tab shows walkable tiles", BoolOption.AllowTabToShowWalkTable),
 
@@ -58,13 +66,14 @@
 
             // ---- UI ----
             OptionRow.Header(OptionCategory.UI, "UI Size Settings"),
-            OptionRow.Slider(OptionCategory.UI, "UI scale", RangeOption.MasterUIScale, 6f, 11f, wholeNumbers: true, applyOnRelease: true),
+            OptionRow.Slider(OptionCategory.UI, "UI scale", RangeOption.MasterUIScale, wholeNumbers: true, applyOnRelease: true),
             OptionRow.Toggle(OptionCategory.UI, "Scale UI with window size", BoolOption.ScaleUiWithResolution),
             OptionRow.Toggle(OptionCategory.UI, "Keep windows fully on screen", BoolOption.KeepWindowsOnScreen),
 
             OptionRow.Header(OptionCategory.UI, "Minimap"),
-            OptionRow.Slider(OptionCategory.UI, "Minimap opacity", RangeOption.MinimapOpacity, 0f, 20f, wholeNumbers: true, applyOnRelease: true),
-            OptionRow.Toggle(OptionCategory.UI, "Show coordinates on minimap", BoolOption.ShowMinimapCoordinates),
+            OptionRow.Toggle(OptionCategory.UI, "Enable minimap", BoolOption.EnableMinimap),
+            OptionRow.Slider(OptionCategory.UI, "Map opacity", RangeOption.MinimapOpacity, wholeNumbers: true, applyOnRelease: true),
+            OptionRow.Slider(OptionCategory.UI, "Icon opacity", RangeOption.MinimapIconOpacity, wholeNumbers: true, applyOnRelease: true),
 
             OptionRow.Header(OptionCategory.UI, "Floating Display"),
             OptionRow.Toggle(OptionCategory.UI, "Scale floating display with zoom", BoolOption.ScalePlayerDisplayWithZoom),
@@ -89,6 +98,13 @@
             OptionRow.Sound(OptionCategory.Audio, "BGM", RangeOption.VolumeBgm, BoolOption.EnableBgm),
             OptionRow.Sound(OptionCategory.Audio, "Effects", RangeOption.VolumeEffects, BoolOption.EnableEffects),
             OptionRow.Sound(OptionCategory.Audio, "Environment", RangeOption.VolumeEnvironment, BoolOption.EnableEnvironment),
+        };
+
+        // The title screen's mini panel, with its own labels and order.
+        public static readonly OptionRow[] TitleScreenLayout =
+        {
+            OptionRow.Sound(OptionCategory.Audio, "Volume", RangeOption.VolumeMaster, BoolOption.EnableMaster),
+            OptionRow.Slider(OptionCategory.UI, "UI scale", RangeOption.MasterUIScale, wholeNumbers: true, applyOnRelease: true),
         };
     }
 }

@@ -12974,16 +12974,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 04b7604fdae856345b6065f626aa40e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  optionSet: 0
+  labelWidth: 280
   content: {fileID: 0}
   tabGroup: {fileID: 1139450487834133190}
   tabCategories: 00000000010000000300000002000000
-  headerRowPrefab: {fileID: 6600000000000001000, guid: 7c1e9a4b2d3f4e5a8b6c1d2e3f4a5b60,
+  headerRowPrefab: {fileID: 6600000000000001050, guid: 7c1e9a4b2d3f4e5a8b6c1d2e3f4a5b60,
     type: 3}
-  toggleRowPrefab: {fileID: 6600000000000002000, guid: 7c1e9a4b2d3f4e5a8b6c1d2e3f4a5b61,
+  toggleRowPrefab: {fileID: 6600000000000002040, guid: 7c1e9a4b2d3f4e5a8b6c1d2e3f4a5b61,
     type: 3}
-  sliderRowPrefab: {fileID: 6600000000000003000, guid: 7c1e9a4b2d3f4e5a8b6c1d2e3f4a5b62,
+  sliderRowPrefab: {fileID: 6600000000000003040, guid: 7c1e9a4b2d3f4e5a8b6c1d2e3f4a5b62,
     type: 3}
-  soundRowPrefab: {fileID: 6600000000000004000, guid: 7c1e9a4b2d3f4e5a8b6c1d2e3f4a5b63,
+  soundRowPrefab: {fileID: 6600000000000004040, guid: 7c1e9a4b2d3f4e5a8b6c1d2e3f4a5b63,
+    type: 3}
+  toggleNumberRowPrefab: {fileID: 6600000000000004040, guid: 1738d9a844414715afa4af5b60bd06ea,
     type: 3}
 --- !u!1 &6053836125023786912
 GameObject:

@@ -100,6 +100,9 @@ namespace Assets.Scripts.PlayerControl
                 CameraFollower.Instance.CharacterDetailBox.CharacterName.text = PlayerName;
         }
 
+        //The lookup holds online members on any map. IsInParty covers a disband before the lookups are cleared.
+        public bool IsInMyParty(int entityId) => IsInParty && PartyMemberIdLookup.ContainsKey(entityId);
+
         public void AssignPartyMemberControllable(int entityId, ServerControllable controllable)
         {
             if(PartyMemberIdLookup.TryGetValue(entityId, out var partyMemberId) && PartyMembers.TryGetValue(partyMemberId, out var member))
@@ -118,17 +121,19 @@ namespace Assets.Scripts.PlayerControl
             {
                 PartyMemberEntityLookup.TryAdd(memberId, entityId);
                 PartyMemberIdLookup.TryAdd(entityId, memberId);
+                MinimapController.Instance.RefreshPartyIcon(entityId);
             }
             else
             {
+                //logged out: the update carries -1, so remove by the previous entity id
+                if (PartyMemberEntityLookup.TryGetValue(memberId, out var oldEntityId))
+                    PartyMemberIdLookup.Remove(oldEntityId);
+
                 PartyMemberEntityLookup.Remove(memberId);
-                PartyMemberIdLookup.Remove(entityId);
             }
 
             if (info.IsLeader)
                 PartyLeader = memberId;
-            
-            MinimapController.Instance.RefreshPartyMembers();
         }
 
         public PartyMemberInfo RemovePartyMember(int memberId)
@@ -141,9 +146,8 @@ namespace Assets.Scripts.PlayerControl
             {
                 PartyMemberIdLookup.Remove(entityId);
                 PartyMemberEntityLookup.Remove(memberId);
+                MinimapController.Instance.RefreshPartyIcon(entityId);
             }
-            
-            MinimapController.Instance.RefreshPartyMembers();
 
             return info;
         }

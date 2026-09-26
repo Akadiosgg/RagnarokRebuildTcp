@@ -47,8 +47,9 @@ namespace Assets.Scripts.UI.ConfigWindow
         public float MasterUIScale = 0.8f;
         public bool ScaleUiWithResolution = true;
         public bool KeepWindowsOnScreen = true;
+        public bool EnableMinimap = true;
         public float MinimapOpacity = 0.85f;
-        public bool ShowMinimapCoordinates = false;
+        public float MinimapIconOpacity = 1f;
 
         public bool ShowBaseExpValue = true;
         public bool ShowBaseExpPercent = true;
@@ -58,6 +59,12 @@ namespace Assets.Scripts.UI.ConfigWindow
 
         //visuals
         public bool UseSmoothPixel = true;
+
+        public bool VSync = true;
+        public bool LimitForegroundFps = false;
+        public float ForegroundFpsLimit = 144f;
+        public bool LimitBackgroundFps = true;
+        public float BackgroundFpsLimit = 30f;
 
         public bool EnableSpriteFiltering = false;
         public bool UseSpriteBasedDamageNumbers = false;
@@ -85,30 +92,39 @@ namespace Assets.Scripts.UI.ConfigWindow
         //user
         [CanBeNull] public string SavedLoginToken;
 
+        public const int HotBarSlots = 30;
+
         public HotBarSaveData[] GetHotBarDataForCharacter(string name)
         {
             if (CharacterHotBarData.TryGetValue(name, out var data))
                 return data;
 
-            var hotBarData = new HotBarSaveData[30];
+            var hotBarData = new HotBarSaveData[HotBarSlots];
             CharacterHotBarData.Add(name, hotBarData);
 
             return hotBarData;
         }
 
-        public void InitDefaultValues()
+        private static readonly int ChannelCount = Enum.GetValues(typeof(ConfigAudioChannel)).Length;
+
+        //The audio arrays need a length before they can be filled.
+        public static GameConfigData CreateDefault()
         {
-            AudioVolumeLevels = new int[4];
-            AudioMuteValues = new bool[4];
+            var data = new GameConfigData();
+            data.InitDefaultValues();
+            return data;
+        }
+
+        private void InitDefaultValues()
+        {
             // HotBarSaveData = new HotBarSaveData[30];
+            AudioVolumeLevels = new int[ChannelCount];
+            AudioMuteValues = new bool[ChannelCount];
 
             AudioVolumeLevels[(int)ConfigAudioChannel.Master] = 25;
             AudioVolumeLevels[(int)ConfigAudioChannel.Music] = 70;
             AudioVolumeLevels[(int)ConfigAudioChannel.Effects] = 50;
             AudioVolumeLevels[(int)ConfigAudioChannel.Environment] = 50;
-
-            for (var i = 0; i < 4; i++)
-                AudioMuteValues[i] = false;
         }
 
         public void OnBeforeSerialize()
@@ -125,20 +141,26 @@ namespace Assets.Scripts.UI.ConfigWindow
 
         }
 
+        //The file's lists can differ in length; a throw here drops the whole config.
         public void OnAfterDeserialize()
         {
-
             for (var j = 0; j < CharacterNames.Count; j++)
             {
                 var name = CharacterNames[j];
                 if (!CharacterHotBarData.TryGetValue(name, out var hotBar))
                 {
-                    hotBar = new HotBarSaveData[30];
+                    hotBar = new HotBarSaveData[HotBarSlots];
                     CharacterHotBarData.Add(name, hotBar);
                 }
 
-                for (var i = 0; i < 30; i++)
-                    hotBar[i] = AllHotBarData[j * 30 + i];
+                for (var i = 0; i < HotBarSlots; i++)
+                {
+                    var index = j * HotBarSlots + i;
+                    if (index >= AllHotBarData.Count)
+                        return; //remaining names keep empty bars
+
+                    hotBar[i] = AllHotBarData[index];
+                }
             }
         }
     }

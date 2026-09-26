@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Assets.Scripts.PlayerControl;
 using Assets.Scripts.UI.ConfigWindow;
 using RebuildSharedData.Enum;
-using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.EventSystems;
@@ -11,77 +10,71 @@ using UnityEngine.UI;
 
 namespace Assets.Scripts.UI.Hud
 {
-    public class MinimapController : MonoBehaviour, IScrollHandler
+    public class MinimapController : MonoBehaviour, IScrollHandler, IPointerMoveHandler, IPointerExitHandler
     {
-        public RectTransform ContentContainer;
         public RectTransform Viewport;
-        public TextMeshProUGUI CoordinateText;
-        private Vector2Int lastCoordinate = new(-1, -1);
-
-        private static readonly Vector3[] cornerBuffer = new Vector3[4];
-
-        //set when the map is resized or rescaled, so anything derived from its rect is recalculated once
-        private bool mapTransformDirty;
-
-        //distance the coordinate label is inset from the corner it's pinned to
-        private static readonly Vector3 CoordinateInset = new(-2f, 0f, 0f);
-
-        private RectTransform playerIconRect;
-        private Vector2Int lastIconPosition = new(-1, -1);
-        private float lastIconAngle = float.NaN;
-
-        //icons stay this much more opaque than the map so they stay readable as it fades
-        private const float IconOpacityOffset = 0.2f;
-        private static float IconAlpha => Mathf.Min(GameConfig.Data.MinimapOpacity + IconOpacityOffset, 1f);
+        public RectTransform ContentContainer;
 
         public Image MapImage;
         public Material OverworldMaterial;
         public Material DungeonMaterial;
-        public Sprite PlayerIcon;
-        public Sprite OtherPlayerIcon;
-        public Sprite PartyMemberIcon;
-        public Sprite BossIcon;
-        public Sprite MvpIcon;
-        public Sprite PortalIcon;
-        public Sprite WarpNpcIcon;
-        public Sprite KafraIcon;
 
-        private GameObject playerMapIconObject;
-        private Dictionary<int, MinimapEntityData> mapIcons = new();
+        public CanvasGroup IconLayer;
+        //keeps entity icons below the player marker
+        public RectTransform EntityIconContainer;
 
-        public MapType MapType;
+        public Image PlayerIconPrefab;
+        public Image PlayerPrefab;
+        public Image PartyPlayerPrefab;
+        public Image MonsterPrefab;
+        public Image BossPrefab;
+        public Image MvpPrefab;
+        public Image PortalPrefab;
+        public Image WarpNpcPrefab;
+        public Image KafraPrefab;
+        public Image TalkNpcPrefab;
 
-        public float ObjectScaleFactor = 1f;
-        public float MinimapPixelsPerTile = 5f;
+        public float IconSizeMultiplier = 1f;
         public float MouseWheelZoomStep = 0.2f;
 
-        public float minScale;
-        public float maxScale;
-
-        public float curSize;
-        public float lastZoom;
-
-        private float offsetX;
-        private float offsetY;
-
         private static MinimapController instance;
+        private static readonly int SecondaryTex = Shader.PropertyToID("_SecondaryTex");
+
+        private const float TileCenter = 0.5f;
+
+        private RectTransform selfRect;
+        private Vector2 maxSize;
 
         private Coroutine loadCoroutine;
-
+        private MapType mapType;
         private Sprite mapSprite;
-        public Sprite walkSprite;
+        private Sprite walkSprite;
+        private int mapPixelWidth;
+        private int mapPixelHeight;
+
+        private float minZoom;
+        private float maxZoom;
+        private float zoom;
+        private bool mapTransformDirty;
+
+        private readonly Dictionary<int, MinimapEntityData> entities = new();
+
+        private Image playerIcon;
+        private Vector2Int lastIconPosition = new(-1, -1);
+        private float lastIconAngle = float.NaN;
+
+        private bool pointerInside;
+        private Vector2 pointerPosition;
+        private Camera pointerCamera;
+        private MinimapEntityData hoveredEntity;
 
         private class MinimapEntityData
         {
-            public GameObject MapIcon;
             public Image Icon;
-            public RectTransform Rect;
             public Vector2Int Position;
-            public float Size; //the zoom the icon was last placed at
             public CharacterDisplayType Type;
+            public string Label;
         }
-
-
 
         public static MinimapController Instance
         {
@@ -89,196 +82,253 @@ namespace Assets.Scripts.UI.Hud
             {
                 if (instance != null)
                     return instance;
-                instance = FindObjectOfType<MinimapController>();
+                //include inactive: the minimap switches itself off
+                instance = FindAnyObjectByType<MinimapController>(FindObjectsInactive.Include);
                 return instance;
             }
         }
 
-        public void RemoveAllEntities()
+        //entities for a loading map are tracked but not drawn until LoadMinimap
+        public void UnloadMap()
         {
-            if (mapIcons == null) return;
+            mapSprite = null;
+            walkSprite = null;
+            ClearIconViews();
+            entities.Clear();
+        }
 
-            foreach(var icon in mapIcons)
-                Destroy(icon.Value.MapIcon);
-            mapIcons.Clear();
+        private void ClearIconViews()
+        {
+            foreach (var pair in entities)
+                DestroyIcon(pair.Value);
+
+            if (playerIcon != null)
+            {
+                Destroy(playerIcon.gameObject);
+                playerIcon = null;
+            }
+
+            //makes the next SetPlayerPosition place the new marker
+            lastIconPosition = new Vector2Int(-1, -1);
+            lastIconAngle = float.NaN;
         }
 
         public void RemoveEntity(int entityId)
         {
-            if (mapIcons == null || !mapIcons.Remove(entityId, out var mapIcon))
-                return;
-
-            Destroy(mapIcon.MapIcon);
+            if (entities.Remove(entityId, out var entity))
+                DestroyIcon(entity);
         }
 
-        public void RefreshPartyMembers()
+        private void DestroyIcon(MinimapEntityData entity)
         {
-            var state = PlayerState.Instance;
-            var isInParty = state.IsInParty;
+            if (hoveredEntity == entity)
+                SetHovered(null);
 
-            foreach (var (entityId, mapEntry) in mapIcons)
+            if (entity.Icon != null)
+                Destroy(entity.Icon.gameObject);
+
+            entity.Icon = null;
+        }
+
+        //call after PlayerState reflects the party change
+        public void RefreshPartyIcon(int entityId)
+        {
+            if (entities.TryGetValue(entityId, out var entity)
+                && entity.Icon != null
+                && entity.Type == CharacterDisplayType.Player)
+                CreateIcon(entityId, entity);
+        }
+
+        //counter-scales icons against zoom so they keep their on-screen size
+        private float IconScale => IconSizeMultiplier / zoom;
+
+        private void ApplyIconScale(MinimapEntityData entity) =>
+            entity.Icon.rectTransform.localScale = Vector3.one * IconScale;
+
+        public void OnPointerMove(PointerEventData eventData)
+        {
+            pointerInside = true;
+            pointerPosition = eventData.position;
+            pointerCamera = eventData.enterEventCamera;
+
+            UpdateHover();
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            pointerInside = false;
+            SetHovered(null);
+        }
+
+        //no pointer exit arrives when the minimap is switched off mid-hover
+        private void OnDisable() => OnPointerExit(null);
+
+        private void UpdateHover()
+        {
+            var ui = UiManager.Instance;
+
+            if (!pointerInside || mapSprite == null || ui == null || ui.IsDraggingItem)
             {
-                if (mapEntry.MapIcon == null || entityId == state.EntityId || mapEntry.Type != CharacterDisplayType.Player)
+                SetHovered(null);
+                return;
+            }
+
+            SetHovered(EntityAt(pointerPosition, pointerCamera));
+        }
+
+        private MinimapEntityData EntityAt(Vector2 screenPoint, Camera cam)
+        {
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(MapImage.rectTransform, screenPoint, cam, out var local))
+                return null;
+
+            MinimapEntityData nearest = null;
+            var nearestDistance = float.MaxValue;
+
+            var iconScale = IconScale;
+
+            foreach (var pair in entities)
+            {
+                var entity = pair.Value;
+
+                if (entity.Label == null || entity.Icon == null)
                     continue;
 
-                var icon = OtherPlayerIcon;
-                if (isInParty && state.PartyMemberIdLookup.ContainsKey(entityId))
-                    icon = PartyMemberIcon;
+                var half = entity.Icon.rectTransform.rect.size * (0.5f * iconScale);
+                var delta = local - (Vector2)MapPosition(entity.Position);
 
-                mapEntry.Icon.sprite = icon;
+                if (Mathf.Abs(delta.x) > half.x || Mathf.Abs(delta.y) > half.y)
+                    continue;
+
+                var distance = delta.sqrMagnitude;
+                if (distance >= nearestDistance)
+                    continue;
+
+                nearestDistance = distance;
+                nearest = entity;
             }
+
+            return nearest;
+        }
+
+        private void SetHovered(MinimapEntityData entity)
+        {
+            if (hoveredEntity == entity)
+                return;
+
+            var ui = UiManager.Instance;
+
+            if (hoveredEntity != null && hoveredEntity.Icon != null && ui != null)
+                ui.HideTooltip(hoveredEntity.Icon.gameObject);
+
+            hoveredEntity = entity;
+
+            if (hoveredEntity != null && hoveredEntity.Icon != null && ui != null)
+                ui.ShowTooltip(hoveredEntity.Icon.gameObject, hoveredEntity.Label);
         }
 
         public void SetEntityPosition(int entityId, CharacterDisplayType type, Vector2Int pos)
         {
-            if (!mapIcons.TryGetValue(entityId, out var iconData))
+            if (!entities.TryGetValue(entityId, out var entity))
             {
-                iconData = new MinimapEntityData() { MapIcon = null, Position = pos, Type = type };
-                mapIcons.Add(entityId, iconData);
+                entity = new MinimapEntityData { Type = type };
+                entities.Add(entityId, entity);
             }
-
-            if (!gameObject.activeInHierarchy || MapImage == null || mapSprite == null)
+            else if (entity.Icon != null && pos == entity.Position)
                 return;
 
-            //moving an icon dirties the canvas, so skip the ones already placed for this zoom
-            if (iconData.MapIcon != null && pos == iconData.Position && Mathf.Approximately(curSize, iconData.Size))
+            //tracked while hidden: static entities are only sent on map entry
+            entity.Position = pos;
+
+            if (mapSprite == null || !gameObject.activeInHierarchy)
                 return;
 
-            var scale = 0.3f;
-            if (type == CharacterDisplayType.Boss || type == CharacterDisplayType.Mvp)
-                scale = 0.4f;
-            if (type == CharacterDisplayType.Portal)
-                scale = 0.08f;
+            if (entity.Icon == null)
+                CreateIcon(entityId, entity);
+            else
+                entity.Icon.rectTransform.localPosition = MapPosition(pos);
+        }
 
-            GameObject mapIcon = iconData.MapIcon;
+        //relative to the map image's top-left pivot
+        private Vector3 MapPosition(Vector2Int pos) =>
+            new(pos.x + TileCenter, pos.y - mapPixelHeight + TileCenter, 0f);
 
-            if (mapIcon == null)
+        private void CreateIcon(int entityId, MinimapEntityData entity)
+        {
+            DestroyIcon(entity);
+
+            var state = PlayerState.Instance;
+            var type = entity.Type;
+            var isParty = type == CharacterDisplayType.Player && state.IsInMyParty(entityId);
+
+            (Image Prefab, string Label) kind = type switch
             {
-                mapIcon = new GameObject("PlayerIcon");
-                mapIcon.transform.SetParent(MapImage.transform, false);
+                CharacterDisplayType.Player => isParty ? (PartyPlayerPrefab, "Party Member") : (PlayerPrefab, "Player"),
+                CharacterDisplayType.Monster => (MonsterPrefab, "Monster"),
+                CharacterDisplayType.Boss => (BossPrefab, "Boss"),
+                CharacterDisplayType.Mvp => (MvpPrefab, "MVP"),
+                CharacterDisplayType.WarpNpc => (WarpNpcPrefab, "Warp"),
+                CharacterDisplayType.Kafra => (KafraPrefab, "Kafra"),
+                CharacterDisplayType.TalkNpc => (TalkNpcPrefab, "NPC"),
 
+                //a null label makes the icon unhoverable
+                CharacterDisplayType.Portal => (PortalPrefab, null),
+                _ => (PlayerPrefab, null)
+            };
 
-                var img = mapIcon.AddComponent<Image>();
-                switch (type)
-                {
-                    case CharacterDisplayType.Player:
-                        if (PlayerState.Instance.PartyMemberIdLookup.ContainsKey(entityId))
-                            img.sprite = PartyMemberIcon;
-                        else
-                            img.sprite = OtherPlayerIcon; 
-                        break;
-                    case CharacterDisplayType.Boss: img.sprite = BossIcon; break;
-                    case CharacterDisplayType.Mvp: img.sprite = MvpIcon; break;
-                    case CharacterDisplayType.Portal: img.sprite = PortalIcon; break;
-                    case CharacterDisplayType.WarpNpc: img.sprite = WarpNpcIcon; break;
-                    case CharacterDisplayType.Kafra: img.sprite = KafraIcon; break;
-                    default:
-                        Debug.Log($"Unknown character display type for minimap icon: {type}");
-                        img.sprite = OtherPlayerIcon;
-                        break;
-                }
+            entity.Icon = Instantiate(kind.Prefab, EntityIconContainer, false);
+            entity.Icon.rectTransform.localPosition = MapPosition(entity.Position);
+            ApplyIconScale(entity);
 
-                SetAlpha(img, IconAlpha);
-
-                iconData.MapIcon = mapIcon;
-                iconData.Icon = img;
-                iconData.Rect = mapIcon.GetComponent<RectTransform>();
-                iconData.Rect.anchorMin = Vector2.zero;
-                iconData.Rect.anchorMax = Vector2.zero;
-
-                //keep the player marker drawn over the icons that were just added
-                playerMapIconObject?.transform.SetAsLastSibling();
-            }
-
-            var h = mapSprite.texture.height;
-            var offset = new Vector3(0.5f, 0.5f, 0);
-
-            //scrolling the map is the player's job - an entity moving must not drag the view with it
-            iconData.Rect.localPosition = new Vector3(pos.x * MinimapPixelsPerTile / 2f, pos.y * MinimapPixelsPerTile / 2f - h, 0f) + offset;
-
-            var s = scale * ObjectScaleFactor * (1 / curSize);
-
-            mapIcon.transform.localScale = Vector3.one * s;
-
-            //a zoom or map change replays every icon from these
-            iconData.Position = pos;
-            iconData.Size = curSize;
+            entity.Label = isParty
+                           && state.PartyMemberIdLookup.TryGetValue(entityId, out var memberId)
+                           && state.PartyMembers.TryGetValue(memberId, out var member)
+                           && !string.IsNullOrEmpty(member.PlayerName)
+                ? member.PlayerName
+                : kind.Label;
         }
 
         public void SetPlayerPosition(Vector2Int pos, float angle)
         {
-            //this runs every frame, so only rebuild the label when it's shown and the tile actually changed
-            if (pos != lastCoordinate && CoordinateText.gameObject.activeSelf)
-            {
-                lastCoordinate = pos;
-                CoordinateText.SetText("{0:0}, {1:0}", pos.x, pos.y);
-            }
-
-            if (!gameObject.activeInHierarchy || MapImage == null || mapSprite == null)
+            if (!gameObject.activeInHierarchy || mapSprite == null)
                 return;
 
-            if (playerMapIconObject == null)
-            {
-                playerMapIconObject = new GameObject("PlayerIcon");
-                playerMapIconObject.transform.SetParent(MapImage.transform, false);
+            if (playerIcon == null)
+                playerIcon = Instantiate(PlayerIconPrefab, IconLayer.transform, false);
 
-
-                var img = playerMapIconObject.AddComponent<Image>();
-                img.sprite = PlayerIcon;
-                SetAlpha(img, IconAlpha);
-
-                playerIconRect = playerMapIconObject.GetComponent<RectTransform>();
-                playerIconRect.anchorMin = Vector2.zero;
-                playerIconRect.anchorMax = Vector2.zero;
-            }
-
-            //everything below only moves when the player does or when the map itself changed
             if (pos == lastIconPosition && Mathf.Approximately(angle, lastIconAngle) && !mapTransformDirty)
                 return;
 
             lastIconPosition = pos;
             lastIconAngle = angle;
 
-            var r = playerIconRect;
+            var r = playerIcon.rectTransform;
+            var mapPosition = MapPosition(pos);
 
-            var w = mapSprite.texture.width;
-            var h = mapSprite.texture.height;
-            var offset = new Vector3(0.5f, 0.5f, 0);
+            r.localPosition = mapPosition;
+            r.localRotation = Quaternion.Euler(0f, 0f, -angle);
+            r.localScale = Vector3.one * IconScale;
 
-            r.localPosition = new Vector3(pos.x * MinimapPixelsPerTile / 2f, pos.y * MinimapPixelsPerTile / 2f - h, 0f) + offset;
+            ScrollViewportTo(mapPosition);
 
-            //ScrollRect.horizontalNormalizedPosition = pos.x / (float)w;
+            //the map moved under the pointer
+            if (pointerInside)
+                UpdateHover();
 
-            var px = (pos.x * MinimapPixelsPerTile / 2f + offsetX) * curSize;
-            var py = ((h - pos.y * MinimapPixelsPerTile / 2f) + offsetY) * curSize;
+            mapTransformDirty = false;
+        }
 
-            var scrollx = px - 125f;
-            var scrolly = py - 125f;
+        private void ScrollViewportTo(Vector2 mapPosition)
+        {
+            var target = mapPosition * zoom;
+            var viewSize = Viewport.rect.size;
 
+            var maxScrollX = Mathf.Max(mapPixelWidth * zoom - viewSize.x, 0f);
+            var maxScrollY = Mathf.Max(mapPixelHeight * zoom - viewSize.y, 0f);
 
+            var scrollX = Mathf.Clamp(viewSize.x / 2f - target.x, -maxScrollX, 0f);
+            var scrollY = Mathf.Clamp(-target.y - viewSize.y / 2f, 0f, maxScrollY);
 
-            var maxScroll = ((Mathf.Max(w, h) * curSize - 250f));
-
-
-            scrollx = Mathf.Clamp(-scrollx, -maxScroll, 0);
-            scrolly = Mathf.Clamp(scrolly, 0, maxScroll);
-
-            //Debug.Log($"{curSize} {px} {py} {scrollx} {scrolly} {maxScroll}");
-
-            ContentContainer.anchoredPosition = new Vector3(scrollx, scrolly, 0f);
-
-            //playerMapIconObject.transform.localPosition = new Vector3(pos.x * 10f, pos.y * 10f, 0f);
-            playerMapIconObject.transform.localRotation = Quaternion.Euler(0f, 0f, -angle);
-
-            var s = 0.3f * ObjectScaleFactor * (1 / curSize);
-
-            playerMapIconObject.transform.localScale = Vector3.one * s;
-
-            if (mapTransformDirty)
-            {
-                mapTransformDirty = false;
-                AnchorCoordinatesToMap();
-            }
+            ContentContainer.anchoredPosition = new Vector2(scrollX, scrollY);
         }
 
         public void LoadMinimap(string mapName, MapType type)
@@ -286,63 +336,38 @@ namespace Assets.Scripts.UI.Hud
             if(loadCoroutine != null)
                 StopCoroutine(loadCoroutine);
 
+            //a coroutine can't start on an inactive object
             gameObject.SetActive(true);
+
             ContentContainer.gameObject.SetActive(false);
-            //if(mapSprite != null)
-            //    Destroy(mapSprite);
             mapSprite = null;
-            //if(walkSprite != null)
-            //    Destroy(walkSprite);
             walkSprite = null;
-            MapType = type;
+            mapType = type;
+
+            ClearIconViews();
 
             loadCoroutine = StartCoroutine(LoadMinimapCoroutine(mapName));
         }
 
-        public void SetZoom(float zoom)
+        public void HideMinimap()
         {
-            zoom = Mathf.Clamp(zoom, minScale, maxScale);
-            //Debug.Log($"Setting minimap size to {zoom} (in a range of {minScale} to {maxScale})");
+            UnloadMap();
+            gameObject.SetActive(false);
+        }
 
-            curSize = zoom;
+        private void SetZoom(float value)
+        {
+            zoom = Mathf.Clamp(value, minZoom, maxZoom);
 
             if (mapSprite == null)
                 return;
 
-            UpdateMapMaterial();
+            ContentContainer.localScale = new Vector3(zoom, zoom, zoom);
 
-            var w = mapSprite.texture.width;
-            var h = mapSprite.texture.height;
+            foreach (var pair in entities)
+                if (pair.Value.Icon != null)
+                    ApplyIconScale(pair.Value);
 
-            MapImage.rectTransform.sizeDelta = new Vector2(w, h);
-
-            ContentContainer.sizeDelta = MapImage.rectTransform.sizeDelta;
-            ContentContainer.localScale = new Vector3(curSize, curSize, curSize);
-
-            offsetX = 0f;
-            offsetY = 0f;
-
-            if (w != h && (w * curSize < 250 || h * curSize < 250))
-            {
-
-                if (w > h)
-                    offsetY = -(w - h) / 2f;
-
-                else
-                    offsetX = (h - w) / 2f;
-
-                MapImage.transform.localPosition = new Vector3(offsetX, offsetY, 0);
-            }
-            else
-                MapImage.transform.localPosition = Vector3.zero;
-
-            lastZoom = curSize;
-
-            if(mapIcons.Count > 0)
-                foreach(var icon in mapIcons)
-                    SetEntityPosition(icon.Key, icon.Value.Type, icon.Value.Position);
-
-            //the map isn't scrolled to the player yet, so dependent work happens on the next player update
             mapTransformDirty = true;
         }
 
@@ -352,36 +377,24 @@ namespace Assets.Scripts.UI.Hud
                 return;
 
             var zoomMultiplier = Mathf.Pow(1f + MouseWheelZoomStep, eventData.scrollDelta.y);
-            SetZoom(curSize * zoomMultiplier);
+            SetZoom(zoom * zoomMultiplier);
         }
 
         private void UpdateMapMaterial()
         {
+            MapImage.sprite = mapType == MapType.Dungeon ? walkSprite : mapSprite;
 
-            MapImage.sprite = mapSprite;
-
-            if (MapType == MapType.Dungeon)
+            if (mapType == MapType.Dungeon || mapType == MapType.Town)
             {
-                MapImage.sprite = walkSprite;
                 MapImage.material = DungeonMaterial;
+                return;
             }
-            else
-            {
-                if (MapType == MapType.Town)
-                {
-                    //dungeon material but with regular map, so no highlighted walk
-                    MapImage.material = DungeonMaterial;
-                }
-                else
-                {
-                    MapImage.material = OverworldMaterial;
-                    OverworldMaterial.SetTexture("_SecondaryTex", walkSprite.texture);
-                }
 
-            }
+            MapImage.material = OverworldMaterial;
+            OverworldMaterial.SetTexture(SecondaryTex, walkSprite.texture);
         }
 
-        public IEnumerator LoadMinimapCoroutine(string mapName)
+        private IEnumerator LoadMinimapCoroutine(string mapName)
         {
             yield return new WaitForEndOfFrame();
 
@@ -394,111 +407,76 @@ namespace Assets.Scripts.UI.Hud
             if (!loadWalk.IsDone || !loadWalk.IsValid() || !loadMap.IsDone || !loadMap.IsValid())
             {
                 Debug.LogWarning("Could not load minimap.");
-                yield break; //give up
+                yield break;
             }
-
-            //var map = loadMap.Result;
 
             mapSprite = loadMap.Result;
             walkSprite = loadWalk.Result;
 
+            var w = mapPixelWidth = mapSprite.texture.width;
+            var h = mapPixelHeight = mapSprite.texture.height;
+
             UpdateMapMaterial();
+            MapImage.rectTransform.sizeDelta = new Vector2(w, h);
+            MapImage.transform.localPosition = Vector3.zero;
+            ContentContainer.sizeDelta = MapImage.rectTransform.sizeDelta;
+            ContentContainer.localPosition = Vector3.zero;
 
-            minScale = 250f / mapSprite.texture.width;
+            minZoom = ResizeToMap(w, h);
+            maxZoom = Mathf.Max(minZoom, Mathf.Clamp(minZoom * 6f, 2f, 10f));
 
-            if (250f / mapSprite.texture.height < minScale)
-                minScale = 250f / mapSprite.texture.height;
-
-            maxScale = minScale * 6f;
-
-            maxScale = Mathf.Clamp(maxScale, 2f, 10f);
-
-            if (minScale > maxScale)
-                maxScale = minScale;
-
-
-
-            //var sprite = Sprite.Create(map, new Rect(0, 0, map.width, map.height), new Vector2(0, 1), 1);
-
-            ContentContainer.localPosition = new Vector3(0, 0, 0f);
-
-            SetZoom(minScale);
+            SetZoom(minZoom);
 
             ContentContainer.gameObject.SetActive(true);
 
-            if (mapIcons.Count > 0)
-            {
-                foreach(var icon in mapIcons)
-                    SetEntityPosition(icon.Key, icon.Value.Type, icon.Value.Position);
-            }
+            ApplyVisibility();
         }
 
         void Awake()
         {
             instance = this;
+            selfRect = (RectTransform)transform;
+            maxSize = selfRect.rect.size;
             OverworldMaterial = new Material(OverworldMaterial);
             DungeonMaterial = new Material(DungeonMaterial);
-            ApplyOpacity();
+            ApplyVisibility();
         }
 
-        public void ApplyOpacity()
+        private float ResizeToMap(int mapWidth, int mapHeight)
+        {
+            var fit = Mathf.Min(maxSize.x / mapWidth, maxSize.y / mapHeight);
+            selfRect.sizeDelta = new Vector2(mapWidth * fit, mapHeight * fit);
+            return fit;
+        }
+
+        public void ApplyVisibility()
         {
             GameConfig.InitializeIfNecessary();
-            var opacity = GameConfig.Data.MinimapOpacity;
-            var visible = opacity > 0f;
 
-            //only the contents are hidden - this object stays active so it can still run its map load coroutine
-            Viewport.gameObject.SetActive(visible);
-            ApplyCoordinateVisibility();
-            if (!visible)
+            if (mapSprite == null)
                 return;
 
-            SetAlpha(MapImage, opacity);
+            var config = GameConfig.Data;
 
-            //the label reads over the map like the icons do, so it gets their offset too
-            var iconAlpha = IconAlpha;
-            SetAlpha(CoordinateText, iconAlpha);
-            foreach (Transform icon in MapImage.transform)
-                SetAlpha(icon.GetComponent<Image>(), iconAlpha);
-        }
+            if (!config.EnableMinimap || (config.MinimapOpacity <= 0f && config.MinimapIconOpacity <= 0f))
+            {
+                //icons aren't moved while hidden, so they're rebuilt when shown
+                ClearIconViews();
+                gameObject.SetActive(false);
+                return;
+            }
 
-        //the label sits outside the map so zoom can't scale or clip it, so pin it to the map's bottom
-        //right corner, kept inside the viewport for when zoom pushes that corner out of sight
-        private void AnchorCoordinatesToMap()
-        {
-            MapImage.rectTransform.GetWorldCorners(cornerBuffer);
-            var mapCorner = cornerBuffer[3];
+            gameObject.SetActive(true);
 
-            Viewport.GetWorldCorners(cornerBuffer);
-            var viewCorner = cornerBuffer[3];
+            foreach (var pair in entities)
+                if (pair.Value.Icon == null)
+                    CreateIcon(pair.Key, pair.Value);
 
-            var rect = CoordinateText.rectTransform;
-            rect.position = new Vector3(Mathf.Min(mapCorner.x, viewCorner.x), Mathf.Max(mapCorner.y, viewCorner.y), 0f);
-            rect.localPosition += CoordinateInset;
-        }
+            var mapColor = MapImage.color;
+            mapColor.a = config.MinimapOpacity;
+            MapImage.color = mapColor;
 
-        //hidden along with the map itself, so it can't be left floating when the minimap is turned off
-        public void ApplyCoordinateVisibility() => CoordinateText.gameObject.SetActive(
-            GameConfig.Data.ShowMinimapCoordinates && GameConfig.Data.MinimapOpacity > 0f);
-
-        private static void SetAlpha(Graphic graphic, float alpha)
-        {
-            var color = graphic.color;
-            color.a = alpha;
-            graphic.color = color;
-        }
-
-        // Start is called before the first frame update
-        void Start()
-        {
-
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-            if(!Mathf.Approximately(curSize, lastZoom))
-                SetZoom(curSize);
+            IconLayer.alpha = config.MinimapIconOpacity;
         }
     }
 }

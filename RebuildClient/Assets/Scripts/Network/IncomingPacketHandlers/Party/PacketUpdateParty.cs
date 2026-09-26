@@ -89,11 +89,15 @@ namespace Assets.Scripts.Network.IncomingPacketHandlers.Party
                         Camera.AppendChatText($"<color=#77FF77>The party has disbanded.</color>");
                     State.IsInParty = false;
                     State.PartyMembers.Clear();
+
+                    //refreshed while the lookups still hold the old members
+                    foreach (var partyEntityId in State.PartyMemberIdLookup.Keys)
+                        MinimapController.Instance.RefreshPartyIcon(partyEntityId);
+
                     State.PartyMemberEntityLookup.Clear();
                     State.PartyMemberIdLookup.Clear();
                     State.UpdatePlayerName();
                     UiManager.Instance.PartyPanel.FullRefreshPartyMemberPanel();
-                    MinimapController.Instance.RefreshPartyMembers();
                     if (Camera.TargetControllable != null)
                         Camera.TargetControllable.PartyName = null;
                     Network.RefreshPartyMemberDisplays();

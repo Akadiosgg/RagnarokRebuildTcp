@@ -162,7 +162,7 @@ namespace Assets.Scripts.Utility
 
 			MonsterHoverText.text = "";
 			LightmapSettings.lightProbes = null;
-			MinimapController.Instance.RemoveAllEntities();
+			MinimapController.Instance.UnloadMap();
 
 			var sceneName = $"Assets/Scenes/Maps/{newScene}.unity";
 
@@ -223,7 +223,7 @@ namespace Assets.Scripts.Utility
 			var type = (MapType)newMap.MapMode;
 
 			if (type == MapType.None || type == MapType.Indoor)
-				MinimapController.Instance.gameObject.SetActive(false);
+				MinimapController.Instance.HideMinimap();
 			else
 				MinimapController.Instance.LoadMinimap(newScene, type);
 			

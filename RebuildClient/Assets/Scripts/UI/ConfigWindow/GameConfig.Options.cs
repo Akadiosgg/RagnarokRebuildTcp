@@ -14,14 +14,16 @@ namespace Assets.Scripts.UI.ConfigWindow
         ShowAllSkillsInSkillWindow, AutoLockSkillWindow,
         ShowExpGainOnKill, ScalePlayerDisplayWithZoom, ShowMonsterHpBars, ShowLevelsInOverlay, AutoHideFullHPBars, AdjustOverlayWhenSitting,
         EnableSpriteFiltering, UseSpriteBasedDamageNumbers, AllowTabToShowWalkTable, HideShoutChat, EnableXRay, EnableWASDControls,
-        ScaleUiWithResolution, KeepWindowsOnScreen, ShowMinimapCoordinates,
+        ScaleUiWithResolution, KeepWindowsOnScreen, EnableMinimap,
+        VSync, LimitForegroundFps, LimitBackgroundFps,
         ShowBaseExpValue, ShowBaseExpPercent, ShowJobExpValue, ShowJobExpPercent, ShowExpGainInChat,
         EnableMaster, EnableBgm, EnableEffects, EnableEnvironment
     }
 
     public enum RangeOption
     {
-        DamageNumberSize, DamageSpacingSize, MasterUIScale, MinimapOpacity,
+        DamageNumberSize, DamageSpacingSize, MasterUIScale, MinimapOpacity, MinimapIconOpacity,
+        ForegroundFpsLimit, BackgroundFpsLimit,
         VolumeMaster, VolumeBgm, VolumeEffects, VolumeEnvironment
     }
 
@@ -33,15 +35,48 @@ namespace Assets.Scripts.UI.ConfigWindow
         public ConfigBinding(Func<T> get, Action<T> set) { Get = get; Set = set; }
     }
 
+    // A RangeOption's span, in the units its binding exposes.
+    public readonly struct RangeBounds
+    {
+        public readonly float Min, Max;
+        public RangeBounds(float min, float max) { Min = min; Max = max; }
+    }
+
     public static partial class GameConfig
     {
         private static GameConfigData D => Data;
 
         public static AudioMixer AudioMixer;
 
+        private const string NoBinding = "has no binding (no same-named field on GameConfigData and no explicit override) — it will not sync.";
+        private const string NoBounds = "has no bounds — a slider bound to it would throw instead of taking a range.";
+
         // Reflected by name (ReflectMap), except the UI-scale conversion and array-backed audio channels (bound by hand).
         private static readonly Dictionary<BoolOption, ConfigBinding<bool>> Bools = BuildBools();
         private static readonly Dictionary<RangeOption, ConfigBinding<float>> Ranges = BuildRanges();
+        private static readonly Dictionary<RangeOption, RangeBounds> BoundsMap = BuildBounds();
+
+        public static RangeBounds BoundsFor(RangeOption o) => BoundsMap[o];
+
+        private static Dictionary<RangeOption, RangeBounds> BuildBounds()
+        {
+            var map = new Dictionary<RangeOption, RangeBounds>
+            {
+                [RangeOption.DamageNumberSize]  = new(0.2f, 2f),
+                [RangeOption.DamageSpacingSize] = new(0.4f, 1f),
+                [RangeOption.MasterUIScale]     = new(5f, 11f),  // tenths: 0.5 - 1.1
+                [RangeOption.MinimapOpacity]    = new(0f, 20f),  // 5% steps
+                [RangeOption.MinimapIconOpacity] = new(0f, 20f), // 5% steps; both at zero hides the minimap
+                [RangeOption.ForegroundFpsLimit] = new(60f, 1000f),
+                [RangeOption.BackgroundFpsLimit] = new(10f, 1000f),
+                [RangeOption.VolumeMaster]      = new(0f, 100f),
+                [RangeOption.VolumeBgm]         = new(0f, 100f),
+                [RangeOption.VolumeEffects]     = new(0f, 100f),
+                [RangeOption.VolumeEnvironment] = new(0f, 100f),
+            };
+            Validate(map, NoBounds);
+            return map;
+        }
 
         private static Dictionary<BoolOption, ConfigBinding<bool>> BuildBools()
         {
@@ -50,7 +85,7 @@ namespace Assets.Scripts.UI.ConfigWindow
             map[BoolOption.EnableBgm]         = EnableBinding(ConfigAudioChannel.Music);
             map[BoolOption.EnableEffects]     = EnableBinding(ConfigAudioChannel.Effects);
             map[BoolOption.EnableEnvironment] = EnableBinding(ConfigAudioChannel.Environment);
-            Validate(map);
+            Validate(map, NoBinding);
             return map;
         }
 
@@ -61,11 +96,12 @@ namespace Assets.Scripts.UI.ConfigWindow
             map[RangeOption.MasterUIScale] = new(() => D.MasterUIScale * 10f, v => D.MasterUIScale = v / 10f);
             // Slider works in 5% steps; config stores the alpha.
             map[RangeOption.MinimapOpacity] = new(() => D.MinimapOpacity * 20f, v => D.MinimapOpacity = v / 20f);
+            map[RangeOption.MinimapIconOpacity] = new(() => D.MinimapIconOpacity * 20f, v => D.MinimapIconOpacity = v / 20f);
             map[RangeOption.VolumeMaster]      = VolumeBinding(ConfigAudioChannel.Master);
             map[RangeOption.VolumeBgm]         = VolumeBinding(ConfigAudioChannel.Music);
             map[RangeOption.VolumeEffects]     = VolumeBinding(ConfigAudioChannel.Effects);
             map[RangeOption.VolumeEnvironment] = VolumeBinding(ConfigAudioChannel.Environment);
-            Validate(map);
+            Validate(map, NoBinding);
             return map;
         }
 
@@ -82,11 +118,12 @@ namespace Assets.Scripts.UI.ConfigWindow
             return map;
         }
 
-        private static void Validate<TEnum, TValue>(Dictionary<TEnum, ConfigBinding<TValue>> map) where TEnum : Enum
+        // Logs any enum member missing from a table.
+        private static void Validate<TEnum, TValue>(Dictionary<TEnum, TValue> map, string problem) where TEnum : Enum
         {
             foreach (TEnum o in Enum.GetValues(typeof(TEnum)))
                 if (!map.ContainsKey(o))
-                    Debug.LogError($"GameConfig: {typeof(TEnum).Name}.{o} has no binding (no '{o}' field on GameConfigData and no explicit override) — it will not sync.");
+                    Debug.LogError($"GameConfig: {typeof(TEnum).Name}.{o} {problem}");
         }
 
         public static bool Get(BoolOption o) { InitializeIfNecessary(); return Bools[o].Get(); }
@@ -107,8 +144,7 @@ namespace Assets.Scripts.UI.ConfigWindow
         {
             InitializeIfNecessary();
 
-            var defaults = new GameConfigData();
-            defaults.InitDefaultValues();
+            var defaults = GameConfigData.CreateDefault();
 
             foreach (BoolOption o in Enum.GetValues(typeof(BoolOption))) ResetOptionField(o.ToString(), defaults);
             foreach (RangeOption o in Enum.GetValues(typeof(RangeOption))) ResetOptionField(o.ToString(), defaults);
@@ -149,13 +185,18 @@ namespace Assets.Scripts.UI.ConfigWindow
                     CameraFollower.Instance.UseTTFDamage = !D.UseSpriteBasedDamageNumbers;
                     break;
 
-                case BoolOption.ShowMinimapCoordinates:
-                    MinimapController.Instance.ApplyCoordinateVisibility();
+                case BoolOption.ScaleUiWithResolution:
+                    CameraFollower.Instance.UpdateCameraSize(); //also fits the floating windows
                     break;
 
-                case BoolOption.ScaleUiWithResolution:
-                    CameraFollower.Instance.UpdateCameraSize();
-                    UiManager.Instance.FitFloatingWindowsIntoPlayArea();
+                case BoolOption.EnableMinimap:
+                    MinimapController.Instance.ApplyVisibility();
+                    break;
+
+                case BoolOption.VSync:
+                case BoolOption.LimitForegroundFps:
+                case BoolOption.LimitBackgroundFps:
+                    ApplyFrameRate();
                     break;
 
                 case BoolOption.KeepWindowsOnScreen:
@@ -183,14 +224,40 @@ namespace Assets.Scripts.UI.ConfigWindow
                 case RangeOption.VolumeEnvironment: ApplyAudioChannel(ConfigAudioChannel.Environment); break;
 
                 case RangeOption.MasterUIScale:
-                    CameraFollower.Instance.UpdateCameraSize();
-                    UiManager.Instance.FitFloatingWindowsIntoPlayArea();
+                    CameraFollower.Instance.UpdateCameraSize(); //also fits the floating windows
                     break;
 
                 case RangeOption.MinimapOpacity:
-                    MinimapController.Instance.ApplyOpacity();
+                case RangeOption.MinimapIconOpacity:
+                    MinimapController.Instance.ApplyVisibility();
+                    break;
+
+                case RangeOption.ForegroundFpsLimit:
+                case RangeOption.BackgroundFpsLimit:
+                    ApplyFrameRate();
                     break;
             }
+        }
+
+        private static bool followingFocus;
+
+        private static void ApplyFrameRate()
+        {
+            if (!followingFocus)
+            {
+                followingFocus = true;
+                Application.focusChanged += _ => ApplyFrameRate();
+            }
+
+            var (capped, fps) = Application.isFocused
+                ? (D.LimitForegroundFps, D.ForegroundFpsLimit)
+                : (D.LimitBackgroundFps, D.BackgroundFpsLimit);
+
+            //vsync overrides the cap, so it's off when the cap is below the vsync rate
+            var capBelowVSync = capped && fps < Screen.currentResolution.refreshRateRatio.value;
+
+            QualitySettings.vSyncCount = D.VSync && !capBelowVSync ? 1 : 0;
+            Application.targetFrameRate = capped ? Mathf.RoundToInt(fps) : -1;
         }
 
         private static void RefreshExpDisplay()

@@ -205,8 +205,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5757797527228606989}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c9dfbbfe535b1647ad05bb9c6fbf6e2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Text: Help
-  HideWhileDraggingItem: 1
+  m_Script: {fileID: 11500000, guid: d8dc9ecdd9cd4a2197e5890ec129bd90, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  TooltipText: Help
