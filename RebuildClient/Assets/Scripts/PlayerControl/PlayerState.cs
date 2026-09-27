@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Assets.Scripts.Data;
 using Assets.Scripts.Network;
-using Assets.Scripts.UI.Hud;
 using RebuildSharedData.ClientTypes;
 using RebuildSharedData.Data;
 using RebuildSharedData.Enum;
@@ -15,6 +14,8 @@ namespace Assets.Scripts.PlayerControl
         public static PlayerState Instance = new();
 
         public event Action AppearanceChanged;
+        //entity id of an online player whose party membership may have changed
+        public event Action<int> PartyMembershipChanged;
 
         public bool IsValid { get; set; } = false;
         public int EntityId { get; set; }
@@ -100,8 +101,14 @@ namespace Assets.Scripts.PlayerControl
                 CameraFollower.Instance.CharacterDetailBox.CharacterName.text = PlayerName;
         }
 
-        //The lookup holds online members on any map. IsInParty covers a disband before the lookups are cleared.
-        public bool IsInMyParty(int entityId) => IsInParty && PartyMemberIdLookup.ContainsKey(entityId);
+        //The lookup holds online members on any map.
+        public bool TryGetPartyMember(int entityId, out PartyMemberInfo member)
+        {
+            member = null;
+            return IsInParty
+                   && PartyMemberIdLookup.TryGetValue(entityId, out var memberId)
+                   && PartyMembers.TryGetValue(memberId, out member);
+        }
 
         public void AssignPartyMemberControllable(int entityId, ServerControllable controllable)
         {
@@ -121,7 +128,7 @@ namespace Assets.Scripts.PlayerControl
             {
                 PartyMemberEntityLookup.TryAdd(memberId, entityId);
                 PartyMemberIdLookup.TryAdd(entityId, memberId);
-                MinimapController.Instance.RefreshPartyIcon(entityId);
+                PartyMembershipChanged?.Invoke(entityId);
             }
             else
             {
@@ -146,10 +153,23 @@ namespace Assets.Scripts.PlayerControl
             {
                 PartyMemberIdLookup.Remove(entityId);
                 PartyMemberEntityLookup.Remove(memberId);
-                MinimapController.Instance.RefreshPartyIcon(entityId);
+                PartyMembershipChanged?.Invoke(entityId);
             }
 
             return info;
+        }
+
+        public void ClearParty()
+        {
+            IsInParty = false;
+            PartyMembers.Clear();
+            PartyMemberEntityLookup.Clear();
+
+            var formerMembers = new List<int>(PartyMemberIdLookup.Keys);
+            PartyMemberIdLookup.Clear();
+
+            foreach (var entityId in formerMembers)
+                PartyMembershipChanged?.Invoke(entityId);
         }
     }
 }

@@ -336,6 +336,9 @@ public class Party
             packet.Write(p.GetStat(CharacterStat.MaxHp));
             packet.Write(p.GetStat(CharacterStat.Sp));
             packet.Write(p.GetStat(CharacterStat.MaxSp));
+            packet.Write((byte)p.GetData(PlayerStat.Head));
+            packet.Write((byte)p.GetData(PlayerStat.HairId));
+            packet.Write(p.IsMale);
         }
     }
 

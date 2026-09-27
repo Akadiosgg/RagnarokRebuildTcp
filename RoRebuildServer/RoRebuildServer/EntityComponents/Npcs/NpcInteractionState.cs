@@ -253,8 +253,7 @@ public class NpcInteractionState
         if (Player == null || Player.Character.Map == null) return;
         var gender = Player.GetData(PlayerStat.Gender);
         Player.SetData(PlayerStat.Gender, gender == 0 ? 1 : 0);
-        Player.Character.Map.RefreshEntity(Player.Character);
-        Player.UpdateStats();
+        Player.RefreshAppearance();
     }
 
     public void ChangePlayerHairToRandom()
@@ -262,15 +261,13 @@ public class NpcInteractionState
         if (Player == null || Player.Character.Map == null) return;
         Player.SetData(PlayerStat.Head, GameRandom.NextInclusive(0, 28));
         //Player.SetData(PlayerStat.HairId, GameRandom.NextInclusive(0, 8));
-        Player.Character.Map.RefreshEntity(Player.Character);
-        Player.UpdateStats();
+        Player.RefreshAppearance();
     }
 
     public void ChangePlayerHairColorToRandom()
     {
         Player?.SetData(PlayerStat.HairId, GameRandom.NextInclusive(0, 8));
-        Player?.Character.Map?.RefreshEntity(Player.Character);
-        Player?.UpdateStats();
+        Player?.RefreshAppearance();
     }
 
     public void ChangePlayerAppearanceToRandom()
@@ -278,8 +275,7 @@ public class NpcInteractionState
         if (Player == null || Player.Character.Map == null) return;
         Player.SetData(PlayerStat.Gender, GameRandom.NextInclusive(0, 1));
         Player.SetData(PlayerStat.Head, GameRandom.NextInclusive(0, 28));
-        Player.Character.Map.RefreshEntity(Player.Character);
-        Player.UpdateStats();
+        Player.RefreshAppearance();
     }
 
     public void ResetCharacterToInitialState()

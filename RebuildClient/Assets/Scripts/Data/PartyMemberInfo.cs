@@ -16,7 +16,10 @@ namespace Assets.Scripts.Data
         public int MaxHp;
         public int Sp;
         public int MaxSp;
-        
+        public int HeadId;
+        public int HairColor;
+        public bool IsMale;
+
         //comparer sorts by online status, then by name
         public int CompareTo(object obj)
         {

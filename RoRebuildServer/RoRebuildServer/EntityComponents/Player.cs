@@ -781,6 +781,16 @@ public class Player : IEntityAutoReset
             AddSkillToCharacter(CharacterSkill.FirstAid, 1);
     }
 
+    //call after changing head, hair color or gender
+    public void RefreshAppearance()
+    {
+        Character.Map?.RefreshEntity(Character);
+        UpdateStats();
+
+        if (Party != null)
+            CommandBuilder.NotifyPartyOfChange(Party, PartyMemberId, PartyUpdateType.UpdatePlayer);
+    }
+
     public void UpdateStats(bool updateSkillData = true, bool sendUpdate = true)
     {
         var level = GetData(PlayerStat.Level);

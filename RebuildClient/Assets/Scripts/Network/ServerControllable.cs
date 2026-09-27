@@ -1623,7 +1623,7 @@ namespace Assets.Scripts.Network
                 if (mc == null || SpriteAnimator == null)
                     return;
 
-                mc.SetPlayerPosition(CellPosition, Directions.GetAngleForDirection(SpriteAnimator.Direction) + 180f);
+                mc.SetPlayerPosition(CellPosition);
 
                 Shader.SetGlobalVector(RoBlindFocus, transform.position);
             }

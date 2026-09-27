@@ -64,8 +64,6 @@ MonoBehaviour:
     type: 3}
   PlayerPrefab: {fileID: 505115097245790084, guid: d7c55f8f758f714c90a9525513781db3,
     type: 3}
-  PartyPlayerPrefab: {fileID: 635117963190372782, guid: 70f78ce3fdc3193d8073d9f0d0e210f2,
-    type: 3}
   MonsterPrefab: {fileID: 921754111676626214, guid: 27776d34505acc2f03a7ca1ca3caef7e,
     type: 3}
   BossPrefab: {fileID: 620312614219942366, guid: 1cf2fe1d1151229f18792a02026f70b6,
