@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 namespace Assets.Scripts.UI.TitleScreen
 {
-    public class CharacterSelectWindow : WindowBase
+    public class CharacterSelectWindow : MonoBehaviour
     {
         public TitleScreen Parent;
         public List<CharacterSelectPlayerButton> CharacterSlots;

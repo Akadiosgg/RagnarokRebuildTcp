@@ -18,9 +18,12 @@ namespace Assets.Scripts.UI.ClientDatabase
     {
         private static readonly Color s_defaultTextColor = new(0.08f, 0.08f, 0.10f, 1f);
 
+        private static readonly Regex LineHeightTagRegex = new(@"</?line-height(=[^>]*)?>", RegexOptions.Compiled);
+
+        private static readonly Dictionary<string, int> PositionAliases = BuildPositionAliases();
+
         private static string FormatItemName(ItemData item) => item.Slots > 0 ? $"{item.Name}[{item.Slots}]" : item.Name;
         private static string FormatNameWithBracket(string name, string bracket) => $"{name}  <size=80%><color=#888888>[{bracket}]</color></size>";
-        private static readonly Regex LineHeightTagRegex = new(@"</?line-height(=[^>]*)?>", RegexOptions.Compiled);
         private static string SanitizeRichText(string raw) => LineHeightTagRegex.Replace(raw, string.Empty);
         private static Sprite GetItemIcon(string spriteName) => string.IsNullOrEmpty(spriteName) || ClientDataLoader.Instance == null ? null : ClientDataLoader.Instance.GetIconAtlasSprite(spriteName);
         
@@ -101,8 +104,6 @@ namespace Assets.Scripts.UI.ClientDatabase
                 _ => false,
             };
         }
-        
-        private static readonly Dictionary<string, int> PositionAliases = BuildPositionAliases();
 
         private static Dictionary<string, int> BuildPositionAliases()
         {

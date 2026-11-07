@@ -1,6 +1,6 @@
 ﻿namespace Assets.Scripts.UI.ConfigWindow
 {
-    public enum OptionKind { Header, Toggle, Slider, Sound, ToggleNumber }
+    public enum OptionKind { Header, Toggle, Slider, Sound, ToggleNumber, List }
 
     // A row's range comes from GameConfig.BoundsFor.
     public readonly struct OptionRow
@@ -10,14 +10,15 @@
         public readonly string Label;
         public readonly BoolOption Bool;    // Toggle, the mute toggle of a Sound row, or the toggle of a ToggleNumber row
         public readonly RangeOption Range;  // Slider, the volume slider of a Sound row, or the number of a ToggleNumber row
+        public readonly ListOption List;
         public readonly bool WholeNumbers;  // Slider / Sound
         public readonly bool ApplyOnRelease; // Slider (expensive applies, e.g. UI scale)
 
         private OptionRow(OptionKind kind, OptionCategory cat, string label, BoolOption b, RangeOption r,
-            bool whole, bool applyOnRelease)
+            bool whole, bool applyOnRelease, ListOption list = default)
         {
             Kind = kind; Category = cat; Label = label; Bool = b; Range = r;
-            WholeNumbers = whole; ApplyOnRelease = applyOnRelease;
+            WholeNumbers = whole; ApplyOnRelease = applyOnRelease; List = list;
         }
 
         public static OptionRow Header(OptionCategory cat, string label)
@@ -35,6 +36,9 @@
 
         public static OptionRow ToggleNumber(OptionCategory cat, string label, BoolOption enabled, RangeOption value)
             => new(OptionKind.ToggleNumber, cat, label, enabled, value, true, false);
+
+        public static OptionRow Dropdown(OptionCategory cat, string label, ListOption option)
+            => new(OptionKind.List, cat, label, default, default, false, false, option);
     }
 
     public static partial class GameConfig
@@ -45,7 +49,7 @@
             OptionRow.Header(OptionCategory.Game, "Graphics"),
             OptionRow.Toggle(OptionCategory.Game, "Enable sprite filtering (pixelated)", BoolOption.EnableSpriteFiltering),
             OptionRow.Toggle(OptionCategory.Game, "Enable X-ray view", BoolOption.EnableXRay),
-            OptionRow.Toggle(OptionCategory.Game, "VSync", BoolOption.VSync),
+            OptionRow.Toggle(OptionCategory.Game, "Enable fog", BoolOption.EnableFog),
             OptionRow.ToggleNumber(OptionCategory.Game, "Foreground FPS cap", BoolOption.LimitForegroundFps, RangeOption.ForegroundFpsLimit),
             OptionRow.ToggleNumber(OptionCategory.Game, "Background FPS cap", BoolOption.LimitBackgroundFps, RangeOption.BackgroundFpsLimit),
 
@@ -75,18 +79,16 @@
             OptionRow.Slider(OptionCategory.UI, "Map opacity", RangeOption.MinimapOpacity, wholeNumbers: true, applyOnRelease: true),
             OptionRow.Slider(OptionCategory.UI, "Icon opacity", RangeOption.MinimapIconOpacity, wholeNumbers: true, applyOnRelease: true),
 
+            OptionRow.Header(OptionCategory.UI, "Chat"),
+            OptionRow.Slider(OptionCategory.UI, "Chat width", RangeOption.ChatWidth, wholeNumbers: true),
+            OptionRow.Slider(OptionCategory.UI, "Chat lines", RangeOption.ChatLines, wholeNumbers: true),
+
             OptionRow.Header(OptionCategory.UI, "Floating Display"),
             OptionRow.Toggle(OptionCategory.UI, "Scale floating display with zoom", BoolOption.ScalePlayerDisplayWithZoom),
             OptionRow.Toggle(OptionCategory.UI, "Show monster HP bars", BoolOption.ShowMonsterHpBars),
-            OptionRow.Toggle(OptionCategory.UI, "Hide full HP/MP bars", BoolOption.AutoHideFullHPBars),
-            OptionRow.Toggle(OptionCategory.UI, "Show levels next to names", BoolOption.ShowLevelsInOverlay),
+            OptionRow.Toggle(OptionCategory.UI, "Show other players' HP bars", BoolOption.ShowOtherPlayerHpBars),
+            OptionRow.Toggle(OptionCategory.UI, "Show party names", BoolOption.ShowPartyNameInOverlay),
             OptionRow.Toggle(OptionCategory.UI, "Lower HP bar if necessary (sitting)", BoolOption.AdjustOverlayWhenSitting),
-
-            OptionRow.Header(OptionCategory.UI, "Player Unit Frame"),
-            OptionRow.Toggle(OptionCategory.UI, "Show current/required base exp", BoolOption.ShowBaseExpValue),
-            OptionRow.Toggle(OptionCategory.UI, "Show base exp percent progress", BoolOption.ShowBaseExpPercent),
-            OptionRow.Toggle(OptionCategory.UI, "Show current/required job exp", BoolOption.ShowJobExpValue),
-            OptionRow.Toggle(OptionCategory.UI, "Show job exp percent progress", BoolOption.ShowJobExpPercent),
 
             // ---- Experimental ----
             OptionRow.Header(OptionCategory.Experimental, "Experimental"),

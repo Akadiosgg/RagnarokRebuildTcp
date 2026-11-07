@@ -81,7 +81,7 @@ namespace Assets.Scripts.UI
                 entry.UniqueEntryId = id;
                 entry.ItemName.text = item.ProperName();
                 entry.ItemName.rectTransform.anchorMax = new Vector2(1, 1); //resize to full width
-                if (state.EquippedBagIdHashes.Contains(item.BagSlotId))
+                if (state.IsEquipped(item.BagSlotId))
                     entry.SetEquipped();
                 else
                     entry.HideCount();

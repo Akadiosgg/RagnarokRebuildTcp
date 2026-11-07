@@ -18,6 +18,7 @@ namespace Assets.Scripts.UI.ConfigWindow
         [SerializeField] private OptionRowInfo sliderRowPrefab;
         [SerializeField] private OptionRowInfo soundRowPrefab;
         [SerializeField] private OptionRowInfo toggleNumberRowPrefab;
+        [SerializeField] private OptionRowInfo listRowPrefab;
 
         private OptionRowInfo[] rows;
 
@@ -71,6 +72,8 @@ namespace Assets.Scripts.UI.ConfigWindow
                     info.GetComponentInChildren<ToggleOption>(true)?.Bind(row.Bool);
                 if (row.Kind is OptionKind.ToggleNumber)
                     info.GetComponentInChildren<NumberOption>(true)?.Bind(row.Range);
+                if (row.Kind is OptionKind.List)
+                    info.GetComponentInChildren<DropdownOption>(true)?.Bind(row.List);
 
                 built.Add(info);
             }
@@ -95,6 +98,7 @@ namespace Assets.Scripts.UI.ConfigWindow
             OptionKind.Slider => sliderRowPrefab,
             OptionKind.Sound => soundRowPrefab,
             OptionKind.ToggleNumber => toggleNumberRowPrefab,
+            OptionKind.List => listRowPrefab,
             _ => null
         };
     }

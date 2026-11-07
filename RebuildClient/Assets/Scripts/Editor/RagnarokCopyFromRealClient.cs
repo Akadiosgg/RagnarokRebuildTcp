@@ -427,6 +427,30 @@ namespace Assets.Editor
             private Vector2 scrollPos;
             private string dataDir;
 
+            private static readonly Color HealthBarBackground = new Color(0.15f, 0.15f, 0.15f, 1f);
+            private static readonly Color HealthBarPresent = new Color(0.20f, 0.62f, 0.32f, 1f);
+            private static readonly Color HealthBarMissing = new Color(0.82f, 0.55f, 0.16f, 1f);
+
+            private static GUIStyle _healthBarTextStyle;
+
+            private static GUIStyle HealthBarTextStyle
+            {
+                get
+                {
+                    if (_healthBarTextStyle != null)
+                        return _healthBarTextStyle;
+
+                    _healthBarTextStyle = new GUIStyle(EditorStyles.centeredGreyMiniLabel)
+                    {
+                        alignment = TextAnchor.MiddleCenter,
+                        fontStyle = FontStyle.Bold
+                    };
+
+                    _healthBarTextStyle.normal.textColor = Color.white;
+                    return _healthBarTextStyle;
+                }
+            }
+
             private CopyCategory CreateCopyCategory(
                 string label,
                 string sourceRelativePath,
@@ -1022,32 +1046,6 @@ namespace Assets.Editor
                 };
 
                 RunHealthCheck();
-            }
-
-
-
-            private static readonly Color HealthBarBackground = new Color(0.15f, 0.15f, 0.15f, 1f);
-            private static readonly Color HealthBarPresent = new Color(0.20f, 0.62f, 0.32f, 1f);
-            private static readonly Color HealthBarMissing = new Color(0.82f, 0.55f, 0.16f, 1f);
-
-            private static GUIStyle _healthBarTextStyle;
-
-            private static GUIStyle HealthBarTextStyle
-            {
-                get
-                {
-                    if (_healthBarTextStyle != null)
-                        return _healthBarTextStyle;
-
-                    _healthBarTextStyle = new GUIStyle(EditorStyles.centeredGreyMiniLabel)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                        fontStyle = FontStyle.Bold
-                    };
-
-                    _healthBarTextStyle.normal.textColor = Color.white;
-                    return _healthBarTextStyle;
-                }
             }
 
             private static void DrawHealthProgressBar(ImportHealth health)

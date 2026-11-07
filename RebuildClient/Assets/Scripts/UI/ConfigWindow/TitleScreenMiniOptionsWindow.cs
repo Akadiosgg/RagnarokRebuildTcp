@@ -8,7 +8,6 @@ namespace Assets.Scripts.UI.ConfigWindow
     public class TitleScreenMiniOptionsWindow : WindowBase
     {
         public LoginBox LoginBox;
-        public RectTransform LoginRect;
         public Button OptionsButton;
 
         public void Awake()
@@ -19,7 +18,8 @@ namespace Assets.Scripts.UI.ConfigWindow
         public override void HideWindow()
         {
             OptionsButton.interactable = true;
-            if(LoginBox.gameObject.activeInHierarchy && !RectTransformUtility.RectangleContainsScreenPoint(LoginRect, Input.mousePosition))
+            //a click into the login box focuses the field it landed on
+            if(LoginBox.gameObject.activeInHierarchy && !RectTransformUtility.RectangleContainsScreenPoint((RectTransform)LoginBox.transform, Input.mousePosition))
                 LoginBox.ReturnFocus();
             base.HideWindow();
         }

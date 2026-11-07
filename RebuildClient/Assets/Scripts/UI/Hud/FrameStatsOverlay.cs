@@ -6,11 +6,9 @@ using UnityEngine.UI;
 
 namespace Assets.Scripts.UI.Hud
 {
-    //Debug frame time readout and history graph, toggled with F7. Its own nested canvas isolates the label's churn.
+    //Toggled with F7. Its nested canvas isolates the label's churn.
     public class FrameStatsOverlay : MonoBehaviour
     {
-        private const KeyCode ToggleKey = KeyCode.F7;
-
         private const float RefreshSeconds = 0.1f;
         private const int WarmupFrames = 2; //the canvas rebuild on show would skew the first window
 
@@ -19,11 +17,8 @@ namespace Assets.Scripts.UI.Hud
         private const float CeilingMs = 100f; //fixed scale, taller frames clamp to the top row
         private const int TraceRadius = 1; //texels either side of the sample, so the line is centred
 
-        private const int NoPreviousSample = -1;
-
         private static readonly Color32 TraceColor = new Color32(255, 255, 255, 255); //opaque, the tint is the RawImage's
 
-        public Canvas OverlayCanvas;
         public RawImage Graph;
         public TextMeshProUGUI Label;
 
@@ -33,12 +28,42 @@ namespace Assets.Scripts.UI.Hud
         private float elapsed;
         private int framesSeen;
 
-        private int previousY = NoPreviousSample;
+        //null until the first column
+        private int? previousY;
 
         private Texture2D texture;
         private Color32[] pixels;
 
-        private void Awake() => OverlayCanvas.enabled = false;
+        //it has no graphic to tell its layout that it appeared or went away
+        public void Toggle()
+        {
+            gameObject.SetActive(!gameObject.activeSelf);
+            LayoutRebuilder.MarkLayoutForRebuild((RectTransform)transform);
+        }
+
+        private void Awake()
+        {
+            texture = new Texture2D(GraphWidth, GraphHeight, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp
+            };
+            pixels = new Color32[GraphWidth * GraphHeight];
+            Graph.texture = texture;
+        }
+
+        private void OnEnable()
+        {
+            ResetWindow();
+            elapsed = 0f;
+            framesSeen = 0;
+            previousY = null;
+
+            Label.SetText("-- FPS -- MS\n-- MS");
+
+            Array.Clear(pixels, 0, pixels.Length);
+            Commit();
+        }
 
         //Script created textures aren't collected with the component.
         private void OnDestroy()
@@ -49,16 +74,6 @@ namespace Assets.Scripts.UI.Hud
 
         private void Update()
         {
-            if (Input.GetKeyDown(ToggleKey))
-            {
-                OverlayCanvas.enabled = !OverlayCanvas.enabled;
-                if (OverlayCanvas.enabled)
-                    BeginSampling();
-            }
-
-            if (!OverlayCanvas.enabled)
-                return;
-
             if (framesSeen < WarmupFrames)
             {
                 framesSeen++;
@@ -82,7 +97,11 @@ namespace Assets.Scripts.UI.Hud
             var meanMs = sum / count;
             SetLabel(meanMs);
             AppendColumn(bucketMax);
+            ResetWindow();
+        }
 
+        private void ResetWindow()
+        {
             sum = 0f;
             count = 0;
             bucketMax = 0f;
@@ -99,32 +118,6 @@ namespace Assets.Scripts.UI.Hud
                 Label.SetText("{0:0} FPS {1:1} MS\n{2:0} MS", 1000f / meanMs, meanMs, network.Latency.Current);
         }
 
-        private void BeginSampling()
-        {
-            if (texture == null)
-            {
-                texture = new Texture2D(GraphWidth, GraphHeight, TextureFormat.RGBA32, false)
-                {
-                    filterMode = FilterMode.Bilinear,
-                    wrapMode = TextureWrapMode.Clamp
-                };
-                pixels = new Color32[GraphWidth * GraphHeight];
-                Graph.texture = texture;
-            }
-
-            sum = 0f;
-            count = 0;
-            bucketMax = 0f;
-            elapsed = 0f;
-            framesSeen = 0;
-            previousY = NoPreviousSample;
-
-            Label.SetText("-- FPS -- MS\n-- MS");
-
-            Array.Clear(pixels, 0, pixels.Length);
-            Commit();
-        }
-
         private void AppendColumn(float ms)
         {
             const int newest = GraphWidth - 1;
@@ -139,8 +132,9 @@ namespace Assets.Scripts.UI.Hud
             //The column spans the previous sample's height to its own, joining the points into one line.
             //The shift doesn't change any height, so the carried previousY still lines up.
             var y = Mathf.Clamp(Mathf.RoundToInt(ms / CeilingMs * (GraphHeight - 1)), 0, GraphHeight - 1);
-            var from = previousY >= 0 ? Mathf.Min(previousY, y) : y;
-            var to = previousY >= 0 ? Mathf.Max(previousY, y) : y;
+            var previous = previousY ?? y;
+            var from = Mathf.Min(previous, y);
+            var to = Mathf.Max(previous, y);
 
             var lo = Mathf.Max(from - TraceRadius, 0);
             var hi = Mathf.Min(to + TraceRadius, GraphHeight - 1);

@@ -12,6 +12,8 @@ namespace Assets.Scripts.Objects
 
         private float maxTextWidth;
 
+        private bool borderDirty;
+
         void Awake()
         {
             RectTransform = (RectTransform)transform;
@@ -25,8 +27,6 @@ namespace Assets.Scripts.Objects
             borderDirty = true;
             RefreshBorderIfNeeded();
         }
-
-        private bool borderDirty;
 
         // Sizes the bubble to its text using the actual rendered ink bounds. TextObject is resized to
         // match the border on both axes so its margin/alignment measure against the same box. Retries

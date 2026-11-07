@@ -45,6 +45,8 @@ internal class ZoneWorker : BackgroundService
     {
         ServerLogger.Log("Ragnarok Rebuild Zone Server, starting up!");
 
+        WindowsTimerResolution.Raise();
+
         DistanceCache.Init();
         RoDatabase.Initialize();
         DataManager.Initialize();
@@ -163,6 +165,8 @@ internal class ZoneWorker : BackgroundService
         await RoDatabase.Shutdown();
 
         await base.StopAsync(cancellationToken);
+
+        WindowsTimerResolution.Restore();
 
         //makes it real clear in the logs where the server shuts down
         logger.LogInformation("Server is now shut down!");

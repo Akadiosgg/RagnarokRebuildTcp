@@ -8,6 +8,9 @@ namespace Assets.Scripts.UI
     {
         public bool CanCloseWithEscape = true;
 
+        //false keeps the window out of the stack Escape closes from
+        protected virtual bool InEscapeStack => true;
+
         public virtual void OnDestroy()
         {
             if (UiManager.Instance)
@@ -38,7 +41,8 @@ namespace Assets.Scripts.UI
         {
             // Debug.Log($"MoveToTop {name}");
             transform.SetAsLastSibling(); //move to top
-            UiManager.Instance.MoveToLast(this);
+            if (InEscapeStack)
+                UiManager.Instance.MoveToLast(this);
         }
 
         public void FitWindowIntoPlayArea()
@@ -63,7 +67,7 @@ namespace Assets.Scripts.UI
                 return;
             gameObject.SetActive(true);
             var mgr = UiManager.Instance;
-            if (!mgr.WindowStack.Contains(this))
+            if (InEscapeStack && !mgr.WindowStack.Contains(this))
                 mgr.WindowStack.Add(this);
 
             FitWindowIntoPlayArea();
@@ -78,13 +82,12 @@ namespace Assets.Scripts.UI
         {
             if (gameObject == null)
                 return;
+            var wasShown = gameObject.activeSelf;
             gameObject.SetActive(false);
             var mgr = UiManager.Instance;
-            if (mgr.WindowStack.Contains(this))
-            {
-                mgr.WindowStack.Remove(this);
+            mgr.WindowStack.Remove(this);
+            if (wasShown)
                 mgr.ForceHideTooltip();
-            }
 
             if (mgr.IsDraggingItem) mgr.EndItemDrag(false);
 

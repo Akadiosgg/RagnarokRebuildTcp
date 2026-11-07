@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Assets.Scripts.PlayerControl;
-using Assets.Scripts.Sprites;
+using Assets.Scripts.Network;
 using Assets.Scripts.UI.Hud;
-using RebuildSharedData.Enum.EntityStats;
+using Assets.Scripts.Utility;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -12,17 +11,19 @@ namespace Assets.Scripts.UI.ConfigWindow
     public enum BoolOption
     {
         ShowAllSkillsInSkillWindow, AutoLockSkillWindow,
-        ShowExpGainOnKill, ScalePlayerDisplayWithZoom, ShowMonsterHpBars, ShowLevelsInOverlay, AutoHideFullHPBars, AdjustOverlayWhenSitting,
-        EnableSpriteFiltering, UseSpriteBasedDamageNumbers, AllowTabToShowWalkTable, HideShoutChat, EnableXRay, EnableWASDControls,
+        ShowExpGainOnKill, ScalePlayerDisplayWithZoom, ShowMonsterHpBars, AdjustOverlayWhenSitting,
+        EnableSpriteFiltering, UseSpriteBasedDamageNumbers, AllowTabToShowWalkTable, HideShoutChat, EnableXRay, EnableFog, EnableWASDControls,
         ScaleUiWithResolution, KeepWindowsOnScreen, EnableMinimap,
-        VSync, LimitForegroundFps, LimitBackgroundFps,
-        ShowBaseExpValue, ShowBaseExpPercent, ShowJobExpValue, ShowJobExpPercent, ShowExpGainInChat,
-        EnableMaster, EnableBgm, EnableEffects, EnableEnvironment
+        LimitForegroundFps, LimitBackgroundFps,
+        ShowExpGainInChat,
+        EnableMaster, EnableBgm, EnableEffects, EnableEnvironment,
+        ShowOtherPlayerHpBars, ShowPartyNameInOverlay
     }
 
     public enum RangeOption
     {
         DamageNumberSize, DamageSpacingSize, MasterUIScale, MinimapOpacity, MinimapIconOpacity,
+        ChatWidth, ChatLines,
         ForegroundFpsLimit, BackgroundFpsLimit,
         VolumeMaster, VolumeBgm, VolumeEffects, VolumeEnvironment
     }
@@ -51,10 +52,20 @@ namespace Assets.Scripts.UI.ConfigWindow
         private const string NoBinding = "has no binding (no same-named field on GameConfigData and no explicit override) — it will not sync.";
         private const string NoBounds = "has no bounds — a slider bound to it would throw instead of taking a range.";
 
-        // Reflected by name (ReflectMap), except the UI-scale conversion and array-backed audio channels (bound by hand).
+        // Reflected by name (ReflectMap), except the unit conversions and the array-backed audio channels.
         private static readonly Dictionary<BoolOption, ConfigBinding<bool>> Bools = BuildBools();
         private static readonly Dictionary<RangeOption, ConfigBinding<float>> Ranges = BuildRanges();
         private static readonly Dictionary<RangeOption, RangeBounds> BoundsMap = BuildBounds();
+
+        private static readonly Dictionary<ConfigAudioChannel, string> MixerParam = new()
+        {
+            [ConfigAudioChannel.Master] = "Master",
+            [ConfigAudioChannel.Music] = "Music",
+            [ConfigAudioChannel.Environment] = "Environment",
+            [ConfigAudioChannel.Effects] = "Sounds",
+        };
+
+        private static bool followingFocus;
 
         public static RangeBounds BoundsFor(RangeOption o) => BoundsMap[o];
 
@@ -67,6 +78,8 @@ namespace Assets.Scripts.UI.ConfigWindow
                 [RangeOption.MasterUIScale]     = new(5f, 11f),  // tenths: 0.5 - 1.1
                 [RangeOption.MinimapOpacity]    = new(0f, 20f),  // 5% steps
                 [RangeOption.MinimapIconOpacity] = new(0f, 20f), // 5% steps; both at zero hides the minimap
+                [RangeOption.ChatWidth]         = new(52f, 92f),  // tens: 520 - 920
+                [RangeOption.ChatLines]         = new(4f, 12f),
                 [RangeOption.ForegroundFpsLimit] = new(60f, 1000f),
                 [RangeOption.BackgroundFpsLimit] = new(10f, 1000f),
                 [RangeOption.VolumeMaster]      = new(0f, 100f),
@@ -97,6 +110,8 @@ namespace Assets.Scripts.UI.ConfigWindow
             // Slider works in 5% steps; config stores the alpha.
             map[RangeOption.MinimapOpacity] = new(() => D.MinimapOpacity * 20f, v => D.MinimapOpacity = v / 20f);
             map[RangeOption.MinimapIconOpacity] = new(() => D.MinimapIconOpacity * 20f, v => D.MinimapIconOpacity = v / 20f);
+            // Slider works in tens; config stores the width.
+            map[RangeOption.ChatWidth] = new(() => D.ChatWidth / 10f, v => D.ChatWidth = v * 10f);
             map[RangeOption.VolumeMaster]      = VolumeBinding(ConfigAudioChannel.Master);
             map[RangeOption.VolumeBgm]         = VolumeBinding(ConfigAudioChannel.Music);
             map[RangeOption.VolumeEffects]     = VolumeBinding(ConfigAudioChannel.Effects);
@@ -184,6 +199,9 @@ namespace Assets.Scripts.UI.ConfigWindow
                 case BoolOption.UseSpriteBasedDamageNumbers:
                     CameraFollower.Instance.UseTTFDamage = !D.UseSpriteBasedDamageNumbers;
                     break;
+                case BoolOption.EnableFog:
+                    MapFog.Apply();
+                    break;
 
                 case BoolOption.ScaleUiWithResolution:
                     CameraFollower.Instance.UpdateCameraSize(); //also fits the floating windows
@@ -193,7 +211,6 @@ namespace Assets.Scripts.UI.ConfigWindow
                     MinimapController.Instance.ApplyVisibility();
                     break;
 
-                case BoolOption.VSync:
                 case BoolOption.LimitForegroundFps:
                 case BoolOption.LimitBackgroundFps:
                     ApplyFrameRate();
@@ -204,12 +221,14 @@ namespace Assets.Scripts.UI.ConfigWindow
                         UiManager.Instance.FitFloatingWindowsIntoPlayArea();
                     break;
 
-                case BoolOption.ShowBaseExpValue:
-                case BoolOption.ShowBaseExpPercent:
-                case BoolOption.ShowJobExpValue:
-                case BoolOption.ShowJobExpPercent:
-                case BoolOption.ShowExpGainInChat:
-                    RefreshExpDisplay();
+                //bars already on screen update right away
+                case BoolOption.ShowMonsterHpBars:
+                case BoolOption.ShowOtherPlayerHpBars:
+                    NetworkManager.Instance.RefreshHpBars();
+                    break;
+
+                case BoolOption.ShowPartyNameInOverlay:
+                    NetworkManager.Instance.RefreshNamePlates();
                     break;
             }
         }
@@ -236,10 +255,13 @@ namespace Assets.Scripts.UI.ConfigWindow
                 case RangeOption.BackgroundFpsLimit:
                     ApplyFrameRate();
                     break;
+
+                case RangeOption.ChatWidth:
+                case RangeOption.ChatLines:
+                    CameraFollower.Instance.ChatLog.SetSize(D.ChatWidth, Mathf.RoundToInt(D.ChatLines));
+                    break;
             }
         }
-
-        private static bool followingFocus;
 
         private static void ApplyFrameRate()
         {
@@ -253,23 +275,9 @@ namespace Assets.Scripts.UI.ConfigWindow
                 ? (D.LimitForegroundFps, D.ForegroundFpsLimit)
                 : (D.LimitBackgroundFps, D.BackgroundFpsLimit);
 
-            //vsync overrides the cap, so it's off when the cap is below the vsync rate
-            var capBelowVSync = capped && fps < Screen.currentResolution.refreshRateRatio.value;
-
-            QualitySettings.vSyncCount = D.VSync && !capBelowVSync ? 1 : 0;
+            //vsync overrides the cap, and a quality level may turn it on
+            QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = capped ? Mathf.RoundToInt(fps) : -1;
-        }
-
-        private static void RefreshExpDisplay()
-        {
-            var state = PlayerState.Instance;
-            if (state == null)
-                return;
-
-            var cam = CameraFollower.Instance;
-            cam.UpdatePlayerExp(state.Exp, cam.ExpForLevel(state.Level));
-            cam.UpdatePlayerJobExp(state.GetData(PlayerStat.JobExp),
-                ClientDataLoader.Instance.GetJobExpRequired(state.JobId, state.GetData(PlayerStat.JobLevel)));
         }
 
         private static ConfigBinding<bool> EnableBinding(ConfigAudioChannel ch)
@@ -277,14 +285,6 @@ namespace Assets.Scripts.UI.ConfigWindow
 
         private static ConfigBinding<float> VolumeBinding(ConfigAudioChannel ch)
             => new(() => D.AudioVolumeLevels[(int)ch], v => D.AudioVolumeLevels[(int)ch] = Mathf.RoundToInt(v));
-
-        private static readonly Dictionary<ConfigAudioChannel, string> MixerParam = new()
-        {
-            [ConfigAudioChannel.Master] = "Master",
-            [ConfigAudioChannel.Music] = "Music",
-            [ConfigAudioChannel.Environment] = "Environment",
-            [ConfigAudioChannel.Effects] = "Sounds",
-        };
 
         private static void ApplyAudioChannel(ConfigAudioChannel ch)
         {

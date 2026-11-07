@@ -451,6 +451,7 @@ public class NetworkManager
             //DisconnectPlayer(connection);
             //ServerLogger.Log($"Player {connection.Character?.Name} is using an admin command without admin privileges. Disconnecting.");
             ServerLogger.Log($"Player {connection.Character?.Name} is trying to use an admin packet {type} but is not an admin.");
+            CommandBuilder.ErrorMessage(connection, "You need to be an admin to use that command.");
             return;
         }
 
@@ -462,10 +463,15 @@ public class NetworkManager
             LastPacketType = type;
             if (AdminPacketTypes[(int)type])
             {
-                if (!ConnectionLookup.TryGetValue(msg.Client.Socket, out var connection) 
-                    || !connection.Entity.IsAlive()
-                    || !connection.IsAdmin)
+                if (!ConnectionLookup.TryGetValue(msg.Client.Socket, out var connection)
+                    || !connection.Entity.IsAlive())
                     return;
+
+                if (!connection.IsAdmin)
+                {
+                    CommandBuilder.ErrorMessage(connection, "You need to be an admin to use that command.");
+                    return;
+                }
             }
 
             if (PacketCheckClientState[(int)type])

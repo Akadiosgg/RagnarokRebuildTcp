@@ -13,6 +13,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.U2D;
 using UnityEngine.UI;
+using RebuildSharedData.Data;
 
 namespace Assets.Scripts.UI
 {
@@ -155,7 +156,7 @@ namespace Assets.Scripts.UI
             NetworkManager.Instance.SendApplySkillPoint(skillId);
         }
 
-        public void ApplySkillUpdateFromServer(CharacterSkill skillId, int level)
+        private void ApplySkillUpdateFromServer(CharacterSkill skillId, int level)
         {
             var state = PlayerState.Instance;
             for (var i = 0; i < Entries.Count; i++)
@@ -163,12 +164,14 @@ namespace Assets.Scripts.UI
                 var entry = Entries[i];
 
                 var hasPrereqs = entry.SkillRank >= 0 && CheckSkillPrereqs(entry.Requirements, state);
-                    
+
                 if (Entries[i].SkillId == skillId)
                     Entries[i].UpdateLevel(level, hasPrereqs);
                 else
                     Entries[i].UpdateLevel(entry.MaxLevel, hasPrereqs);
             }
+
+            UpdateSkillPointsAndLock();
         }
         
         public SkillWindowEntry AddSkillToSkillWindow(CharacterSkill skill, int currentLevel, int rank, bool meetsPrereqs, SkillWindowEntry existing = null)
@@ -239,26 +242,15 @@ namespace Assets.Scripts.UI
             {
                 var tabIndex = GetTabIndexForRank(tree.JobRank);
                 JobTabLabels[tabIndex].text = ClientDataLoader.Instance.GetJobNameForId(tree.ClassId);
+                var look = state.Appearance;
                 JobTabPlayerSprites[tabIndex].PrepareDisplayPlayerCharacter(
-                    tree.ClassId,
-                    state.HairStyleId,
-                    state.HairColorId,
-                    0,
-                    0,
-                    0,
-                    state.IsMale);
+                    new PlayerAppearance(tree.ClassId, look.HairStyleId, look.HairColorId, look.IsMale));
 
                 tree = tree.ExtendsClass >= 0
                     ? ClientDataLoader.Instance.GetSkillTree(tree.ExtendsClass)
                     : null;
             }
 
-        }
-
-        public override void ShowWindow()
-        {
-            base.ShowWindow();
-            Initialize();
         }
 
         public void ChangeTab(int tabRank)
@@ -451,8 +443,6 @@ namespace Assets.Scripts.UI
             }
         }
 
-        public void RefreshSkillAvailability() => UpdateSkillPointsAndLock();
-
         public void ToggleSkillLock()
         {
             lockSkillLevelUp = !lockSkillLevelUp;
@@ -467,6 +457,26 @@ namespace Assets.Scripts.UI
             tooltipWidth = TooltipBox.sizeDelta.x;
             tooltipTextTemplate = TooltipText.text;
             TooltipBox.gameObject.SetActive(false);
+        }
+
+        private void OnEnable()
+        {
+            var state = PlayerState.Instance;
+            state.SkillsChanged += UpdateAvailableSkills;
+            state.SkillLevelChanged += ApplySkillUpdateFromServer;
+            state.StatsChanged += UpdateSkillPointsAndLock;
+            state.JobChanged += UpdateAvailableSkills;
+            if (state.IsReadyForDisplay)
+                UpdateAvailableSkills();
+        }
+
+        private void OnDisable()
+        {
+            var state = PlayerState.Instance;
+            state.SkillsChanged -= UpdateAvailableSkills;
+            state.SkillLevelChanged -= ApplySkillUpdateFromServer;
+            state.StatsChanged -= UpdateSkillPointsAndLock;
+            state.JobChanged -= UpdateAvailableSkills;
         }
     }
 }

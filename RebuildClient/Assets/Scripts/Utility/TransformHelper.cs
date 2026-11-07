@@ -4,6 +4,9 @@ namespace Assets.Scripts.Utility
 {
     public static class TransformHelper
     {
+        //How much of a dragged rect stays on screen, in UI units.
+        private const float DragMargin = 40f;
+
         public static RectTransform RectTransform(this Transform t) => (RectTransform)t;
         public static RectTransform RectTransform(this GameObject t) => (RectTransform)t.transform;
         public static RectTransform RectTransform(this MonoBehaviour m) => (RectTransform)m.transform;
@@ -26,8 +29,27 @@ namespace Assets.Scripts.Utility
                 pos.z);
         }
 
-        //How much of a dragged rect stays on screen, in UI units.
-        private const float DragMargin = 40f;
+        //Beside the cursor, flipping to its left without room; never under it, as its graphic hangs down and right.
+        public static void PlaceNextToCursor(this RectTransform rect, Vector2 gap, bool above)
+        {
+            var size = ScreenSize(rect);
+            var cursor = (Vector2)Input.mousePosition;
+            var gapX = gap.x * rect.lossyScale.x;
+            var gapY = gap.y * rect.lossyScale.y;
+
+            var bottom = above ? cursor.y + gapY : cursor.y - gapY - size.y;
+            var fitsVertically = bottom >= 0f && bottom + size.y <= Screen.height;
+
+            var left = cursor.x + gapX;
+            if (!fitsVertically || left + size.x > Screen.width)
+                left = cursor.x - gapX - size.x;
+
+            left = Mathf.Clamp(left, 0f, Mathf.Max(0f, Screen.width - size.x));
+            bottom = Mathf.Clamp(bottom, 0f, Mathf.Max(0f, Screen.height - size.y));
+
+            //position places the pivot, so offset from the corner by the pivot's share of the size
+            rect.position = new Vector3(left + size.x * rect.pivot.x, bottom + size.y * rect.pivot.y, rect.position.z);
+        }
 
         //Lets the rect hang off the left, right and bottom, but never past the top - windows are dragged
         //by their title bar, so a rect above the top edge could not be dragged back.

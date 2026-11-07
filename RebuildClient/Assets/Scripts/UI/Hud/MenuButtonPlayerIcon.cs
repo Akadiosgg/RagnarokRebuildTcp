@@ -24,12 +24,10 @@ namespace Assets.Scripts.UI.Hud
         public void Refresh()
         {
             var state = PlayerState.Instance;
-            //the player and game data must exist - OnEnable can run at scene load before either is ready
-            if (PlayerSprite == null || state == null || !state.IsValid || ClientDataLoader.Instance?.IsInitialized != true)
+            if (PlayerSprite == null || state == null || !state.IsReadyForDisplay)
                 return;
 
-            PlayerSprite.PrepareDisplayPlayerCharacter(state.JobId, state.HairStyleId, state.HairColorId,
-                state.Headgear1, state.Headgear2, state.Headgear3, state.IsMale);
+            PlayerSprite.PrepareDisplayPlayerCharacter(state.Appearance);
             PlayerSprite.SetMotion(SpriteMotion.Sit);
         }
     }

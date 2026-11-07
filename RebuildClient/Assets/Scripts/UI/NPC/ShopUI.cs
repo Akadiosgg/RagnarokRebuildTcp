@@ -444,7 +444,7 @@ namespace Assets.Scripts.UI
 
                 count++;
                 var item = i.Value;
-                if (item.Type == ItemType.UniqueItem && state.EquippedBagIdHashes.Contains(item.BagSlotId))
+                if (item.Type == ItemType.UniqueItem && state.IsEquipped(item.BagSlotId))
                     continue;
                 var shopEntry = new ShopEntry() { ItemId = item.BagSlotId, Count = item.Count, Cost = item.SalePrice };
                 LeftSideItems.Add(shopEntry.ItemId, shopEntry);

@@ -1,10 +1,12 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Assets.Scripts.Network;
 using Assets.Scripts.Sprites;
 using Assets.Scripts.UI.Utility;
 using Assets.Scripts.Utility;
 using RebuildSharedData.ClientTypes;
+using Assets.Scripts.UI.Hud;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,7 +16,9 @@ namespace Assets.Scripts.UI.ClientDatabase
     public partial class ClientDatabaseWindow
     {
         private static readonly int s_secondaryTex = Shader.PropertyToID("_SecondaryTex");
-        private const float MinimapPxPerTile = 1f;
+        private readonly MinimapArt minimapArt = new();
+        private Coroutine minimapLoad;
+        private float minimapContentScale = 1f;
 
         private readonly List<ClientMapEntry> filteredMaps = new();
         private string currentMapDetailCode;
@@ -59,8 +63,14 @@ namespace Assets.Scripts.UI.ClientDatabase
 
         [SerializeField, HideInInspector] internal TextMeshProUGUI mapSearchGhost;
         [SerializeField, HideInInspector] internal Image mapDetailMinimap;
+        //one unit per tile from the map's bottom left
+        [SerializeField, HideInInspector] internal RectTransform mapDetailContent;
         [SerializeField, HideInInspector] internal GameObject portalMarkerTemplate;
         [SerializeField, HideInInspector] internal GameObject npcMarkerTemplate;
+
+        private readonly HashSet<string> sortedMapMonsterKeys = new();
+
+        internal static readonly PredicateRegistry<ClientMapEntry> MapPredicates = BuildPredicateRegistry<ClientMapEntry>();
 
         private void EnsureRuntimeMinimapMaterial()
         {
@@ -77,31 +87,15 @@ namespace Assets.Scripts.UI.ClientDatabase
 
         private void OnMinimapRightClick()
         {
-            if (string.IsNullOrEmpty(currentMapDetailCode)) return;
-            if (mapDetailMinimap == null || mapDetailMinimap.sprite == null) return;
+            if (string.IsNullOrEmpty(currentMapDetailCode) || mapDetailMinimap.sprite == null) return;
 
-            var rt = mapDetailMinimap.rectTransform;
             var cam = mapDetailMinimap.canvas != null ? mapDetailMinimap.canvas.worldCamera : null;
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(rt, Input.mousePosition, cam, out var local)) return;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(mapDetailContent, Input.mousePosition, cam, out var tile)) return;
 
-            var rect = rt.rect;
-            var pxFromLeft = local.x - rect.xMin;
-            var pyFromTop = rect.yMax - local.y;
+            var size = mapDetailContent.sizeDelta;
+            if (tile.x < 0 || tile.y < 0 || tile.x >= size.x || tile.y >= size.y) return;
 
-            var sprW = mapDetailMinimap.sprite.texture.width;
-            var sprH = mapDetailMinimap.sprite.texture.height;
-            var scale = Mathf.Min(rect.width / sprW, rect.height / sprH);
-            var letterboxX = (rect.width - sprW * scale) * 0.5f;
-            var letterboxY = (rect.height - sprH * scale) * 0.5f;
-
-            var pixelX = (pxFromLeft - letterboxX) / scale;
-            var pixelYFromTop = (pyFromTop - letterboxY) / scale;
-            if (pixelX < 0 || pixelX >= sprW || pixelYFromTop < 0 || pixelYFromTop >= sprH) return;
-
-            var tileX = (int)(pixelX / MinimapPxPerTile);
-            var tileY = (int)((sprH - pixelYFromTop) / MinimapPxPerTile);
-
-            NetworkManager.Instance.SendMoveRequest(currentMapDetailCode, tileX, tileY);
+            NetworkManager.Instance.SendMoveRequest(currentMapDetailCode, (int)tile.x, (int)tile.y);
         }
 
         private void PopulateMapList()
@@ -138,99 +132,86 @@ namespace Assets.Scripts.UI.ClientDatabase
 
         private void LoadMinimap(string mapCode)
         {
+            if (minimapLoad != null)
+                StopCoroutine(minimapLoad);
+            ClearMinimap();
+            minimapLoad = StartCoroutine(LoadMinimapRoutine(mapCode));
+        }
+
+        private IEnumerator LoadMinimapRoutine(string mapCode)
+        {
+            yield return minimapArt.Load(mapCode);
+            minimapLoad = null;
+            if (!minimapArt.IsLoaded)
+                yield break;
+
+            minimapArt.ShowOn(mapDetailMinimap, minimapMaterialInstance);
+            mapDetailMinimap.color = Color.white;
+            FitMinimapContent(minimapArt.Content, minimapArt.TileWidth, minimapArt.TileHeight);
+            DrawPortalMarkers(mapCode);
+            DrawNpcMarkers(mapCode);
+        }
+
+        private void FitMinimapContent(RectInt drawn, int tileWidth, int tileHeight)
+        {
+            Canvas.ForceUpdateCanvases();
+            var view = ((RectTransform)mapDetailContent.parent).rect.size;
+            minimapContentScale = Mathf.Min(view.x / drawn.width, view.y / drawn.height);
+            mapDetailContent.sizeDelta = new Vector2(tileWidth, tileHeight);
+            mapDetailContent.localScale = new Vector3(minimapContentScale, minimapContentScale, 1f);
+            mapDetailContent.anchoredPosition = -drawn.center * minimapContentScale;
+        }
+
+        private void ClearMinimap()
+        {
+            ReleaseMarkers(portalMarkers);
+            ReleaseMarkers(npcMarkers);
+
             mapDetailMinimap.sprite = null;
             mapDetailMinimap.color = new Color(1, 1, 1, 0.08f);
-
             if (minimapMaterialInstance != null)
                 minimapMaterialInstance.SetTexture(s_secondaryTex, null);
-            ClearPortalMarkers();
-            ClearNpcMarkers();
+            minimapArt.Release();
 
-            var path = $"Assets/Maps/minimap/{mapCode}.png";
-            if (!ClientDataLoader.DoesAddressableExist<Sprite>(path)) return;
-
-            var requested = mapCode;
-            AddressableUtility.LoadSprite(gameObject, path, sprite =>
-            {
-                if (sprite == null || currentMapDetailCode != requested) return;
-                mapDetailMinimap.sprite = sprite;
-                mapDetailMinimap.color = Color.white;
-                DrawPortalMarkers(requested, sprite);
-                DrawNpcMarkers(requested, sprite);
-            });
-
-            var walkPath = $"Assets/Maps/minimap/{mapCode}_walkmask.png";
-            if (ClientDataLoader.DoesAddressableExist<Sprite>(walkPath))
-            {
-                AddressableUtility.LoadSprite(gameObject, walkPath, walk =>
-                {
-                    if (walk == null || currentMapDetailCode != requested || minimapMaterialInstance == null) return;
-                    minimapMaterialInstance.SetTexture(s_secondaryTex, walk.texture);
-                });
-            }
+            var view = ((RectTransform)mapDetailContent.parent).rect.size;
+            minimapContentScale = 1f;
+            mapDetailContent.sizeDelta = view;
+            mapDetailContent.localScale = Vector3.one;
+            mapDetailContent.anchoredPosition = -view / 2f;
+            mapDetailMinimap.rectTransform.anchorMin = Vector2.zero;
+            mapDetailMinimap.rectTransform.anchorMax = Vector2.one;
         }
 
-        private void ClearPortalMarkers()
+        private void DrawPortalMarkers(string mapCode)
         {
-            for (var i = portalMarkers.Count - 1; i >= 0; i--)
-            {
-                if (portalMarkers[i] != null)
-                    portalMarkers[i].SetActive(false);
-            }
-            portalMarkers.Clear();
-        }
-
-        private void DrawPortalMarkers(string mapCode, Sprite minimapSprite)
-        {
-            ClearPortalMarkers();
-            if (minimapSprite == null) return;
-            if (!mapPortalsLookup.TryGetValue(mapCode, out var portals)) return;
-            if (portals == null || portals.Count == 0) return;
-
-            var imageRT = mapDetailMinimap.rectTransform;
-            LayoutRebuilder.ForceRebuildLayoutImmediate(imageRT);
-
-            var imgW = imageRT.rect.width;
-            var imgH = imageRT.rect.height;
-            var sprW = minimapSprite.texture.width;
-            var sprH = minimapSprite.texture.height;
-            if (imgW <= 0 || imgH <= 0 || sprW <= 0 || sprH <= 0) return;
-
-            var scale = Mathf.Min(imgW / sprW, imgH / sprH);
-            var letterboxX = (imgW - sprW * scale) * 0.5f;
-            var letterboxY = (imgH - sprH * scale) * 0.5f;
+            if (!mapPortalsLookup.TryGetValue(mapCode, out var portals) || portals == null)
+                return;
 
             foreach (var p in portals)
             {
-                if (!portalConnectionIndex.TryGetValue(p.To, out var idx)) continue;
-
-                var pixelYFromTop = sprH - p.Y * MinimapPxPerTile;
-                var posX = letterboxX + p.X * MinimapPxPerTile * scale;
-                var posY = letterboxY + pixelYFromTop * scale;
-
-                CreatePortalMarker(idx, posX, posY);
+                if (portalConnectionIndex.TryGetValue(p.To, out var number))
+                    portalMarkers.Add(PlaceMarker(portalMarkerTemplate, PortalMarkerPrefix, number, p.X, p.Y));
             }
         }
 
-        private void CreatePortalMarker(int number, float xFromLeft, float yFromTop)
+        private GameObject PlaceMarker(GameObject template, string prefix, int number, int tileX, int tileY)
         {
-            if (portalMarkerTemplate == null)
-            {
-                Debug.LogWarning("ClientDatabaseWindow: portalMarkerTemplate is unset on the Database prefab.");
-                return;
-            }
+            var marker = GetPooledObject(template, mapDetailContent, () => Instantiate(template, mapDetailContent));
+            marker.name = $"{prefix}{number}";
+            var rt = (RectTransform)marker.transform;
+            rt.anchoredPosition = new Vector2(tileX + 0.5f, tileY + 0.5f);
+            rt.localScale = Vector3.one / minimapContentScale;
+            var text = marker.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (text != null)
+                text.text = number.ToString();
+            return marker;
+        }
 
-            var marker = GetPooledObject(
-                portalMarkerTemplate,
-                mapDetailMinimap.transform,
-                () => Instantiate(portalMarkerTemplate, mapDetailMinimap.transform));
-            marker.name = $"{PortalMarkerPrefix}{number}";
-            var mrt = marker.GetComponent<RectTransform>();
-            mrt.anchoredPosition = new Vector2(xFromLeft, -yFromTop);
-            var tmp = marker.GetComponentInChildren<TextMeshProUGUI>(true);
-            if (tmp != null) tmp.text = number.ToString();
-
-            portalMarkers.Add(marker);
+        private static void ReleaseMarkers(List<GameObject> markers)
+        {
+            foreach (var marker in markers)
+                marker.SetActive(false);
+            markers.Clear();
         }
 
         private void PopulateMapConnections(string mapCode)
@@ -260,8 +241,6 @@ namespace Assets.Scripts.UI.ClientDatabase
                 }
             }
         }
-
-        private readonly HashSet<string> sortedMapMonsterKeys = new();
 
         private void PopulateMapMonsters(string mapCode)
         {
@@ -311,65 +290,14 @@ namespace Assets.Scripts.UI.ClientDatabase
             }
         }
 
-        private void ClearNpcMarkers()
+        private void DrawNpcMarkers(string mapCode)
         {
-            for (var i = npcMarkers.Count - 1; i >= 0; i--)
-            {
-                if (npcMarkers[i] != null)
-                    npcMarkers[i].SetActive(false);
-            }
-            npcMarkers.Clear();
-        }
-
-        private void DrawNpcMarkers(string mapCode, Sprite minimapSprite)
-        {
-            ClearNpcMarkers();
-            if (minimapSprite == null || npcMarkerTemplate == null) return;
-            if (!mapNpcsLookup.TryGetValue(mapCode, out var npcs)) return;
-            if (npcs == null || npcs.Count == 0) return;
-
-            var imageRT = mapDetailMinimap.rectTransform;
-            LayoutRebuilder.ForceRebuildLayoutImmediate(imageRT);
-
-            var imgW = imageRT.rect.width;
-            var imgH = imageRT.rect.height;
-            var sprW = minimapSprite.texture.width;
-            var sprH = minimapSprite.texture.height;
-            if (imgW <= 0 || imgH <= 0 || sprW <= 0 || sprH <= 0) return;
-
-            var scale = Mathf.Min(imgW / sprW, imgH / sprH);
-            var letterboxX = (imgW - sprW * scale) * 0.5f;
-            var letterboxY = (imgH - sprH * scale) * 0.5f;
+            if (!mapNpcsLookup.TryGetValue(mapCode, out var npcs) || npcs == null)
+                return;
 
             for (var i = 0; i < npcs.Count; i++)
-            {
-                var npc = npcs[i];
-                var pixelYFromTop = sprH - npc.Y * MinimapPxPerTile;
-                var posX = letterboxX + npc.X * MinimapPxPerTile * scale;
-                var posY = letterboxY + pixelYFromTop * scale;
-
-                CreateNpcMarker(i + 1, posX, posY);
-            }
+                npcMarkers.Add(PlaceMarker(npcMarkerTemplate, NpcMarkerPrefix, i + 1, npcs[i].X, npcs[i].Y));
         }
-
-        private void CreateNpcMarker(int number, float xFromLeft, float yFromTop)
-        {
-            if (npcMarkerTemplate == null) return;
-
-            var marker = GetPooledObject(
-                npcMarkerTemplate,
-                mapDetailMinimap.transform,
-                () => Instantiate(npcMarkerTemplate, mapDetailMinimap.transform));
-            marker.name = $"{NpcMarkerPrefix}{number}";
-            var mrt = marker.GetComponent<RectTransform>();
-            mrt.anchoredPosition = new Vector2(xFromLeft, -yFromTop);
-            var tmp = marker.GetComponentInChildren<TextMeshProUGUI>(true);
-            if (tmp != null) tmp.text = number.ToString();
-
-            npcMarkers.Add(marker);
-        }
-
-        internal static readonly PredicateRegistry<ClientMapEntry> MapPredicates = BuildPredicateRegistry<ClientMapEntry>();
 
         private void FilterMaps(string query) =>
             ApplyDatabaseFilter<ClientMapEntry, DatabaseListRow>(

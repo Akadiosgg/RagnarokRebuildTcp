@@ -1,17 +1,30 @@
 ﻿using System.Collections.Generic;
+using Assets.Scripts.PlayerControl;
 using Assets.Scripts.Utility;
 using RebuildSharedData.Enum;
 using UnityEngine;
+using RebuildSharedData.Data;
 
 namespace Assets.Scripts.Sprites
 {
-    public enum UiSpriteAlignment
+    public enum UiSpriteScaling
     {
-        Center,
-        Left,
-        Right,
-        //ignores the rect entirely; the sprite's own root anchor sits at the rect's local origin
-        Origin,
+        //fits inside the rect
+        FitInside,
+        //fills the rect's width; a mask clips anything taller
+        FitWidth,
+        //always at Scale
+        Fixed,
+    }
+
+    //fixed values: prefabs store them as numbers
+    public enum UiSpriteAnchor
+    {
+        Body = 0,
+        //the sprite's own world origin
+        SpriteOrigin = 2,
+        //where the head joins the body; characters without a head are fit and centered instead
+        HeadAttachPoint = 3,
     }
 
     public class UiPlayerSprite : MonoBehaviour
@@ -19,15 +32,19 @@ namespace Assets.Scripts.Sprites
         public Material Material;
         public Direction ViewDirection;
 
-        //Horizontal placement: the character binds to the chosen rect edge, or centers. Always
-        //grounded at the rect bottom. Origin ignores the rect and just anchors to its local origin.
-        public UiSpriteAlignment Alignment = UiSpriteAlignment.Center;
+        [Header("Size")]
+        public UiSpriteScaling Scaling = UiSpriteScaling.FitInside;
 
-        //0 scales the sprite to fit the rect, up to MaxScale; above 0 renders at exactly that scale.
-        //50 = one ui pixel per sprite pixel.
-        public float FixedScale;
-        public float MaxScale = 100f;
-        
+        [Tooltip("UI pixels per sprite pixel; the most the fit modes scale up to.")]
+        public float Scale = 2f;
+
+        [Header("Position")]
+        [Tooltip("The part of the character placed at Anchor Position.")]
+        public UiSpriteAnchor Anchor = UiSpriteAnchor.Body;
+
+        [Tooltip("Where the anchor sits in the rect, (0,0) bottom-left to (1,1) top-right. Head Attach Point is set facing east and mirrors facing west.")]
+        public Vector2 AnchorPosition = new(0.5f, 0f);
+
         private class UiSpriteLayerData
         {
             public RoSpriteRendererUI SpriteRenderer;
@@ -43,6 +60,7 @@ namespace Assets.Scripts.Sprites
         private int loadVersion;
         private int currentFrame;
         private int frameCount;
+        private int headLayer = -1;
         private SpriteMotion currentMotion = SpriteMotion.Idle;
 
         public int FrameCount => frameCount;
@@ -60,12 +78,17 @@ namespace Assets.Scripts.Sprites
 
         public void DisplaySprite(string spritePath, SpriteMotion motion = SpriteMotion.Idle, int frame = 0)
         {
-            DisplayLayers(new[] { spritePath }, motion, frame);
+            DisplayLayers(new[] { spritePath }, -1, motion, frame);
         }
 
-        public void DisplayLayers(IReadOnlyList<string> spritePaths, SpriteMotion motion = SpriteMotion.Idle, int frame = 0)
+        //repeat requests do nothing, as sprites load asynchronously
+        private void DisplayLayers(IReadOnlyList<string> spritePaths, int headSlot, SpriteMotion motion, int frame)
         {
+            if (IsDisplaying(spritePaths, headSlot, motion, frame))
+                return;
+
             BeginDisplay(spritePaths.Count, motion, frame);
+            headLayer = headSlot;
 
             for (var i = 0; i < spritePaths.Count; i++)
                 LoadSpriteIntoSlot(spritePaths[i], i);
@@ -74,20 +97,33 @@ namespace Assets.Scripts.Sprites
                 Clear();
         }
 
-        public void PrepareDisplayPlayerCharacter(int jobId, int headId, int hairColor, int headgear1, int headgear2, int headgear3, bool isMale)
+        private bool IsDisplaying(IReadOnlyList<string> spritePaths, int headSlot, SpriteMotion motion, int frame)
         {
+            if (loadCount == 0 || headSlot != headLayer || motion != currentMotion || frame != currentFrame || spritePaths.Count > sprites.Count)
+                return false;
+
+            for (var i = 0; i < sprites.Count; i++)
+                if (sprites[i].SpriteName != (i < spritePaths.Count ? spritePaths[i] : null))
+                    return false;
+            return true;
+        }
+
+        public void PrepareDisplayPlayerCharacter(PlayerAppearance appearance)
+        {
+            const int headSlot = 1;
             var d = ClientDataLoader.Instance;
+            var isMale = appearance.IsMale;
             var spritePaths = new List<string>(5)
             {
-                d.GetPlayerBodySpriteName(jobId, isMale),
-                d.GetPlayerHeadSpriteName(headId, hairColor, isMale)
+                d.GetPlayerBodySpriteName(appearance.JobId, isMale),
+                d.GetPlayerHeadSpriteName(appearance.HairStyleId, appearance.HairColorId, isMale)
             };
 
-            if (headgear3 > 0) spritePaths.Add(d.GetHeadgearSpriteName(headgear3, isMale));
-            if (headgear2 > 0) spritePaths.Add(d.GetHeadgearSpriteName(headgear2, isMale));
-            if (headgear1 > 0) spritePaths.Add(d.GetHeadgearSpriteName(headgear1, isMale));
+            if (appearance.Headgear3 > 0) spritePaths.Add(d.GetHeadgearSpriteName(appearance.Headgear3, isMale));
+            if (appearance.Headgear2 > 0) spritePaths.Add(d.GetHeadgearSpriteName(appearance.Headgear2, isMale));
+            if (appearance.Headgear1 > 0) spritePaths.Add(d.GetHeadgearSpriteName(appearance.Headgear1, isMale));
 
-            DisplayLayers(spritePaths);
+            DisplayLayers(spritePaths, headSlot, SpriteMotion.Idle, 0);
         }
 
         private void BeginDisplay(int layerCount, SpriteMotion motion, int frame)
@@ -188,7 +224,7 @@ namespace Assets.Scripts.Sprites
                 else if (frame.Pos.Length > 0)
                 {
                     var diff = rootAnchor - frame.Pos[0].Position;
-                    attachmentOffsets[i] = new Vector2(diff.x, -diff.y) / 50f;
+                    attachmentOffsets[i] = new Vector2(diff.x, -diff.y) / SpriteMeshBuilder.PixelsPerUnit;
                 }
             }
 
@@ -201,7 +237,8 @@ namespace Assets.Scripts.Sprites
             if (frameCount == int.MaxValue)
                 frameCount = 0;
 
-            LayoutSprites(attachmentOffsets);
+            Vector2? attachPoint = hasRootAnchor ? new Vector2(rootAnchor.x, -rootAnchor.y) / SpriteMeshBuilder.PixelsPerUnit : null;
+            LayoutSprites(attachmentOffsets, attachPoint);
 
             for (var i = 0; i < sprites.Count; i++)
             {
@@ -245,7 +282,7 @@ namespace Assets.Scripts.Sprites
                 : 0;
         }
 
-        private void LayoutSprites(Vector2[] attachmentOffsets)
+        private void LayoutSprites(Vector2[] attachmentOffsets, Vector2? attachPoint)
         {
             var availableSize = ((RectTransform)transform).rect.size;
             if (availableSize.x <= 0 || availableSize.y <= 0)
@@ -273,28 +310,39 @@ namespace Assets.Scripts.Sprites
             if (characterSize.x <= 0 || characterSize.y <= 0)
                 return;
 
-            var renderSize = FixedScale > 0
-                ? FixedScale
-                : Mathf.Min(availableSize.x / characterSize.x, availableSize.y / characterSize.y, MaxScale);
+            var scale = Scale;
+            var scaling = Scaling;
+            var anchorPosition = AnchorPosition;
+            var anchor = Anchor;
+            //set facing east, mirrored facing west
+            if (anchor == UiSpriteAnchor.HeadAttachPoint && ViewDirection is Direction.SouthWest or Direction.West or Direction.NorthWest)
+                anchorPosition.x = 1f - anchorPosition.x;
+            var hasHead = headLayer >= 0 && headLayer < sprites.Count && sprites[headLayer].IsActive;
+            if (anchor == UiSpriteAnchor.HeadAttachPoint && (!hasHead || attachPoint == null)) // fallback (monsters, NPCs)
+            {
+                scale = 1.5f;
+                scaling = UiSpriteScaling.FitInside;
+                anchor = UiSpriteAnchor.Body;
+                anchorPosition = new Vector2(0.5f, 0.5f);
+            }
 
-            Vector2 placementOffset;
-            if (Alignment == UiSpriteAlignment.Origin)
+            var maxSize = scale * SpriteMeshBuilder.PixelsPerUnit;
+            var widthFit = availableSize.x / characterSize.x;
+            var renderSize = scaling switch
             {
-                //ignores the rect; the sprite's own root anchor sits at the rect's local origin
-                placementOffset = Vector2.zero;
-            }
-            else
+                UiSpriteScaling.Fixed => maxSize,
+                UiSpriteScaling.FitWidth => Mathf.Min(widthFit, maxSize),
+                _ => Mathf.Min(widthFit, availableSize.y / characterSize.y, maxSize),
+            };
+
+            var target = (anchorPosition - Vector2.one * 0.5f) * availableSize;
+            var anchorPoint = anchor switch
             {
-                //grounded at the rect bottom; horizontally bound to the chosen edge, or centered
-                var half = availableSize * 0.5f;
-                var placementX = Alignment switch
-                {
-                    UiSpriteAlignment.Left => -half.x - min.x * renderSize,
-                    UiSpriteAlignment.Right => half.x - max.x * renderSize,
-                    _ => -(min.x + max.x) * 0.5f * renderSize,
-                };
-                placementOffset = new Vector2(placementX, -half.y - min.y * renderSize);
-            }
+                UiSpriteAnchor.SpriteOrigin => Vector2.zero,
+                UiSpriteAnchor.HeadAttachPoint => attachPoint.Value,
+                _ => Vector2.Scale(Vector2.one - anchorPosition, min) + Vector2.Scale(anchorPosition, max),
+            };
+            var placementOffset = target - anchorPoint * renderSize;
 
             for (var i = 0; i < sprites.Count; i++)
             {
@@ -316,6 +364,21 @@ namespace Assets.Scripts.Sprites
             if (loadCount > 0 && loadedCount >= loadCount)
                 AssembleCompleteSprite();
         }
+
+#if UNITY_EDITOR
+        //play mode only: re-lays out while size and position are tuned
+        private void OnValidate()
+        {
+            if (!Application.isPlaying)
+                return;
+
+            UnityEditor.EditorApplication.delayCall += () =>
+            {
+                if (this != null && loadCount > 0 && loadedCount >= loadCount)
+                    AssembleCompleteSprite();
+            };
+        }
+#endif
 
         public void ChangeDirection(Direction newDir)
         {

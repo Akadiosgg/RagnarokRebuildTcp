@@ -25,6 +25,7 @@ namespace Assets.Scripts.UI.Stats
 
         //public int[] MinValues;
         private readonly int[] adjustValue = new int[6];
+        private readonly int[] shownBaseStats = new int[6];
         private int statPointsRequired;
 
         private static readonly int[] CumulativeStatPointCost = new[]
@@ -35,6 +36,38 @@ namespace Assets.Scripts.UI.Stats
             272, 280, 288, 296, 304, 312, 320, 328, 336, 344, 352, 361, 370, 379, 388, 397, 406, 415, 424, 433,
             442, 452, 462, 472, 482, 492, 502, 512, 522, 532, 542, 553, 564, 575, 586, 597, 608, 619, 630
         };
+
+        private void OnEnable()
+        {
+            var state = PlayerState.Instance;
+            state.StatsChanged += OnStatsChanged;
+            state.WeaponClassChanged += UpdateCharacterStats;
+            if (state.IsReadyForDisplay)
+                OnStatsChanged();
+        }
+
+        private void OnDisable()
+        {
+            var state = PlayerState.Instance;
+            state.StatsChanged -= OnStatsChanged;
+            state.WeaponClassChanged -= UpdateCharacterStats;
+        }
+
+        private void OnStatsChanged()
+        {
+            if (HaveBaseStatsChanged())
+                ResetStatChanges();
+            else
+                UpdateCharacterStats();
+        }
+
+        private bool HaveBaseStatsChanged()
+        {
+            for (var i = 0; i < shownBaseStats.Length; i++)
+                if (shownBaseStats[i] != PlayerState.Instance.GetData(PlayerStat.Str + i))
+                    return true;
+            return false;
+        }
 
         public void ResetStatChanges()
         {
@@ -137,6 +170,8 @@ namespace Assets.Scripts.UI.Stats
         public void UpdateCharacterStats()
         {
             var state = PlayerState.Instance;
+            for (var i = 0; i < shownBaseStats.Length; i++)
+                shownBaseStats[i] = state.GetData(PlayerStat.Str + i);
 
             UpdateStat(0, state.GetData(PlayerStat.Str), state.GetStat(CharacterStat.AddStr), adjustValue[0]);
             UpdateStat(1, state.GetData(PlayerStat.Agi), state.GetStat(CharacterStat.AddAgi), adjustValue[1]);
@@ -171,7 +206,7 @@ namespace Assets.Scripts.UI.Stats
             AttributeText[4].text = $"{state.GetStat(CharacterStat.Def)} + {softDef}";
             AttributeText[5].text = $"{state.GetStat(CharacterStat.MDef)} + {totalInt}";
             AttributeText[6].text = $"{totalAgi + state.Level + state.GetStat(CharacterStat.AddFlee)} + {state.GetStat(CharacterStat.PerfectDodge)}";
-            AttributeText[7].text = $"{(1 / state.AttackSpeed):F2}/sec";
+            AttributeText[7].text = $"{(1 / state.AttackDelay):F2}/sec";
             if (statPointsRequired == 0)
                 AttributeText[8].text = $"{state.GetData(PlayerStat.StatPoints)}";
             else

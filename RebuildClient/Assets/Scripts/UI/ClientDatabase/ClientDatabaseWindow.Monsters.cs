@@ -83,6 +83,8 @@ namespace Assets.Scripts.UI.ClientDatabase
         [SerializeField, HideInInspector] internal TextMeshProUGUI monsterDetailStatsText;
         [SerializeField, HideInInspector] internal UiPlayerSprite monsterSprite;
 
+        internal static readonly PredicateRegistry<MonsterEntry> MonsterPredicates = BuildPredicateRegistry<MonsterEntry>();
+
         private void PopulateMonsterList(MonsterDbFile data)
         {
             monsterEntries = data?.Items ?? (IReadOnlyList<MonsterEntry>)Array.Empty<MonsterEntry>();
@@ -209,8 +211,6 @@ namespace Assets.Scripts.UI.ClientDatabase
             monsterSprite.gameObject.SetActive(false);
             monsterFrame = 0;
         }
-        
-        internal static readonly PredicateRegistry<MonsterEntry> MonsterPredicates = BuildPredicateRegistry<MonsterEntry>();
 
         private void FilterMonsters(string query) =>
             ApplyDatabaseFilter<MonsterEntry, DatabaseListRow>(

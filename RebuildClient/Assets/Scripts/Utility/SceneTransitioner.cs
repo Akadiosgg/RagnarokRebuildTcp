@@ -193,8 +193,7 @@ namespace Assets.Scripts.Utility
             GameConfig.ApplyAudio();
             UiManager.Instance.StatusWindow.ResetStatChanges(); //clear existing changes
 
-            PlayerState.Instance.MapName = newMap.Code;
-            UiManager.Instance.PartyPanel.OnChangeMaps();
+            PlayerState.Instance.SetMapName(newMap.Code);
             UiManager.Instance.EmoteManager.GetComponent<EmoteWindow>()?.EnsureInitialized();
 
 			if (needAudioChange)
@@ -208,17 +207,7 @@ namespace Assets.Scripts.Utility
 				mapFogInfo = json.Items.ToList();
 			}
 			
-			var fog = mapFogInfo.FirstOrDefault(m => m.Map == newScene);
-			if (fog != null)
-			{
-				CameraFollower.Instance.FogNearRatio = fog.NearPlane * 1500f / 400f;
-				CameraFollower.Instance.FogFarRatio = fog.FarPlane * 1500f / 400f;
-			}
-			else
-			{
-				CameraFollower.Instance.FogNearRatio = 0.1f * 1500f / 400f;
-				CameraFollower.Instance.FogFarRatio = 0.9f * 1500f / 400f;
-			}
+			MapFog.SetMap(mapFogInfo.FirstOrDefault(m => m.Map == newScene));
 
 			var type = (MapType)newMap.MapMode;
 

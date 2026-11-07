@@ -24,6 +24,10 @@ namespace Assets.Scripts.UI.ClientDatabase
 
         private TmpLinkHover detailLinkHover;
 
+        private readonly HashSet<int> sortedDropMapKeys = new();
+
+        private static readonly PredicateRegistry<ItemData> ItemPredicates = BuildItemPredicates();
+
         private void PopulateItemList()
         {
             itemPage.Refresh();
@@ -107,8 +111,6 @@ namespace Assets.Scripts.UI.ClientDatabase
             }
         }
 
-        private readonly HashSet<int> sortedDropMapKeys = new();
-
         private static string BuildItemInfoFooter(ItemData item)
         {
             if (item.Price <= 0 && item.SellPrice <= 0) return "";
@@ -190,8 +192,6 @@ namespace Assets.Scripts.UI.ClientDatabase
         {
             itemPage.ShowList();
         }
-
-        private static readonly PredicateRegistry<ItemData> ItemPredicates = BuildItemPredicates();
 
         private static PredicateRegistry<ItemData> BuildItemPredicates()
         {

@@ -40,6 +40,8 @@ namespace Assets.Scripts.UI.ClientDatabase
         private static readonly Dictionary<string, ClientMapEntry> EmptyMapLookup = new();
         private static readonly Dictionary<string, string> EmptyDescLookup = new();
 
+        private bool dbDataLoaded;
+
         private void Start()
         {
             InitializePages();
@@ -60,6 +62,7 @@ namespace Assets.Scripts.UI.ClientDatabase
             ClientDataLoader.InitializationCompleted -= RefreshLookupPages;
             if (minimapMaterialInstance)
                 Destroy(minimapMaterialInstance);
+            minimapArt.Release();
             base.OnDestroy();
         }
 
@@ -217,9 +220,7 @@ namespace Assets.Scripts.UI.ClientDatabase
             tabGroup.SelectTab(3);
             ShowMapDetail(map);
         }
-        
-        private bool dbDataLoaded;
-        
+
         private void LoadDatabaseData()
         {
             if (dbDataLoaded || ClientDataLoader.Instance == null || !ClientDataLoader.Instance.IsInitialized)

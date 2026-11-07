@@ -39,9 +39,10 @@ namespace Assets.Scripts.UI.ConfigWindow
         public float DamageSpacingSize = 0.7f;
         public bool ShowExpGainOnKill = true;
         public bool ShowMonsterHpBars = true;
-        public bool AutoHideFullHPBars = false;
+        //players outside the party; the player's own and party members' bars always show
+        public bool ShowOtherPlayerHpBars = false;
+        public bool ShowPartyNameInOverlay = false;
         public bool ScalePlayerDisplayWithZoom = true;
-        public bool ShowLevelsInOverlay = true;
         public bool AdjustOverlayWhenSitting = true;
         //ui
         public float MasterUIScale = 0.8f;
@@ -50,19 +51,17 @@ namespace Assets.Scripts.UI.ConfigWindow
         public bool EnableMinimap = true;
         public float MinimapOpacity = 0.85f;
         public float MinimapIconOpacity = 1f;
+        //in UI units, and the lines shown above the input line
+        public float ChatWidth = 720f;
+        public float ChatLines = 8f;
 
-        public bool ShowBaseExpValue = true;
-        public bool ShowBaseExpPercent = true;
-        public bool ShowJobExpValue = true;
-        public bool ShowJobExpPercent = true;
         public bool ShowExpGainInChat = false;
 
         //visuals
         public bool UseSmoothPixel = true;
 
-        public bool VSync = true;
-        public bool LimitForegroundFps = false;
-        public float ForegroundFpsLimit = 144f;
+        public bool LimitForegroundFps = true;
+        public float ForegroundFpsLimit = 240f;
         public bool LimitBackgroundFps = true;
         public float BackgroundFpsLimit = 30f;
 
@@ -72,6 +71,7 @@ namespace Assets.Scripts.UI.ConfigWindow
         public bool HideShoutChat = false;
         
         public bool EnableXRay = false;
+        public bool EnableFog = true;
 
         //game
         public bool EnableWASDControls = false;
@@ -94,6 +94,8 @@ namespace Assets.Scripts.UI.ConfigWindow
 
         public const int HotBarSlots = 30;
 
+        private static readonly int ChannelCount = Enum.GetValues(typeof(ConfigAudioChannel)).Length;
+
         public HotBarSaveData[] GetHotBarDataForCharacter(string name)
         {
             if (CharacterHotBarData.TryGetValue(name, out var data))
@@ -104,8 +106,6 @@ namespace Assets.Scripts.UI.ConfigWindow
 
             return hotBarData;
         }
-
-        private static readonly int ChannelCount = Enum.GetValues(typeof(ConfigAudioChannel)).Length;
 
         //The audio arrays need a length before they can be filled.
         public static GameConfigData CreateDefault()

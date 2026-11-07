@@ -119,6 +119,8 @@ namespace Assets.Scripts.Sprites
 
         private Mesh _mesh;
 
+        internal int CachedInstanceId => _instanceId != 0 ? _instanceId : _instanceId = GetInstanceID();
+
         public void SetAction(int action, bool is8Direction)
         {
             ActionId = action;
@@ -131,7 +133,22 @@ namespace Assets.Scripts.Sprites
         public void SetAngle(float angle) => Angle = angle;
 
         public void SetFrame(int frame) => CurrentFrame = frame;
-        public void SetSprite(RoSpriteData sprite) => SpriteData = sprite;
+        public void SetSprite(RoSpriteData sprite)
+        {
+            SpriteData = sprite;
+            if (!isInitialized)
+                return;
+
+            //a live renderer needs new mesh caches and a full rebuild
+            LoadMeshCaches();
+            _hasRebuiltOnce = false;
+        }
+
+        private void LoadMeshCaches()
+        {
+            meshCache = SpriteMeshCache.GetMeshCacheForSprite(SpriteData.Name);
+            colliderCache = SpriteMeshCache.GetColliderCacheForSprite(SpriteData.Name);
+        }
         public void SetOffset(float offset) => SpriteOffset = offset;
 
         public RoFrame GetActiveRendererFrame()
@@ -174,8 +191,7 @@ namespace Assets.Scripts.Sprites
             if (shader == null)
                 shader = GameConfig.Data.EnableXRay ? ShaderCache.Instance?.SpriteShaderWithXRay : ShaderCache.Instance?.SpriteShader;
 
-            meshCache = SpriteMeshCache.GetMeshCacheForSprite(SpriteData.Name);
-            colliderCache = SpriteMeshCache.GetColliderCacheForSprite(SpriteData.Name);
+            LoadMeshCaches();
 
             Color = Color.white;
 
@@ -488,8 +504,6 @@ namespace Assets.Scripts.Sprites
             _useFallback = true;
             UpdateFallbackRenderer();
         }
-
-        internal int CachedInstanceId => _instanceId != 0 ? _instanceId : _instanceId = GetInstanceID();
 
         private RoSpriteRendererStandard ResolveRootRenderer()
         {

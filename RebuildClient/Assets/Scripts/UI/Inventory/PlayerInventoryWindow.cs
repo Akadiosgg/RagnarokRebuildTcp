@@ -30,12 +30,33 @@ namespace Assets.Scripts.UI.Inventory
                 Destroy(ItemBoxRoot.transform.GetChild(0).gameObject);
         }
 
-        public override void ShowWindow()
+        private void OnEnable()
         {
-            base.ShowWindow();
-            UpdateActiveVisibleBag();
+            var state = PlayerState.Instance;
+            state.Inventory.Changed += OnInventoryChanged;
+            state.EquipmentChanged += UpdateActiveVisibleBag;
+            state.WeightChanged += RefreshHeader;
+            state.ZenyChanged += RefreshHeader;
+            if (state.IsReadyForDisplay)
+                UpdateActiveVisibleBag();
         }
-        
+
+        private void OnDisable()
+        {
+            var state = PlayerState.Instance;
+            state.Inventory.Changed -= OnInventoryChanged;
+            state.EquipmentChanged -= UpdateActiveVisibleBag;
+            state.WeightChanged -= RefreshHeader;
+            state.ZenyChanged -= RefreshHeader;
+        }
+
+        //the tooltip reads the entries, so it refreshes after them
+        private void OnInventoryChanged(int _)
+        {
+            UpdateActiveVisibleBag();
+            UiManager.Instance.RefreshTooltip();
+        }
+
         public void ClickTabButton(int tab)
         {
             activeItemSection = tab;
@@ -86,7 +107,7 @@ namespace Assets.Scripts.UI.Inventory
                     var itemClass = item.ItemData.ItemClass;
                     if (itemClass == ItemClass.Weapon || itemClass == ItemClass.Equipment || itemClass == ItemClass.Ammo)
                     {
-                        if (!state.EquippedItems.Contains(item.BagSlotId))
+                        if (!state.IsEquipped(item.BagSlotId))
                         {
                             if (itemClass == ItemClass.Ammo)
                             {
@@ -112,22 +133,11 @@ namespace Assets.Scripts.UI.Inventory
             if (!gameObject.activeSelf || PlayerState.Instance == null)
                 return;
 
+            RefreshHeader();
+
             var state = PlayerState.Instance;
-            var inventory = state.Inventory;
             activeEntryCount = 0;
-            var bagItems = inventory.GetInventoryData();
-            var curWeight = state.CurrentWeight / 10;
-            var totalWeight = state.MaxWeight / 10;
-
-            var weightPercent = curWeight * 100 / totalWeight;
-            var countText = bagItems.Count < 190 ? $"{bagItems.Count}/200" : $"<color=red>{bagItems.Count}</color>/200";
-            var weightText = weightPercent < 90 ? $"{curWeight}/{totalWeight}" : $"<color=red>{curWeight}</color>/{totalWeight}";
-
-            WeightText.text = weightText;
-            ItemCountText.text = countText;
-            ZenyText.text = $"{state.Zeny:N0}";
-            LayoutRebuilder.ForceRebuildLayoutImmediate(WeightText.rectTransform.parent as RectTransform);
-
+            var bagItems = state.Inventory.GetInventoryData();
             foreach (var bagEntry in bagItems)
             {
                 var item = bagEntry.Value;
@@ -161,7 +171,7 @@ namespace Assets.Scripts.UI.Inventory
                 if (item.ItemData.IsUnique)
                     itemEntry.DragItem.HideCount();
 
-                if (state.EquippedItems.Contains(item.BagSlotId))
+                if (state.IsEquipped(item.BagSlotId))
                 {
                     itemEntry.DragItem.SetEquipped();
                     itemEntry.DragItem.OnDoubleClick = null;
@@ -197,6 +207,27 @@ namespace Assets.Scripts.UI.Inventory
                 entryList[i].DragItem.Clear();
                 entryList[i].gameObject.SetActive(i < totalBoxes);
             }
+        }
+
+        //weight, item count and zeny, without rebuilding the item grid
+        private void RefreshHeader()
+        {
+            if (!gameObject.activeSelf || PlayerState.Instance == null)
+                return;
+
+            var state = PlayerState.Instance;
+            var itemCount = state.Inventory.TotalItems;
+            var curWeight = state.CurrentWeight / 10;
+            var totalWeight = state.MaxWeight / 10;
+
+            var weightPercent = curWeight * 100 / totalWeight;
+            var countText = itemCount < 190 ? $"{itemCount}/200" : $"<color=red>{itemCount}</color>/200";
+            var weightText = weightPercent < 90 ? $"{curWeight}/{totalWeight}" : $"<color=red>{curWeight}</color>/{totalWeight}";
+
+            WeightText.text = weightText;
+            ItemCountText.text = countText;
+            ZenyText.text = $"{state.Zeny:N0}";
+            LayoutRebuilder.ForceRebuildLayoutImmediate(WeightText.rectTransform.parent as RectTransform);
         }
     }
 }

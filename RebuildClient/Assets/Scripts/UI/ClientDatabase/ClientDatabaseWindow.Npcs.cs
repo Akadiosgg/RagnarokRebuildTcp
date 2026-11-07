@@ -47,6 +47,8 @@ namespace Assets.Scripts.UI.ClientDatabase
         [SerializeField, HideInInspector] internal TextMeshProUGUI npcDetailStatsText;
         [SerializeField, HideInInspector] internal UiPlayerSprite npcSprite;
 
+        internal static readonly PredicateRegistry<NpcEntry> NpcPredicates = BuildPredicateRegistry<NpcEntry>();
+
         private NpcDbFile LoadNpcDatabase() => LoadStreamingJson<NpcDbFile>("ClientConfigGenerated/npcdatabase.json");
 
         private void BuildNpcReverseLookups(NpcDbFile npcDb)
@@ -171,8 +173,6 @@ namespace Assets.Scripts.UI.ClientDatabase
             npcSprite.gameObject.SetActive(false);
             npcFrame = 0;
         }
-
-        internal static readonly PredicateRegistry<NpcEntry> NpcPredicates = BuildPredicateRegistry<NpcEntry>();
 
         private void FilterNpcs(string query) =>
             ApplyDatabaseFilter<NpcEntry, DatabaseListRow>(

@@ -277,9 +277,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Material: {fileID: 2100000, guid: 8497e6a895aab5a4ea9b4242458bcfa7, type: 2}
   ViewDirection: 0
-  Alignment: 3
-  FixedScale: 100
-  MaxScale: 100
+  Scaling: 2
+  Scale: 2
+  Anchor: 2
+  AnchorPosition: {x: 0.5, y: 0.5}
 --- !u!1 &7455720992710055616
 GameObject:
   m_ObjectHideFlags: 0

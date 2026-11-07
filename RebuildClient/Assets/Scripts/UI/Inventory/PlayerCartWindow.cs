@@ -36,17 +36,29 @@ namespace Assets.Scripts.UI.Inventory
             DropZone.gameObject.SetActive(isActive);
         }
 
-        public override void ShowWindow()
+        private void OnEnable()
         {
-            base.ShowWindow();
-            UpdateActiveVisibleBag();
+            var state = PlayerState.Instance;
+            state.Cart.Changed += OnCartChanged;
+            state.CartWeightChanged += RefreshHeader;
+            if (state.IsReadyForDisplay)
+                UpdateActiveVisibleBag();
         }
-        
+
+        private void OnDisable()
+        {
+            var state = PlayerState.Instance;
+            state.Cart.Changed -= OnCartChanged;
+            state.CartWeightChanged -= RefreshHeader;
+        }
+
+        private void OnCartChanged(int _) => UpdateActiveVisibleBag();
+
         public void OnMoveInventoryItemToCart(int bagSlotId)
         {
             if (VendingSetupManager.Instance != null)
             {
-                CameraFollower.Instance.AppendNotice("You can't transfer items with your cart while setting up a vend.");
+                CameraFollower.Instance.AppendError("You can't transfer items with your cart while setting up a vend.");
                 return;
             }
             
@@ -65,7 +77,7 @@ namespace Assets.Scripts.UI.Inventory
         {
             if (VendingSetupManager.Instance != null)
             {
-                CameraFollower.Instance.AppendNotice("You can't transfer items with your cart while setting up a vend.");
+                CameraFollower.Instance.AppendError("You can't transfer items with your cart while setting up a vend.");
                 return;
             }
 
@@ -102,26 +114,16 @@ namespace Assets.Scripts.UI.Inventory
             }
         }
         
-        public void UpdateActiveVisibleBag()
+        private void UpdateActiveVisibleBag()
         {
             if (!gameObject.activeSelf || PlayerState.Instance == null)
                 return;
 
+            RefreshHeader();
+
             var state = PlayerState.Instance;
-            var inventory = state.Cart;
             activeEntryCount = 0;
-            var bagItems = inventory.GetInventoryData();
-            var curWeight = state.CartWeight / 10;
-            var totalWeight = 8000;
-
-            var weightPercent = curWeight * 100 / totalWeight;
-            var countText = $"{bagItems.Count}/100";
-            var percentText = $"{weightPercent}%";
-
-            ItemCountText.text = countText;
-            WeightText.text = $"{curWeight}/{totalWeight}";
-            LayoutRebuilder.ForceRebuildLayoutImmediate(WeightText.rectTransform.parent as RectTransform);
-
+            var bagItems = state.Cart.GetInventoryData();
             foreach (var bagEntry in bagItems)
             {
                 var item = bagEntry.Value;
@@ -184,6 +186,18 @@ namespace Assets.Scripts.UI.Inventory
                 entryList[i].DragItem.Clear();
                 entryList[i].gameObject.SetActive(i < totalBoxes);
             }
+        }
+
+        //item count and weight, without rebuilding the item grid
+        private void RefreshHeader()
+        {
+            if (!gameObject.activeSelf || PlayerState.Instance == null)
+                return;
+
+            var state = PlayerState.Instance;
+            ItemCountText.text = $"{state.Cart.TotalItems}/100";
+            WeightText.text = $"{state.CartWeight / 10}/8000";
+            LayoutRebuilder.ForceRebuildLayoutImmediate(WeightText.rectTransform.parent as RectTransform);
         }
     }
 }

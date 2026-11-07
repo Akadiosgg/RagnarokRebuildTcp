@@ -11,6 +11,7 @@ using Assets.Scripts.UI.ConfigWindow;
 using Assets.Scripts.UI.Hud;
 using Assets.Scripts.UI.Inventory;
 using Assets.Scripts.UI.Stats;
+using Assets.Scripts.Utility;
 using RebuildSharedData.Enum;
 using TMPro;
 using UnityEngine;
@@ -47,6 +48,7 @@ public class UiManager : MonoBehaviour
     public ItemDescriptionWindow SubDescriptionWindow;
     public CardIllustrationWindow CardIllustrationWindow;
     public ClientDatabaseWindow ClientDatabaseWindow;
+    public FrameStatsOverlay FrameStatsOverlay;
 
     public GameObject InventoryDropArea;
     public GameObject EquipmentDropArea;
@@ -75,9 +77,12 @@ public class UiManager : MonoBehaviour
     [NonSerialized] public bool IsDraggingItem;
     private IItemDropTarget hoveredDropTarget;
     private bool canChangeSkillLevel;
+    private int maxDragSkillLevel;
     public bool IsCanvasVisible => canvas.enabled;
     private GameObject hoveredObject;
     private CameraFollower cameraFollower;
+
+    private static readonly Vector2 TooltipCursorGap = new(5f, 5f);
 
     public static UiManager Instance
     {
@@ -146,12 +151,6 @@ public class UiManager : MonoBehaviour
 
         canvas.enabled = false;
         cameraFollower = CameraFollower.Instance;
-        RefreshCartVisibility();
-    }
-
-    public void RefreshCartVisibility()
-    {
-        MenuWindow.RefreshRows();
     }
 
     public void ShowTooltip(GameObject src, string text)
@@ -204,38 +203,10 @@ public class UiManager : MonoBehaviour
         drag.OnPointerEnter(null);
     }
 
-    public Vector3 GetScreenPositionOfCursor()
-    {
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas.transform as RectTransform,
-            Input.mousePosition, canvas.worldCamera, out var screenPos);
-
-        return canvas.transform.TransformPoint(screenPos);
-    }
-
     private void UpdateOverlayPosition()
     {
-        if (!TooltipOverlay.gameObject.activeInHierarchy)
-            return;
-
-        var rt = TooltipOverlay.RectTransform;
-
-        var scale = canvas.scaleFactor;
-        var width = rt.rect.width * scale;
-        var height = rt.rect.height * scale;
-
-        //sits above the cursor, flips left at the right edge, then clamps fully on screen
-        var corner = (Vector2)Input.mousePosition;
-        corner.y += 10;
-
-        if (corner.x + width > Screen.width)
-            corner.x -= width;
-        if (corner.y + height > Screen.height)
-            corner.y = Screen.height - height;
-        corner.x = Mathf.Max(0, corner.x);
-        corner.y = Mathf.Max(0, corner.y);
-
-        //position places the pivot, so offset from the corner by the pivot's share of the size
-        TooltipOverlay.transform.position = corner + rt.pivot * new Vector2(width, height);
+        if (TooltipOverlay.gameObject.activeInHierarchy)
+            TooltipOverlay.RectTransform.PlaceNextToCursor(TooltipCursorGap, true);
     }
 
     public void OnLogIn()
@@ -344,6 +315,9 @@ public class UiManager : MonoBehaviour
                 canChangeSkillLevel = ClientDataLoader.Instance.GetSkillData((CharacterSkill)dragItem.ItemId).AdjustableLevel;
                 if (!canChangeSkillLevel)
                     DragItemObject.UpdateCount(0);
+                //a granted skill can put the level above 10
+                maxDragSkillLevel = Mathf.Max(DragItemObject.ItemCount,
+                    PlayerState.Instance.KnownSkills.GetValueOrDefault((CharacterSkill)dragItem.ItemId, 1));
                 break;
             }
             case DragItemType.Item:
@@ -487,7 +461,7 @@ public class UiManager : MonoBehaviour
             if (oldLvl == 0)
                 return;
             var lvl = oldLvl + Input.GetAxis("Mouse ScrollWheel") * 10f;
-            lvl = Mathf.Clamp(lvl, 1, 10);
+            lvl = Mathf.Clamp(lvl, 1, maxDragSkillLevel);
             var newLevel = Mathf.RoundToInt(lvl);
             if (newLevel != oldLvl)
                 DragItemObject.UpdateCount(newLevel);

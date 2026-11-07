@@ -3,6 +3,7 @@ using Assets.Scripts.Sprites;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Assets.Scripts.UI.Utility;
 
 namespace Assets.Scripts.UI.Hud
 {
@@ -30,9 +31,9 @@ namespace Assets.Scripts.UI.Hud
                 obtainedText = $"{inventoryItem.ProperName()} - {itemCount} obtained.";
 
             if (itemCount == 1)
-                CameraFollower.Instance.AppendChatText($"<color=#00fbfb>You got {inventoryItem.ProperName()}.</color>");
+                CameraFollower.Instance.AppendChatText($"You got {inventoryItem.ProperName()}.", TextColor.Item);
             else
-                CameraFollower.Instance.AppendChatText($"<color=#00fbfb>You got {itemCount}x {inventoryItem.ProperName()}.</color>");
+                CameraFollower.Instance.AppendChatText($"You got {itemCount}x {inventoryItem.ProperName()}.", TextColor.Item);
 
             if (chatOnly)
                 return;

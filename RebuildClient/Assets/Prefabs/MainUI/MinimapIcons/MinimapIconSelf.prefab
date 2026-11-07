@@ -48,8 +48,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f94d978b91a242b3b5a4272830937318, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Material: {fileID: 0}
+  Material: {fileID: 2100000, guid: 8497e6a895aab5a4ea9b4242458bcfa7, type: 2}
   ViewDirection: 0
-  Alignment: 0
-  FixedScale: 50
-  MaxScale: 100
+  Scaling: 2
+  Scale: 1
+  Anchor: 0
+  AnchorPosition: {x: 0.5, y: 0}

@@ -58,15 +58,22 @@ namespace Assets.Scripts.UI.TitleScreen
             }
 
             yield return new WaitForSeconds(0.1f);
-            EventSystem.current.SetSelectedGameObject(LoginUsernameBox.gameObject);
+            FocusLoginField();
         }
 
         public void ReturnFocus()
         {
             if (currentTab == 0 || currentTab == 1)
-                EventSystem.current.SetSelectedGameObject(LoginUsernameBox.gameObject);
+                FocusLoginField();
             if (currentTab == 2)
                 EventSystem.current.SetSelectedGameObject(ServerInputBox.gameObject);
+        }
+
+        //the password box when the username is remembered
+        private void FocusLoginField()
+        {
+            var field = string.IsNullOrWhiteSpace(LoginUsernameBox.text) ? LoginUsernameBox : LoginPasswordBox;
+            EventSystem.current.SetSelectedGameObject(field.gameObject);
         }
 
         public void ChangeTabs(int id)
@@ -92,7 +99,7 @@ namespace Assets.Scripts.UI.TitleScreen
                     RememberLoginToggle.gameObject.SetActive(true);
                     SubmitButton.gameObject.SetActive(true);
                     WindowRect.sizeDelta = new Vector2(400, 230);
-                    EventSystem.current.SetSelectedGameObject(LoginUsernameBox.gameObject);
+                    FocusLoginField();
                     break;
                 case 1:
                     SubmitButtonText.text = "Create";

@@ -32,7 +32,12 @@ namespace Assets.Scripts.UI.Hud
 
         public void Close() => gameObject.SetActive(false);
 
-        public void RefreshRows()
+        //Show refreshes the rows before opening
+        private void OnEnable() => PlayerState.Instance.FollowerChanged += RefreshRows;
+
+        private void OnDisable() => PlayerState.Instance.FollowerChanged -= RefreshRows;
+
+        private void RefreshRows()
         {
             CartRow.SetActive(PlayerState.Instance.HasCart);
         }

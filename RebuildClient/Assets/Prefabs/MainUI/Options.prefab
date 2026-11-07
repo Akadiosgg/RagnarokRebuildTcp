@@ -12989,6 +12989,8 @@ MonoBehaviour:
     type: 3}
   toggleNumberRowPrefab: {fileID: 6600000000000004040, guid: 1738d9a844414715afa4af5b60bd06ea,
     type: 3}
+  listRowPrefab: {fileID: 4844924704357008673, guid: f9969bb5c7044974f9db039a4fa6d017,
+    type: 3}
 --- !u!1 &6053836125023786912
 GameObject:
   m_ObjectHideFlags: 0

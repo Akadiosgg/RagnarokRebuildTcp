@@ -160,9 +160,9 @@ public class NpcInteractionState
     public void SkillReset() => Player?.SkillReset();
     public void StatPointReset() => Player?.StatPointReset();
     public bool HasLearnedSkill(CharacterSkill skill, int level = 1) => Player?.DoesCharacterKnowSkill(skill, level) ?? false;
-    public bool HasCart => ((Player?.GetData(PlayerStat.FollowerType) ?? 0) & (int)CharacterFollowerState.AnyCart) > 0;
-    public bool HasBird => ((Player?.GetData(PlayerStat.FollowerType) ?? 0) & (int)CharacterFollowerState.Falcon) > 0;
-    public bool HasPeco => ((Player?.GetData(PlayerStat.FollowerType) ?? 0) & (int)CharacterFollowerState.Mounted) > 0;
+    public bool HasCart => Player?.HasCart ?? false;
+    public bool HasFalcon => Player?.HasFalcon ?? false;
+    public bool HasPeco => Player?.HasPeco ?? false;
 
     public void FocusNpc()
     {
@@ -297,7 +297,7 @@ public class NpcInteractionState
         if (!Enum.TryParse(skillName, true, out CharacterSkill skill))
             return 0;
 
-        return Player.MaxLearnedLevelOfSkill(skill);
+        return Player.LearnedSkillLevel(skill);
     }
 
 
@@ -515,7 +515,6 @@ public class NpcInteractionState
             newItem.Count = (short)(newItem.Count * tradeCount);
         Player.CreateItemInInventory(newItem);
         CommandBuilder.SendServerEvent(Player, ServerEvent.TradeSuccess);
-        CommandBuilder.SendUpdateZeny(Player);
     }
 
     public void StartSellToNpc()
@@ -618,32 +617,12 @@ public class NpcInteractionState
         if (Player == null)
             return;
 
-        var cartStyle = Level switch
-        {
-            < 41 => 0,
-            < 66 => 1,
-            < 81 => 2,
-            < 91 => 3,
-            _ => 4
-        };
+        Player.SetCart(CharacterFollowerStateExtensions.BestCartStyleForLevel(Level));
+    }
 
-        var follower = cartStyle switch
-        {
-            1 => CharacterFollowerState.Cart1,
-            2 => CharacterFollowerState.Cart2,
-            3 => CharacterFollowerState.Cart3,
-            4 => CharacterFollowerState.Cart4,
-            _ => CharacterFollowerState.Cart0
-        };
-
-        var existing = (CharacterFollowerState)Player.GetData(PlayerStat.FollowerType) & (~CharacterFollowerState.AnyCart);
-        var newState = existing | follower;
-        
-
-        Player.SetData(PlayerStat.FollowerType, (int)newState);
-        Player.PlayerFollower = newState;
-
-        CommandBuilder.UpdatePlayerFollowerStateAutoVis(Player);
+    public void EquipFalcon()
+    {
+        Player?.GiveFalcon();
     }
 
     public void EnterVendingState()

@@ -1,4 +1,5 @@
 using Assets.Scripts.Network;
+using Assets.Scripts.PlayerControl;
 
 namespace Assets.Scripts.UI.ConfigWindow
 {
@@ -22,6 +23,8 @@ namespace Assets.Scripts.UI.ConfigWindow
                 toggle.SyncFromConfig();
             foreach (var slider in GetComponentsInChildren<SliderOption>(true))
                 slider.SyncFromConfig();
+            foreach (var dropdown in GetComponentsInChildren<DropdownOption>(true))
+                dropdown.SyncFromConfig();
         }
 
         public void ResetToDefaults()
@@ -34,8 +37,7 @@ namespace Assets.Scripts.UI.ConfigWindow
 
         public void ToggleHide()
         {
-            var isHidden = CameraFollower.Instance.TargetControllable.IsHidden;
-            NetworkManager.Instance.SendAdminHideCharacter(!isHidden);
+            NetworkManager.Instance.SendAdminHideCharacter(!PlayerState.Instance.IsAdminHidden);
         }
 
         public override void OnDestroy()

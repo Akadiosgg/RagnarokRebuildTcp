@@ -13,9 +13,6 @@ namespace Assets.Scripts.Network.IncomingPacketHandlers.Character
             var updatedItem = UniqueItem.Deserialize(msg);
             
             State.Inventory.ReplaceUniqueItem(bagId, updatedItem);
-
-            UiManager.InventoryWindow.UpdateActiveVisibleBag();
-            UiManager.EquipmentWindow.RefreshEquipmentWindow();
             // Don't reveal the refine window here; SubmitRefine reveals it after the effect — doing it now flickers it.
         }
     }
